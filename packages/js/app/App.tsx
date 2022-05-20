@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
 
 const Section: React.FC<{
     title: string;
+    children?: React.ReactNode;
 }> = ({ children, title }) => {
     const isDarkMode = useColorScheme() === 'dark';
     return (
