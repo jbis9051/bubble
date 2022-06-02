@@ -63,4 +63,3 @@ CREATE TABLE IF NOT EXISTS message
     date_time     TIMESTAMP                                    NOT NULL
 );
 
-
