@@ -62,7 +62,7 @@ CREATE TABLE user_group
 CREATE TABLE message
 (
     id            serial PRIMARY KEY,
-    attachment_id INT REFERENCES attachment (id) NOT NULL,
+    attachment_id INT REFERENCES attachment (id) NULL,
     group_id      INT REFERENCES "group" (id)    NOT NULL,
     user_id       INT REFERENCES "user" (id)     NOT NULL,
     content       VARCHAR(255)                   NULL,
