@@ -1,17 +1,10 @@
 import React, { Component } from 'react';
 import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
 import colors from '../../constants/Colors';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-type RootStackParamList = {
-    loginScreen: undefined,
-    signupScreen: undefined,
-};
-type Props = NativeStackScreenProps<RootStackParamList, 'signupScreen'>;
-
-function Login({route, navigation}: Props) {
-    //const [text, onChangeText] = React.useState("Useless Text");
-    //const [number, onChangeNumber] = React.useState(null);
+function Signup() {
+    const [text, onChangeText] = React.useState("Useless Text");
+    const [number, onChangeNumber] = React.useState(null);
 
     const styles = StyleSheet.create({
         container: {
@@ -64,19 +57,17 @@ function Login({route, navigation}: Props) {
                 <TextInput
                     style={styles.textInput}
                     // onChangeText={onChangeNumber} //calls when text is changed
-                    placeholder="Enter login"
+                    placeholder="Enter your username"
                     keyboardType="default"/>
                 <TextInput
                     style={styles.textInput}
-                    placeholder="Enter Password"
+                    placeholder="Enter your password"
                     keyboardType="default"/>
                 <TouchableOpacity style={styles.login}>
-                    <Text>Log In</Text>
+                    <Text>Sign up</Text>
                 </TouchableOpacity>
-                <Text>Don't have a account? </Text>
-                <Text onPress={() => App.navigation.navigate('SignupScreen')}>Sign up here</Text>
             </View>
         </View>
     );
 }
-export default Login;
+export default Signup;
