@@ -16,6 +16,7 @@ type RootStackParamList = {
 
 const App = () => {
     const RootStack = createNativeStackNavigator<RootStackParamList>();
+
     return(
     <NavigationContainer>
         <RootStack.Navigator initialRouteName={"Login"}>
