@@ -1,34 +1,34 @@
-//import React, { Component } from 'react';
-import * as React from 'react';
+import React, { Component } from 'react';
 import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StackNavigationProp} from "@react-navigation/stack";
-import Login from './screens/LoginScreen/index';
-import Signup from './screens/SignupScreen/index';
+import login from './screens/LoginScreen/index';
+import signup from './screens/SignupScreen/index';
 
+type RootStackParamList = {
+    Login: undefined,
+    Signup: undefined,
+};
 
 
 const App = () => {
-    type RootStackParamList = {
-        loginScreen: undefined,
-        signupScreen: undefined,
-    };
-
     const RootStack = createNativeStackNavigator<RootStackParamList>();
-
     return(
-        <NavigationContainer>
-            <RootStack.Navigator initialRouteName={"loginScreen"}>
-                <RootStack.Screen
-                name="loginScreen"
-                component={Login}
-                options={{title: 'Welcome'}}
-                />
-                <RootStack.Screen
-                name="signupScreen" component={Signup}/>
-            </RootStack.Navigator>
-        </NavigationContainer>
-    );
+    <NavigationContainer>
+        <RootStack.Navigator initialRouteName={"Login"}>
+            <RootStack.Screen
+                name="Login"
+                component={login}
+                options={{title: "Life 256"}}
+            />
+            <RootStack.Screen
+                name="Signup"
+                component={signup}
+                options={{title: "Life 256"}}/>
+        </RootStack.Navigator>
+    </NavigationContainer>
+);
 }
+
 export default App;
