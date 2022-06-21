@@ -1,6 +1,14 @@
 import React, { Component } from 'react';
 import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
+import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import colors from '../../constants/Colors';
+
+type RootStackParamList = {
+    Login: undefined,
+    Signup: undefined,
+    Splash: undefined,
+};
+type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
 const styles = StyleSheet.create({
     container: {
@@ -40,7 +48,7 @@ const styles = StyleSheet.create({
     },
 })
 
-function Signup() {
+function Signup({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Sign Up</Text>
@@ -57,6 +65,7 @@ function Signup() {
                 <TouchableOpacity style={styles.login}>
                     <Text>Sign up</Text>
                 </TouchableOpacity>
+                <Text>Already have an account?</Text><Text onPress={() => navigation.navigate('Login')}>Log in here</Text>
             </View>
         </View>
     );

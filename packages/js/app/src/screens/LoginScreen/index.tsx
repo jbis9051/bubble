@@ -6,6 +6,7 @@ import colors from '../../constants/Colors';
 type RootStackParamList = {
     Login: undefined,
     Signup: undefined,
+    Splash: undefined,
 };
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
 function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Log In</Text>
+            <Text style={styles.title}>Life 256</Text>
             <View style={styles.loginContainer}>
                 <TextInput
                     style={styles.textInput}
