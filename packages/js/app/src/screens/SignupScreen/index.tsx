@@ -3,8 +3,6 @@ import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} 
 import colors from '../../constants/Colors';
 
 function Signup() {
-    const [text, onChangeText] = React.useState("Useless Text");
-    const [number, onChangeNumber] = React.useState(null);
 
     const styles = StyleSheet.create({
         container: {
@@ -19,12 +17,6 @@ function Signup() {
             fontSize: 95,
             fontWeight: '100',
         },
-        /*textInputBox:{
-            flex: 2,
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },*/
         loginContainer:{
             justifyContent: 'center',
             alignItems: 'center',

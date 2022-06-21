@@ -7,15 +7,15 @@ import {StackNavigationProp} from "@react-navigation/stack";
 import Login from './screens/LoginScreen/index';
 import Signup from './screens/SignupScreen/index';
 
-type RootStackParamList = {
-    loginScreen: undefined,
-    signupScreen: undefined,
-};
-
-const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 
 const App = () => {
+    type RootStackParamList = {
+        loginScreen: undefined,
+        signupScreen: undefined,
+    };
+
+    const RootStack = createNativeStackNavigator<RootStackParamList>();
 
     return(
         <NavigationContainer>

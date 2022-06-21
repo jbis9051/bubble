@@ -9,55 +9,46 @@ type RootStackParamList = {
 };
 type Props = NativeStackScreenProps<RootStackParamList, 'signupScreen'>;
 
+const styles = StyleSheet.create({
+    container: {
+        alignItems: 'center',
+        backgroundColor: colors.white,
+        width: '100%',
+        height: '100%',
+    },
+    title: {
+        marginVertical: 75,
+        alignItems:'center',
+        fontSize: 95,
+        fontWeight: '100',
+    },
+    loginContainer:{
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1,
+    },
+    login:{
+        height: 40,
+        width: 150,
+        margin: 7,
+        borderWidth: 1,
+        borderRadius: 15,
+        padding: 10,
+        alignItems:'center',
+        justifyContent:'center',
+    },
+    textInput: {
+        height: 50,
+        width: 300,
+        margin: 7,
+        borderWidth: 1,
+        borderRadius: 15,
+        padding: 10,
+    },
+})
+
 function Login({route, navigation}: Props) {
-    //const [text, onChangeText] = React.useState("Useless Text");
-    //const [number, onChangeNumber] = React.useState(null);
-
-    const styles = StyleSheet.create({
-        container: {
-            alignItems: 'center',
-            backgroundColor: colors.white,
-            width: '100%',
-            height: '100%',
-        },
-        title: {
-            marginVertical: 75,
-            alignItems:'center',
-            fontSize: 95,
-            fontWeight: '100',
-        },
-        /*textInputBox:{
-            flex: 2,
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },*/
-        loginContainer:{
-            justifyContent: 'center',
-            alignItems: 'center',
-            flex: 1,
-        },
-        login:{
-            height: 40,
-            width: 150,
-            margin: 7,
-            borderWidth: 1,
-            borderRadius: 15,
-            padding: 10,
-            alignItems:'center',
-            justifyContent:'center',
-        },
-        textInput: {
-            height: 50,
-            width: 300,
-            margin: 7,
-            borderWidth: 1,
-            borderRadius: 15,
-            padding: 10,
-        },
-    })
     return (
-
         <View style={styles.container}>
             <Text style={styles.title}>Life 360</Text>
             <View style={styles.loginContainer}>
@@ -74,7 +65,7 @@ function Login({route, navigation}: Props) {
                     <Text>Log In</Text>
                 </TouchableOpacity>
                 <Text>Don't have a account? </Text>
-                <Text onPress={() => App.navigation.navigate('SignupScreen')}>Sign up here</Text>
+                <Text onPress={() => navigation.navigate('signupScreen')}>Sign up here</Text>
             </View>
         </View>
     );
