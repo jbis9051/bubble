@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import {Text, View, StyleSheet, StatusBar, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import colors from '../../constants/Colors';
-import TempLogo from '../../../assets/tempLife256Logo.svg';
 
 type RootStackParamList = {
     Login: undefined,
@@ -53,7 +52,6 @@ function Splash({route, navigation}: Props) {
         <View style={styles.container}>
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>Life 256</Text>
-                <TempLogo style={styles.logo} />
             </View>
             <View style={styles.logSign}>
                 <TouchableOpacity style={styles.buttons}>

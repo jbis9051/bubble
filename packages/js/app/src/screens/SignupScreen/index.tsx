@@ -3,13 +3,6 @@ import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} 
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import colors from '../../constants/Colors';
 
-type RootStackParamList = {
-    Login: undefined,
-    Signup: undefined,
-    Splash: undefined,
-};
-type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
-
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
@@ -47,6 +40,14 @@ const styles = StyleSheet.create({
         padding: 10,
     },
 })
+
+type RootStackParamList = {
+    Login: undefined,
+    Signup: undefined,
+    Splash: undefined,
+};
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
 function Signup({route, navigation}: Props) {
     return (
