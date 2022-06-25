@@ -29,6 +29,7 @@ build/
 local.properties
 *.iml
 *.hprof
+yarn.lock
 
 # node.js
 #
@@ -60,5 +61,7 @@ buck-out/
 # Ruby / CocoaPods
 /ios/Pods/
 /vendor/bundle/
+
+
 
 

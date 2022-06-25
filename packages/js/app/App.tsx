@@ -3,8 +3,8 @@ import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} 
 import { NavigationContainer } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StackNavigationProp} from "@react-navigation/stack";
-import login from './screens/LoginScreen/index';
-import signup from './screens/SignupScreen/index';
+import login from './screens/LoginScreen';
+import signup from './screens/SignupScreen';
 
 type RootStackParamList = {
     Login: undefined,

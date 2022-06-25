@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {Text, View, StyleSheet, StatusBar, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import colors from '../../constants/Colors';
-import TempLogo from '../../../assets/tempLife256Logo.svg';
+import TempLogo from '../../assets/tempLife256Logo.svg';
 
 type RootStackParamList = {
     Login: undefined,
