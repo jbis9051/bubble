@@ -5,7 +5,7 @@ CREATE TABLE "user"
     password        VARCHAR(255)        NOT NULL,
     profile_picture VARCHAR(255)        NULL,
     email           VARCHAR(255) UNIQUE NULL,
-    phone           VARCHAR(11) UNIQUE  NOT NULL,
+    phone           VARCHAR(11)  UNIQUE NOT NULL,
     name            VARCHAR(255)        NOT NULL,
     created         TIMESTAMP           NOT NULL
 );
@@ -69,4 +69,18 @@ CREATE TABLE message
     created       TIMESTAMP                      NOT NULL
 );
 
+CREATE TABLE confirmation (
+                              id      serial PRIMARY KEY ,
+                              user_id INT REFERENCES "user" (id)        NOT NULL ,
+                              link_id VARCHAR(32)                UNIQUE NOT NULL ,
+                              email   VARCHAR(255)                      NOT NULL ,
+                              created TIMESTAMP                         NOT NULL
+);
+
+CREATE TABLE password_reset (
+                                id       SERIAL PRIMARY KEY ,
+                                user_id  INT REFERENCES "user" (id)        NOT NULL ,
+                                reset_id VARCHAR(32)                UNIQUE NOT NULL ,
+                                created  TIMESTAMP                         NOT NULL
+);
 
