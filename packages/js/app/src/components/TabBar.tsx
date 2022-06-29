@@ -1,12 +1,12 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import HomeScreen from './views/HomeScreen';
-import MapScreen from './views/MapScreen';
-import ProfileScreen from './views/ProfileScreen';
-import FriendsScreen from './views/FriendsScreen';
+import HomeScreen from '../views/HomeScreen';
+import MapScreen from '../views/MapScreen';
+import ProfileScreen from '../views/ProfileScreen';
+import FriendsScreen from '../views/FriendsScreen';
 
-import TabIcon from './components/TabIcon';
+import TabIcon from './TabIcon';
 import { 
     faHouse as homeIcon,
     faUserGroup as friendsIcon,
