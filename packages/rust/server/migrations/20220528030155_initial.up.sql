@@ -1,11 +1,12 @@
 CREATE TABLE "user"
 (
     id              serial PRIMARY KEY,
+    uuid            UUID UNIQUE         NOT NULL,
     username        VARCHAR(255) UNIQUE NOT NULL,
     password        VARCHAR(255)        NOT NULL,
     profile_picture VARCHAR(255)        NULL,
     email           VARCHAR(255) UNIQUE NULL,
-    phone           VARCHAR(11)  UNIQUE NOT NULL,
+    phone           VARCHAR(11) UNIQUE  NULL,
     name            VARCHAR(255)        NOT NULL,
     created         TIMESTAMP           NOT NULL
 );
@@ -22,6 +23,7 @@ CREATE TABLE location
 CREATE TABLE "group"
 (
     id         serial PRIMARY KEY,
+    uuid       UUID UNIQUE  NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     created    TIMESTAMP    NOT NULL
 );
@@ -69,18 +71,28 @@ CREATE TABLE message
     created       TIMESTAMP                      NOT NULL
 );
 
-CREATE TABLE confirmation (
-                              id      serial PRIMARY KEY ,
-                              user_id INT REFERENCES "user" (id)        NOT NULL ,
-                              link_id VARCHAR(32)                UNIQUE NOT NULL ,
-                              email   VARCHAR(255)                      NOT NULL ,
-                              created TIMESTAMP                         NOT NULL
+CREATE TABLE confirmation
+(
+    id      serial PRIMARY KEY,
+    user_id INT REFERENCES "user" (id) NOT NULL,
+    link_id VARCHAR(32) UNIQUE         NOT NULL,
+    email   VARCHAR(255)               NOT NULL,
+    created TIMESTAMP                  NOT NULL
 );
 
-CREATE TABLE password_reset (
-                                id       SERIAL PRIMARY KEY ,
-                                user_id  INT REFERENCES "user" (id)        NOT NULL ,
-                                reset_id VARCHAR(32)                UNIQUE NOT NULL ,
-                                created  TIMESTAMP                         NOT NULL
+CREATE TABLE forgot_password
+(
+    id        SERIAL PRIMARY KEY,
+    user_id   INT REFERENCES "user" (id) NOT NULL,
+    forgot_id VARCHAR(32) UNIQUE         NOT NULL,
+    created   TIMESTAMP                  NOT NULL
 );
+
+CREATE TABLE session_token
+(
+    id      SERIAL PRIMARY KEY,
+    user_id INT REFERENCES "user" (id) NOT NULL,
+    token   VARCHAR(32) UNIQUE         NOT NULL,
+    created TIMESTAMP                  NOT NULL
+)
 
