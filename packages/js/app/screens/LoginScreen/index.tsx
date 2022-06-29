@@ -6,6 +6,7 @@ import colors from '../../constants/Colors';
 type RootStackParamList = {
     Login: undefined,
     Signup: undefined,
+    Splash: undefined,
 };
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
