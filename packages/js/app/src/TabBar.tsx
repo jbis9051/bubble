@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import HomeScreen from './views/HomeScreen';
@@ -7,6 +7,12 @@ import ProfileScreen from './views/ProfileScreen';
 import FriendsScreen from './views/FriendsScreen';
 
 import TabIcon from './components/TabIcon';
+import { 
+    faHouse as homeIcon,
+    faUserGroup as friendsIcon,
+    faMap as mapIcon,
+    faUser as userIcon
+} from '@fortawesome/free-solid-svg-icons';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,9 +35,7 @@ const TabBar = () => (
                 tabBarIcon: ({ focused }) => (
                     <TabIcon
                         name='Home'
-                        image={require('../assets/icons/home.png')}
-                        size={35}
-                        color='#e32f45'
+                        icon={homeIcon}
                         focused={focused}
                     />
                 )
@@ -43,9 +47,7 @@ const TabBar = () => (
                 tabBarIcon: ({focused}) => (
                     <TabIcon
                         name='Friends'
-                        image={require('../assets/icons/friends.png')}
-                        size={35}
-                        color='#e32f45'
+                        icon={friendsIcon}
                         focused={focused}
                     />
                 )
@@ -57,9 +59,7 @@ const TabBar = () => (
                 tabBarIcon: ({focused}) => (
                     <TabIcon
                         name='Map'
-                        image={require('../assets/icons/globe.png')}
-                        size={30}
-                        color='#e32f45'
+                        icon={mapIcon}
                         focused={focused}
                     />
                 )
@@ -71,9 +71,7 @@ const TabBar = () => (
                 tabBarIcon: ({focused}) => (
                     <TabIcon
                         name='Profile'
-                        image={require('../assets/icons/user.png')}
-                        size={30}
-                        color='#e32f45'
+                        icon={userIcon}
                         focused={focused}
                     />
                 )
