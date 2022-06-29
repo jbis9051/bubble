@@ -17,10 +17,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         width: '100%',
         height: '100%',
-    },logo:{
-        flex:1,
-        height: 100,
-        width: 100,
     },
     title: {
         flex:1,
@@ -32,18 +28,20 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: "column",
-    },logSign:{
-
-    },buttons:{
-        height: 40,
-        width: 150,
-        margin: 7,
-        borderWidth: 1,
-        borderRadius: 15,
-        padding: 10,
-        alignItems:'center',
-        justifyContent:'center',
+    }, buttonsContainer:{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buttons:{
+            height: 40,
+            width: 150,
+            margin: 7,
+            borderWidth: 1,
+            borderRadius: 15,
+            padding: 10,
+            alignItems:'center',
+            justifyContent:'center',
     }
 })
 
