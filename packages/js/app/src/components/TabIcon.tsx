@@ -1,34 +1,38 @@
 import React from 'react';
 import { 
     View, 
-    Image, 
-    Text, 
-    ImageSourcePropType 
+    Text
 } from 'react-native';
 
-const TabIcon: React.FC<{
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+
+
+interface TabIconProps {
     name: string;
-    image: ImageSourcePropType;
-    size: number;
-    color: string;
+    icon: IconProp;
     focused: boolean
-}> = ({ name, image, size, color, focused }) => (
-    <View style={{alignItems: 'center', justifyContent: 'center', top: 10} }>
-        <Image
-            source={image}
-            resizeMode='contain'
-            style={{
-                width: size,
-                height: size,
-                tintColor: focused ? color : '#748c94'
-            }}
-        />
-        <Text
-            style={{color: focused ? color : '#748c94', fontSize: 12 }}
-        >
-            {name}
-        </Text>
-    </View>
-);
+}
+
+const TabIcon: React.FC<TabIconProps> = ({ name, icon, focused }) => {
+    const color = focused ? '#e32f45' : '#748c94';
+    return (
+        <View style={{alignItems: 'center', justifyContent: 'center', top: 10} }>
+            <FontAwesomeIcon 
+                icon={icon} 
+                color={color} 
+                size={35}
+            />
+            <Text
+                style={{
+                    color: color, 
+                    fontSize: 12 
+                }}
+            >
+                {name}
+            </Text>
+        </View>
+    );
+};
 
 export default TabIcon;
