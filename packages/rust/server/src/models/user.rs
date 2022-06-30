@@ -1,4 +1,3 @@
-
 struct User{
     id: &str,
     uuid: &str,
@@ -58,6 +57,9 @@ impl User {
         todo!();
         // remove routes from a whole bunch of things
         // delete routes row
+    }
+    fn uppity() {
+
     }
 }
 
