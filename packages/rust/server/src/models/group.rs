@@ -1,11 +1,11 @@
 
 // Based on up.sql
 struct Group{
-    id: &str,
-    uuid: &str,
-    group_name: &str,
-    created: &str,
-    members: Vec<&str>
+    id: String,
+    uuid: String,
+    group_name: String,
+    created: String,
+    members: Vec<String>
 }
 
 // CRUD functions
