@@ -1,5 +1,5 @@
-struct User{
-    id: String,
+struct User {
+    id: i32,
     uuid: String,
     username: String,
     email: String,
@@ -9,14 +9,17 @@ struct User{
 }
 
 impl User {
-    fn create(&self, email: String, password: String, phone: Option<String> ) {
-        todo!()
+    fn create(email: String, password: String, phone: Option<String> ) -> User {
+        todo!();
     }
-    fn get_by_id(id: String) {
-        todo!()
+    fn get_by_id(id: String) -> User {
+        todo!();
     }
-    fn get_by_uuid(uuid: String) {
-        todo!()
+    fn get_by_uuid(uuid: String) -> User {
+        todo!();
+    }
+    fn update(&self) {
+        todo!();
     }
     fn delete(&self) {
         todo!();
