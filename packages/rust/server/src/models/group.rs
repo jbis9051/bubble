@@ -16,9 +16,6 @@ impl Group{
     fn read(&self){
         todo!();
     }
-    fn read_users(&self){
-        todo!();
-    }
     fn add_users(&self, new_users: Vec<&str>){
         todo!();
     }

@@ -6,9 +6,7 @@ use axum::Router;
 pub fn router() -> Router {
     let app = Router::new()
         .route("/group/:name", get(create))
-        //have to make unique
         .route("/group/:id", get(read))
-        .route("/group/:id", get(read_users))
         .route("/group/:id/:new_users", get(add_users))
         .route("/group/:id/:users_to_delete", get(delete_users))
         .route("/group/:id/:name", get(change_name))
