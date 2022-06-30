@@ -1,11 +1,12 @@
 use axum::extract::Path;
 use axum::routing::get;
+use axum::routing::post;
 use axum::handler::Handler;
 use axum::Router;
 
 pub fn router() -> Router {
     let app = Router::new()
-        .route("/user/signup/:email/:username/:password/:phone/:name", get(signup))
+        .route("/user/signup/:email/:username/:password/:phone/:name", post(signup))
         .route("/user/signin/:email/:password", get(signin))
         .route("/user/signout/:token", get(signout))
         .route("/user/forgot/:email", get(forgot))
