@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { 
+    View,
+    ScrollView,
+    Text, 
+    Image, 
+    StyleSheet
+} from 'react-native';
 import MapView from 'react-native-maps';
 const styles = StyleSheet.create({
     shadow: {
@@ -56,7 +62,7 @@ const MapComponent = () => (
                 longitudeDelta: 0.0421,
             }}
             style={{
-                height: 300,
+                height: 250,
             }}
         />
     </View>
@@ -81,13 +87,14 @@ const InfoComponent = () => (
 )
 
 const ProfileScreen = () => (
-    <View>
+    <ScrollView>
         <HeaderComponent />
         <MapComponent />
         <InfoComponent />
         <InfoComponent />
         <InfoComponent />
-    </View>
+        <InfoComponent />
+    </ScrollView>
 );
 
 export default ProfileScreen;
