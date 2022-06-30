@@ -11,7 +11,7 @@ import {
     faHouse as homeIcon,
     faUserGroup as friendsIcon,
     faMap as mapIcon,
-    faUser as userIcon
+    faCircleUser as userIcon
 } from '@fortawesome/free-solid-svg-icons';
 
 const Tab = createBottomTabNavigator();
