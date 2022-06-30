@@ -3,6 +3,7 @@ export default {
     grey: '#d9d9d9',
     darkGrey: '#BFBFBF',
     black: '#000000',
-    selected: '#e32f45',
+    primary: '#ff6339',
+    secondary: '#ff3a66',
     unselected: '#748c94'
 };
