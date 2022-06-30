@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     },
 })
 
+
 function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
@@ -56,16 +57,16 @@ function Login({route, navigation}: Props) {
                 <TextInput
                     style={styles.textInput}
                     // onChangeText={onChangeNumber} //calls when text is changed
-                    placeholder="Enter login"
+                    placeholder="Username"
                     keyboardType="default"/>
                 <TextInput
                     style={styles.textInput}
-                    placeholder="Enter Password"
+                    placeholder="Password"
                     keyboardType="default"/>
                 <TouchableOpacity style={styles.login}>
                     <Text>Log In</Text>
                 </TouchableOpacity>
-                <Text>Don't have a account? </Text><Text onPress={() => navigation.navigate('Signup')}>Sign up here</Text>
+                <Text>Don't have a account? </Text><Text onPress={() => {navigation.navigate('Signup')}}>Sign up here</Text>
             </View>
         </View>
     );

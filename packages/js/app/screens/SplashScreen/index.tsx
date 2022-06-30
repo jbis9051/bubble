@@ -51,12 +51,12 @@ function Splash({route, navigation}: Props) {
             <View style={styles.titleContainer}>
                 <Text style={styles.title}>Life 256</Text>
             </View>
-            <View style={styles.logSign}>
+            <View style={styles.buttonsContainer}>
                 <TouchableOpacity style={styles.buttons}>
-                    <Text onPress={() => navigation.navigate('Signup')}>Sign up</Text>
+                    <Text onPress={() => {navigation.navigate('Signup')}}>Sign up</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.buttons}>
-                    <Text onPress={() => navigation.navigate('Login')}>Log in</Text>
+                    <Text onPress={() => {navigation.navigate('Login')}}>Log in</Text>
                 </TouchableOpacity>
             </View>
         </View>

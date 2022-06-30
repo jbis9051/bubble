@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
+import {TextInput, Text, View, StyleSheet, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import colors from '../../constants/Colors';
 
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
 function Signup({route, navigation}: Props) {
     return (
         <View style={styles.container}>
+            <Header/>
             <Text style={styles.title}>Sign Up</Text>
             <View style={styles.loginContainer}>
                 <TextInput
