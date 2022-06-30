@@ -16,7 +16,7 @@ interface TabIconProps {
 }
 
 const TabIcon: React.FunctionComponent<TabIconProps> = ({ name, icon, focused }) => {
-    const color = focused ? colors.selected : colors.unselected;
+    const color = focused ? colors.primary : colors.unselected;
     return (
         <View style={{alignItems: 'center', justifyContent: 'center', top: 10} }>
             <FontAwesomeIcon 
