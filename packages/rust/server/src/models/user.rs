@@ -9,7 +9,7 @@ struct User{
 pub fn signup(email: &str, password: &str, phone: Option<&str>) -> Option<User> {
     todo!();
     // generate id, uuid, created
-    // do sql things - create user row, confirmation row
+    // do sql things - create routes row, confirmation row
     // send email with verification link_id
 
     // somehow implement a timeout for signup
@@ -22,8 +22,8 @@ pub fn signin(email: &str, password: &str) -> Option<(&str, &str)> {
 
 pub fn confirm(link_id: &str) {
     todo!();
-    // confirm user
-    // update user email
+    // confirm routes
+    // update routes email
     // delete confirmation row
 }
 
@@ -37,7 +37,7 @@ pub fn forgot(email: &str) {
 pub fn forgot_confirm(forgot_id: &str) {
     todo!();
     // check if forgot_id exists
-    // update password in user table
+    // update password in routes table
     // delete forgot_password row
 }
 
@@ -56,8 +56,8 @@ impl User {
     }
     fn delete(&self) {
         todo!();
-        // remove user from a whole bunch of things
-        // delete user row
+        // remove routes from a whole bunch of things
+        // delete routes row
     }
 }
 
