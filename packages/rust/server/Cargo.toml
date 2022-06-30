@@ -10,7 +10,7 @@ sqlx = { version = "0.5", features = ["runtime-tokio-rustls", "postgres", "migra
 tokio = { version = "1.18", features = ["full"] }
 
 # Web framework
-axum = "0.5.7"
+axum = "0.5.10"
 
 # Modular components for clients and servers
 tower = "0.4.12"
