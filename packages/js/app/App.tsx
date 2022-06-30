@@ -27,12 +27,12 @@ const App = () => {
             <RootStack.Screen
                 name="Login"
                 component={login}
-                options={{headerShown: true, title: "Log In"}}
+                options={{headerShown: false, title: "Log In"}}
             />
             <RootStack.Screen
                 name="Signup"
                 component={signup}
-                options={{headerShown: true, title: "Sign Up"}}/>
+                options={{headerShown: false, title: "Sign Up"}}/>
         </RootStack.Navigator>
     </NavigationContainer>
 );

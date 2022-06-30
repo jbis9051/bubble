@@ -19,8 +19,6 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     title: {
-        flex:1,
-        alignItems:'center',
         fontSize: 95,
         fontWeight: '100',
     },
@@ -34,8 +32,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttons:{
-            height: 40,
-            width: 150,
+            height: 50,
+            width: 250,
             margin: 7,
             borderWidth: 1,
             borderRadius: 15,
@@ -49,7 +47,7 @@ function Splash({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <View style={styles.titleContainer}>
-                <Text style={styles.title}>Life 256</Text>
+                <Text style={styles.title}>Bubble</Text>
             </View>
             <View style={styles.buttonsContainer}>
                 <TouchableOpacity style={styles.buttons}>

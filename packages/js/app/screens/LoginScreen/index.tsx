@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import Header from '../../components/Header';
 import colors from '../../constants/Colors';
 
 type RootStackParamList = {
@@ -19,14 +20,13 @@ const styles = StyleSheet.create({
     },
     title: {
         marginVertical: 75,
-        alignItems:'center',
-        fontSize: 95,
+        alignItems: 'center',
+        fontSize: 60,
         fontWeight: '100',
     },
     loginContainer:{
         justifyContent: 'center',
         alignItems: 'center',
-        flex: 1,
     },
     login:{
         height: 40,
@@ -52,7 +52,8 @@ const styles = StyleSheet.create({
 function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Log In</Text>
+            <Header page={'Splash'}/>
+            <Text style={styles.title}>Welcome back</Text>
             <View style={styles.loginContainer}>
                 <TextInput
                     style={styles.textInput}
