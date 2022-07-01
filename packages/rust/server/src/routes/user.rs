@@ -1,8 +1,15 @@
 use std::collections::HashMap;
-use axum::extract::Path;
+use axum::{extract, Json};
+use axum::extract::{Extension, Path};
 use axum::routing::{get, post, delete};
 use axum::handler::Handler;
 use axum::Router;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct CreateUser {
+
+}
 
 pub fn router() {
     let user_routes = Router::new()
@@ -15,7 +22,7 @@ pub fn router() {
         .route("/user/:password", delete(delete));
 }
 
-async fn signup(Path(params): Path<&str>) {
+async fn signup(extract::Json(payload): extract::Json<CreateUser>) {
     let email = params.get("email");
     let username = params.get("username");
     let password = params.get("password");

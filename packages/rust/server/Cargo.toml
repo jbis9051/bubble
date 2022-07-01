@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 sqlx = { version = "0.5", features = ["runtime-tokio-rustls", "postgres", "migrate"] }
 tokio = { version = "1.18", features = ["full"] }
+serde = "1.0.137"
 
 # Web framework
 axum = "0.5.10"
