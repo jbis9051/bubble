@@ -1,4 +1,4 @@
-
+use std::time::{Duration, SystemTime};
 // Based on up.sql
 struct Group{
     id: String,
@@ -11,13 +11,19 @@ struct Group{
 // CRUD functions
 impl Group{
     fn create(&self, name: String){
-        todo!();
+       let group = Group {
+           id: "".to_string(),
+           uuid: "".to_string(),
+           group_name: String::from(name),
+           created: SystemTime::now().to_string(),
+           members: vec![]
+       };
     }
     fn read(&self){
         todo!();
     }
-    fn add_users(&self, new_users: Vec<String>){
-        todo!();
+    fn add_users(&mut self, mut new_users: Vec<String>){
+        self.members.append(&mut new_users);
     }
     fn delete_users(&self, users_to_delete: Vec<String>){
         todo!();
