@@ -23,12 +23,12 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: '100',
     },
-    loginContainer:{
+    signupContainer:{
         top: 20,
         justifyContent: 'center',
-        alignItems: 'center',
     },
-    login:{
+    signupButton:{
+        top: 30,
         height: 40,
         width: 150,
         margin: 7,
@@ -36,15 +36,21 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         padding: 10,
         alignItems:'center',
-        justifyContent:'center',
     },
     textInput: {
+        borderTopColor: colors.white,
+        borderRightColor: colors.white,
+        borderLeftColor: colors.white,
         height: 50,
         width: 300,
         margin: 7,
         borderWidth: 1,
-        borderRadius: 15,
         padding: 10,
+    },
+    textInputDescriptors:{
+        color: colors.darkGrey,
+        top: 10,
+        left: 7,
     },
 })
 
@@ -53,20 +59,20 @@ function Signup({route, navigation}: Props) {
         <View style={styles.container}>
             <Header page={'Splash'}/>
             <Text style={styles.title}>Enter username and password</Text>
-            <View style={styles.loginContainer}>
+            <View style={styles.signupContainer}>
+                <Text style={styles.textInputDescriptors}>Username</Text>
                 <TextInput
                     style={styles.textInput}
                     // onChangeText={onChangeNumber} //calls when text is changed
-                    placeholder="Enter your username"
                     keyboardType="default"/>
+                <Text style={styles.textInputDescriptors}>Password</Text>
                 <TextInput
                     style={styles.textInput}
-                    placeholder="Enter your password"
                     keyboardType="default"/>
-                <TouchableOpacity style={styles.login}>
-                    <Text>Sign up</Text>
-                </TouchableOpacity>
             </View>
+            <TouchableOpacity style={styles.signupButton}>
+                <Text>Sign up</Text>
+            </TouchableOpacity>
         </View>
     );
 }
