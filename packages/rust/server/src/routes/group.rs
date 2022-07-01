@@ -1,5 +1,5 @@
 use axum::extract::Path;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::handler::Handler;
 use axum::Router;
 
