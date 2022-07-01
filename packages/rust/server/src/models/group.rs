@@ -10,7 +10,7 @@ struct Group{
 
 // CRUD functions
 impl Group{
-    fn create(&self, name: String){
+    fn create(&self, name: String) -> Group{
        let group = Group {
            id: "".to_string(),
            uuid: "".to_string(),
@@ -18,6 +18,7 @@ impl Group{
            created: SystemTime::now().to_string(),
            members: vec![]
        };
+        group
     }
     fn read(&self){
         todo!();
@@ -26,7 +27,9 @@ impl Group{
         self.members.append(&mut new_users);
     }
     fn delete_users(&self, users_to_delete: Vec<String>){
-        todo!();
+        for i in users_to_delete{
+            if &self.members.has
+        }
     }
     fn change_name(&self, name: String){
         todo!();
