@@ -1,5 +1,7 @@
 mod routes;
 mod models;
+mod config;
+
 use sqlx::postgres::PgPoolOptions;
 
 fn main() {
