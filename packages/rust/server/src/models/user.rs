@@ -10,7 +10,7 @@ struct User {
 }
 
 impl User {
-    fn create(username: String, email: String, password: String, phone: Option<String>, name: String) -> User {
+    pub fn create(username: String, email: String, password: String, phone: Option<String>, name: String) -> Option<User> {
         let t_id: i32 = 0;
         let t_uuid: String = "0".to_string();
         let t_created: String = "0".to_string();
