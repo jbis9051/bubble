@@ -52,7 +52,6 @@ const styles = StyleSheet.create({
     }
 })
 
-
 function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
