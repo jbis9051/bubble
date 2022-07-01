@@ -81,7 +81,7 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
             padding: 20,
             backgroundColor: '#ffffff',
             borderBottomColor: '#d3d3d3',
-            borderBottomWidth: 2
+            borderBottomWidth: 1
         }}
     >
         <Text 
@@ -100,11 +100,6 @@ const ProfileScreen = () => (
             <InfoComponent title='Email' detail='johnappleseed@bubble.com' />
             <InfoComponent title='Phone' detail='123-456-7890' />
             <InfoComponent title='Username' detail='johnappleseed' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
             <InfoComponent title='Last seen' detail='San Franscico, California' />
         </ScrollView>
     </View>
