@@ -19,15 +19,14 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     title: {
-        marginVertical: 75,
         alignItems:'center',
-        fontSize: 95,
+        fontSize: 30,
         fontWeight: '100',
     },
     loginContainer:{
+        top: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        flex: 1,
     },
     login:{
         height: 40,
@@ -53,7 +52,7 @@ function Signup({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <Header page={'Splash'}/>
-            <Text style={styles.title}>Sign Up</Text>
+            <Text style={styles.title}>Enter username and password</Text>
             <View style={styles.loginContainer}>
                 <TextInput
                     style={styles.textInput}
@@ -67,7 +66,6 @@ function Signup({route, navigation}: Props) {
                 <TouchableOpacity style={styles.login}>
                     <Text>Sign up</Text>
                 </TouchableOpacity>
-                <Text>Already have an account?</Text><Text onPress={() => navigation.navigate('Login')}>Log in here</Text>
             </View>
         </View>
     );

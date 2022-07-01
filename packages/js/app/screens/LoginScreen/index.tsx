@@ -24,19 +24,10 @@ const styles = StyleSheet.create({
         fontSize: 60,
         fontWeight: '100',
     },
-    loginContainer:{
+    textContainer:{
+        top: 10,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    login:{
-        height: 40,
-        width: 150,
-        margin: 7,
-        borderWidth: 1,
-        borderRadius: 15,
-        padding: 10,
-        alignItems:'center',
-        justifyContent:'center',
     },
     textInput: {
         height: 50,
@@ -46,6 +37,19 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         padding: 10,
     },
+    login:{
+        height: 40,
+        width: 200,
+        margin: 7,
+        borderWidth: 1,
+        borderRadius: 15,
+        padding: 10,
+        alignItems:'center',
+        justifyContent:'center',
+    },forgot:{
+        fontSize: 15,
+        textAlign: 'center',
+    }
 })
 
 
@@ -54,20 +58,23 @@ function Login({route, navigation}: Props) {
         <View style={styles.container}>
             <Header page={'Splash'}/>
             <Text style={styles.title}>Welcome back</Text>
-            <View style={styles.loginContainer}>
+            <View style={styles.textContainer}>
                 <TextInput
                     style={styles.textInput}
                     // onChangeText={onChangeNumber} //calls when text is changed
                     placeholder="Username"
-                    keyboardType="default"/>
+                    keyboardType="default"
+                    autoFocus={true}/>
                 <TextInput
                     style={styles.textInput}
                     placeholder="Password"
                     keyboardType="default"/>
+            </View>
+            <View style={{top: 20,}}>
                 <TouchableOpacity style={styles.login}>
                     <Text>Log In</Text>
                 </TouchableOpacity>
-                <Text>Don't have a account? </Text><Text onPress={() => {navigation.navigate('Signup')}}>Sign up here</Text>
+                <Text style={styles.forgot} onPress={() => {navigation.navigate('Signup')}}>Forgot password?</Text>
             </View>
         </View>
     );

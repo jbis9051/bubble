@@ -26,7 +26,10 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    }, buttonsContainer:{
+    }, info:{
+        flex: 1,
+        textAlign: 'center',
+    },buttonsContainer:{
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -50,11 +53,16 @@ function Splash({route, navigation}: Props) {
                 <Text style={styles.title}>Bubble</Text>
             </View>
             <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={styles.buttons}>
-                    <Text onPress={() => {navigation.navigate('Signup')}}>Sign up</Text>
+                <TouchableOpacity
+                    style={styles.buttons}
+                    onPress={() => {navigation.navigate('Signup')}}>
+                    <Text>Sign up</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.buttons}>
-                    <Text onPress={() => {navigation.navigate('Login')}}>Log in</Text>
+
+                <TouchableOpacity
+                    style={styles.buttons}
+                    onPress={() => {navigation.navigate('Login')}}>
+                    <Text>Log in</Text>
                 </TouchableOpacity>
             </View>
         </View>

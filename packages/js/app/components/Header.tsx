@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         width: '100%',
         height: 95,
-        backgroundColor: colors.primary
+        backgroundColor: colors.white
     }
 })
 
@@ -20,14 +20,19 @@ const Header: React.FC<{page: string, message?: string}> = ({page, message}) =>{
         <View style={styles.header}>
             <TouchableOpacity
                 onPress={() => {navigation.navigate(page)}}
-                style={{alignItems: 'center', flex:0.2}}>
+                style={{alignItems: 'center', flex:0.2, flexDirection:'row'}}>
+
                 <FontAwesomeIcon
-                    style={{top: 45}}
+                    style={{top:20, left:10}}
                     icon={faArrowLeftLong}
-                    size={35}
+                    size={20}
                 />
+                <Text
+                    style={{top:20, left:20}}
+                >Back</Text>
+
             </TouchableOpacity>
-            <Text style={{flex:0.5}}>{message}</Text>
+            <Text style={{flex:1.5}}>{message}</Text>
         </View>
     );
 }
