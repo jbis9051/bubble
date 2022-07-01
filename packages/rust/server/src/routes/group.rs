@@ -2,7 +2,7 @@ use std::future::Future;
 use axum::extract::Path;
 use axum::routing::{get, post};
 use axum::handler::Handler;
-use axum::Router;
+use axum::{Json, Router};
 
 pub fn router() -> Router {
     let app = Router::new()
@@ -13,6 +13,7 @@ pub fn router() -> Router {
         .route("/group/:id/:name", post(change_name))
         .route("/group/:id", delete(delete_group));
 }
+
 
 async fn create(Path(params): Path<String>){
     let name: String = params.get("name");
@@ -45,9 +46,11 @@ async fn delete_users(Path((id, user_ids_to_delete)): Path<(String, Vec<String>)
     todo!();
 }
 
-async fn change_name(Path((id, new_name)): Path<(String, Vec<String>)>){
+async fn change_name(Path((id, new_name)): Path<(String, Vec<String>)>, Json(payload): Json<String>){
     let group_id = id.get("id");
     let name = new_name.get("name");
+    //must resolve where normal rust or json is how requests replies sent
+    let name_to_change = payload;
     todo!();
 }
 

@@ -17,7 +17,7 @@ pub fn router() {
         .route("/user/forgot/:email", post(forgot))
         .route("/user/forgot-confirm/:email/:password", post(forgot_confirm))
         .route("/user/change_email/:email", post(change_email))
-        .route("/user/:password", delete(delete));
+        .route("/user/:password", delete(delete_user));
 }
 
 #[derive(Deserialize)]
@@ -76,7 +76,7 @@ async fn change_email(Path(params): &str) {
     todo!();
 }
 
-async fn delete(Path(params): &str) {
+async fn delete_user(Path(params): &str) {
     let password = params.get("password");
 
     todo!();
