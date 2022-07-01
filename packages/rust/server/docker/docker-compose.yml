@@ -10,8 +10,8 @@ services:
       - "5433:5432"
   migrate:
     build:
-      context: .
-      dockerfile: Dockerfile_migrate
+      context: ../
+      dockerfile: docker/Dockerfile_migrate
     environment:
         DATABASE_URL: postgres://user:pass@postgres:5432/db
     depends_on:
