@@ -10,22 +10,22 @@ struct Group{
 
 // CRUD functions
 impl Group{
-    fn create(&self, name: &str){
+    fn create(&self, name: String){
         todo!();
     }
     fn read(&self){
         todo!();
     }
-    fn add_users(&self, new_users: Vec<&str>){
+    fn add_users(&self, new_users: Vec<String>){
         todo!();
     }
-    fn delete_users(&self, users_to_delete: Vec<&str>){
+    fn delete_users(&self, users_to_delete: Vec<String>){
         todo!();
     }
-    fn change_name(&self, name: &str){
+    fn change_name(&self, name: String){
         todo!();
     }
-    fn delete(&self){
+    fn delete_group(&self){
         todo!();
     }
 }
