@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {Text, View, StyleSheet, StatusBar, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
+import bubbleLogo from '../../../../../brand/logo.svg';
 import colors from '../../constants/Colors';
 
 type RootStackParamList = {
@@ -50,6 +51,10 @@ function Splash({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <View style={styles.titleContainer}>
+                <bubbleLogo
+                    width={50}
+                    height={50}
+                />
                 <Text style={styles.title}>Bubble</Text>
             </View>
             <View style={styles.buttonsContainer}>
