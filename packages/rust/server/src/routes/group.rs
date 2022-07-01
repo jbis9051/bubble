@@ -15,7 +15,10 @@ pub fn router() -> Router {
 }
 
 async fn create(Path(params): Path<String>){
-    let name = params.get("name");
+    let name: String = params.get("name");
+
+    // Call create in models
+    // Return reply JSON
     todo!();
 }
 
