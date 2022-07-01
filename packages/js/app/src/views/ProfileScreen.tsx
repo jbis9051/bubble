@@ -7,6 +7,7 @@ import {
     StyleSheet
 } from 'react-native';
 import MapView from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
 const styles = StyleSheet.create({
     shadow: {
         shadowColor: '#171717',
@@ -87,14 +88,16 @@ const InfoComponent = () => (
 )
 
 const ProfileScreen = () => (
-    <ScrollView>
+    <View>
         <HeaderComponent />
-        <MapComponent />
-        <InfoComponent />
-        <InfoComponent />
-        <InfoComponent />
-        <InfoComponent />
-    </ScrollView>
+        <ScrollView>
+            <MapComponent />
+            <InfoComponent />
+            <InfoComponent />
+            <InfoComponent />
+            <InfoComponent />
+        </ScrollView>
+    </View>
 );
 
 export default ProfileScreen;
