@@ -46,7 +46,7 @@ const HeaderComponent = () => (
                 fontSize: 36
             }}
         >
-            Johnny Ramirez
+            John Appleseed
         </Text>
     </View>
 );
@@ -69,7 +69,12 @@ const MapComponent = () => (
     </View>
 );
 
-const InfoComponent = () => (
+interface InfoProps {
+    title: string,
+    detail: string
+}
+
+const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail='' }) => (
     <View
         style={{
             justifyContent: 'center',
@@ -83,19 +88,24 @@ const InfoComponent = () => (
             style={{
                 fontSize: 20
             }}
-        >Last Seen: San Francisco, California</Text>
+        >{title}: {detail}</Text>
     </View>
 )
 
 const ProfileScreen = () => (
-    <View>
+    <View style={{flex: 1}}>
         <HeaderComponent />
         <ScrollView>
             <MapComponent />
-            <InfoComponent />
-            <InfoComponent />
-            <InfoComponent />
-            <InfoComponent />
+            <InfoComponent title='Email' detail='johnappleseed@bubble.com' />
+            <InfoComponent title='Phone' detail='123-456-7890' />
+            <InfoComponent title='Username' detail='johnappleseed' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
         </ScrollView>
     </View>
 );
