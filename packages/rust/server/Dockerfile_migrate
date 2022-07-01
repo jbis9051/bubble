@@ -1,0 +1,7 @@
+FROM rust:latest
+
+RUN cargo install sqlx-cli --no-default-features --features native-tls,postgres
+
+COPY ./migrations /migrations
+
+CMD sqlx migrate run --source /migrations --database-url ${DATABASE_URL}
