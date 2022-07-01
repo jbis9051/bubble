@@ -5,11 +5,9 @@ use axum::routing::{get, post, delete};
 use axum::handler::Handler;
 use axum::Router;
 use serde::Deserialize;
+use crate::models;
 
-#[derive(Deserialize)]
-struct CreateUser {
 
-}
 
 pub fn router() {
     let user_routes = Router::new()
@@ -22,12 +20,23 @@ pub fn router() {
         .route("/user/:password", delete(delete));
 }
 
-async fn signup(extract::Json(payload): extract::Json<CreateUser>) {
-    let email = params.get("email");
-    let username = params.get("username");
-    let password = params.get("password");
-    let phone = params.get("phone");
-    let name = params.get("name");
+#[derive(Deserialize)]
+struct CreateUser {
+    email: String,
+    username: String,
+    password: String,
+    phone: Option<String>,
+    name: String,
+}
+async fn signup(Json(payload): Json<CreateUser>) {
+    let email = payload.email;
+    let username = payload.username;
+    let password = payload.password;
+    let phone = payload.phone;
+    let name = payload.name;
+
+    //pass to models
+
 
 
 
