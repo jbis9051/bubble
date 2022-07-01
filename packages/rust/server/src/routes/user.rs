@@ -1,21 +1,21 @@
+use std::collections::HashMap;
 use axum::extract::Path;
-use axum::routing::get;
-use axum::routing::post;
+use axum::routing::{get, post, delete};
 use axum::handler::Handler;
 use axum::Router;
 
-pub fn router() -> Router {
-    let app = Router::new()
-        .route("/user/signup/:email/:username/:password/:phone/:name", post(signup))
-        .route("/user/signin/:email/:password", get(signin))
-        .route("/user/signout/:token", get(signout))
-        .route("/user/forgot/:email", get(forgot))
-        .route("/user/forgot-confirm/:email/:password", get(forgot_confirm))
-        .route("/user/change_email/:email", get(change_email))
-        .route("/user/:password", get(delete));
+pub fn router() {
+    let user_routes = Router::new()
+        .route("/user/signup", post(signup))
+        .route("/user/signin/:email/:password", post(signin))
+        .route("/user/signout/:token", post(signout))
+        .route("/user/forgot/:email", post(forgot))
+        .route("/user/forgot-confirm/:email/:password", post(forgot_confirm))
+        .route("/user/change_email/:email", post(change_email))
+        .route("/user/:password", delete(delete));
 }
 
-async fn signup(Path(params): &str) {
+async fn signup(Path(params): Path<&str>) {
     let email = params.get("email");
     let username = params.get("username");
     let password = params.get("password");
@@ -27,9 +27,10 @@ async fn signup(Path(params): &str) {
     todo!();
 }
 
-async fn signin(Path(params): &str) {
+async fn signin(Path(params): Path<HashMap<String, String>>) {
     let email = params.get("email");
     let password = params.get("password");
+
 
     todo!();
 }
