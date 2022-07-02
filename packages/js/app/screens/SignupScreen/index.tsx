@@ -24,11 +24,11 @@ const styles = StyleSheet.create({
         fontWeight: '100',
     },
     signupContainer:{
-        top: 20,
+        top: 40,
         justifyContent: 'center',
     },
     signupButton:{
-        top: 30,
+        top: 110,
         height: 40,
         width: 150,
         margin: 7,
@@ -71,7 +71,7 @@ function Signup({route, navigation}: Props) {
                     keyboardType="default"/>
             </View>
             <TouchableOpacity style={styles.signupButton}>
-                <Text>Sign up</Text>
+                <Text>Next</Text>
             </TouchableOpacity>
         </View>
     );
