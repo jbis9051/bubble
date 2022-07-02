@@ -71,7 +71,7 @@ function Signup({route, navigation}: Props) {
                     keyboardType="default"/>
             </View>
             <TouchableOpacity style={styles.signupButton}>
-                <Text>Next</Text>
+                <Text>Sign Up</Text>
             </TouchableOpacity>
         </View>
     );
