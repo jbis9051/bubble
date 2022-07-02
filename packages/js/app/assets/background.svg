@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 980 980">
+    <defs>
+        <style>.cls-1{fill:url(#linear-gradient);}.cls-2{filter:url(#drop-shadow-1);}</style>
+        <filter id="drop-shadow-1"><feOffset dx="0" dy="3"/>
+            <feGaussianBlur result="blur" stdDeviation="5"/><feFlood flood-color="#000" flood-opacity=".66"/>
+            <feComposite in="blur" operator="in"/><feComposite in="SourceGraphic"/>
+        </filter>
+        <linearGradient id="linear-gradient" x1="490" y1="969.5" x2="490" y2="20.5" gradientTransform="translate(0 982) scale(1 -1)" gradientUnits="userSpaceOnUse">
+            <stop offset=".49" stop-color="#ff6339"/><stop offset="1" stop-color="#ff3a66"/>
+        </linearGradient>
+    </defs>
+    <g id="Layer_2" class="cls-2">
+        <rect class="cls-1" x="0" y="0" width="100%" height="100%" rx="0" ry="0"/>
+    </g>
+</svg>
