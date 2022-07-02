@@ -17,39 +17,56 @@ const styles = StyleSheet.create({
         shadowOffset: {width: -3, height: 10},
         shadowOpacity: 0.8,
         shadowRadius: 10,
+    },
+    header: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        padding: 10,
+        height: 256,
+    },
+    profileImage: {
+        height: 150,
+        width: 150,
+        borderRadius: 100,
+        borderWidth: 2.5,
+        borderColor: '#d3d3d3'
+    },
+    info: {
+        padding: 20,
+        backgroundColor: '#ffffff',
+        borderTopRightRadius: 30,
+        borderTopLeftRadius: 30,
+        marginTop: 256
+    },
+    headerText: {
+        fontSize: 36,
+        color: '#ffffff',
+    },
+    heading: {
+        fontSize: 24,
+        marginBottom: 10
     }
 });
 
 const HeaderComponent = () => (
-    <ImageBackground
-        source={require('../../assets/background.png')}
-        style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            padding: 10,
-            height: 256,
-        }}
-    >
+    <View style={styles.header}>
         <Image 
             source={require('../../assets/user.jpeg')}
-            style={{
-                height: 150,
-                width: 150,
-                borderRadius: 100,
-                borderWidth: 3,
-                borderColor: '#d3d3d3',
-                ...styles.shadow
-            }}
+            style={styles.profileImage}
         />
-        <Text
-            style={{
-                fontSize: 36
-            }}
-        >
+        <Text style={styles.headerText}>
             John Appleseed
         </Text>
-    </ImageBackground>
+        <Text style={{
+            ...styles.headerText,
+            fontSize: 14,
+            marginTop: 3,
+            color: '#e3e3e3'
+        }}>
+            johnappleseed@bubble.com
+        </Text>
+    </View>
 );
 
 
@@ -64,8 +81,9 @@ const MapComponent = () => (
                 longitudeDelta: 0.0421,
             }}
             style={{
-                height: 250,
-                borderRadius: 10
+                height: 300,
+                borderRadius: 15,
+                marginBottom: 10
             }}
         />
     </View>
@@ -79,11 +97,7 @@ interface InfoProps {
 const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail='' }) => (
     <View
         style={{
-            justifyContent: 'center',
-            padding: 20,
-            backgroundColor: '#ffffff',
-            borderBottomColor: '#d3d3d3',
-            borderBottomWidth: 1
+            marginBottom: 20
         }}
     >
         <Text 
@@ -94,17 +108,43 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
     </View>
 );
 
-const ProfileScreen = () => (
-    <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
-        <HeaderComponent />
-        <ScrollView>
-            <MapComponent />
+const SlideUpComponent = () => (
+    <View style={styles.info}>
+        <Text style={styles.heading}>Map</Text>
+        <MapComponent />
+        <Text style={styles.heading}>Information</Text>
+        <View style={{
+            borderRadius: 15,
+            backgroundColor: '#ffffff',
+            paddingBottom: 24
+        }}>
             <InfoComponent title='Email' detail='johnappleseed@bubble.com' />
             <InfoComponent title='Phone' detail='123-456-7890' />
             <InfoComponent title='Username' detail='johnappleseed' />
             <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+
+            <InfoComponent title='Last seen' detail='San Franscico, California' />
+
+
+        </View>
+    </View>
+);
+
+const ProfileScreen = () => (
+    <ImageBackground
+        source={require('../../assets/background.png')}
+    >
+        <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
+            <HeaderComponent />
+        </SafeAreaView>
+        <ScrollView showsVerticalScrollIndicator={false}>
+            <SlideUpComponent />
         </ScrollView>
-    </SafeAreaView>
+    </ImageBackground>
+   
 );
 
 export default ProfileScreen;
