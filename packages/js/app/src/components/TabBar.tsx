@@ -21,6 +21,7 @@ const TabBar = () => (
     <Tab.Navigator
         screenOptions={{
             tabBarShowLabel: false,
+            headerShown: false,
             tabBarStyle: {
                 backgroundColor: '#ffffff',
                 height: 90,

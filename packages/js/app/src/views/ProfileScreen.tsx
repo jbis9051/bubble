@@ -4,30 +4,31 @@ import {
     ScrollView,
     Text, 
     Image, 
-    StyleSheet
+    StyleSheet,
+    ImageBackground
 } from 'react-native';
+
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 const styles = StyleSheet.create({
     shadow: {
         shadowColor: '#171717',
         shadowOffset: {width: -3, height: 10},
         shadowOpacity: 0.8,
         shadowRadius: 10,
-    },
-    map: {
-        ...StyleSheet.absoluteFillObject,
-    },
+    }
 });
 
 const HeaderComponent = () => (
-    <View
+    <ImageBackground
+        source={require('../../assets/background.png')}
         style={{
-            backgroundColor: '#ffffff',
             alignItems: 'center',
+            justifyContent: 'center',
             flexDirection: 'column',
             padding: 10,
-            ...styles.shadow
+            height: 256,
         }}
     >
         <Image 
@@ -48,7 +49,7 @@ const HeaderComponent = () => (
         >
             John Appleseed
         </Text>
-    </View>
+    </ImageBackground>
 );
 
 
@@ -64,6 +65,7 @@ const MapComponent = () => (
             }}
             style={{
                 height: 250,
+                borderRadius: 10
             }}
         />
     </View>
@@ -90,10 +92,10 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
             }}
         >{title}: {detail}</Text>
     </View>
-)
+);
 
 const ProfileScreen = () => (
-    <View style={{flex: 1}}>
+    <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
         <HeaderComponent />
         <ScrollView>
             <MapComponent />
@@ -102,7 +104,7 @@ const ProfileScreen = () => (
             <InfoComponent title='Username' detail='johnappleseed' />
             <InfoComponent title='Last seen' detail='San Franscico, California' />
         </ScrollView>
-    </View>
+    </SafeAreaView>
 );
 
 export default ProfileScreen;
