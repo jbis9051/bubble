@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
-import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
+import {ImageBackground, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
+import TextInputBox from "../../components/TextInputBox";
 import colors from '../../constants/Colors';
 
 type RootStackParamList = {
     Login: undefined,
-    Signup: undefined,
+    Signup1: undefined,
+    Signup2: undefined,
     Splash: undefined,
 };
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -18,14 +20,17 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    title: {
-        marginVertical: 20,
+    backgroundImage:{
         alignItems: 'center',
-        fontSize: 60,
+    },
+    title: {
+        flex: 0.7,
+        alignItems: 'center',
+        fontSize: 45,
         fontWeight: '100',
     },
     textContainer:{
-        top: 10,
+        flex: 3,
         justifyContent: 'center',
     },
     textInput: {
@@ -38,8 +43,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },textInputDescriptors:{
         color: colors.darkGrey,
-        top: 10,
-        left: 7,
+    },loginContainer: {
+        flex: 5,
     },
     login:{
         height: 40,
@@ -51,7 +56,7 @@ const styles = StyleSheet.create({
         alignItems:'center',
         justifyContent:'center',
     },forgot:{
-        fontSize: 15,
+        fontSize: 13,
         textAlign: 'center',
     }
 })
@@ -59,25 +64,29 @@ const styles = StyleSheet.create({
 function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
-            <Header page={'Splash'}/>
-            <Text style={styles.title}>Welcome back</Text>
-            <View style={styles.textContainer}>
-                <Text style={styles.textInputDescriptors}>Username</Text>
-                <TextInput
-                    style={styles.textInput}
-                    keyboardType="default"
-                    autoFocus={true}/>
-                <Text style={styles.textInputDescriptors}>Password</Text>
-                <TextInput
-                    style={styles.textInput}
-                    keyboardType="default"/>
-            </View>
-            <View style={{top: 20,}}>
-                <TouchableOpacity style={styles.login}>
-                    <Text>Log In</Text>
-                </TouchableOpacity>
-                <Text style={styles.forgot} onPress={() => {navigation.navigate('Signup')}}>Forgot password?</Text>
-            </View>
+            <ImageBackground
+                source={require('../../constants/background.png')}
+                style={styles.backgroundImage}
+            >
+                <Header page={'Splash'}/>
+                <Text style={styles.title}>Welcome back</Text>
+                <View style={styles.textContainer}>
+                    <TextInputBox
+                        descriptor='Username'
+                        required={false}
+                    />
+                    <TextInputBox
+                        descriptor='Password'
+                        required={false}
+                    />
+                </View>
+                <View style={styles.loginContainer}>
+                    <TouchableOpacity style={styles.login}>
+                        <Text>Log In</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.forgot} onPress={() => {navigation.navigate('')}}>Forgot password?</Text>
+                </View>
+            </ImageBackground>
         </View>
     );
 }

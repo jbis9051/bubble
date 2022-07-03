@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         width: '100%',
         height: 95,
-        backgroundColor: colors.white
+        backgroundColor: colors.primary
     }
 })
 
@@ -19,7 +19,8 @@ const Header: React.FC<{page: string, message?: string}> = ({page, message}) =>{
     return (
         <View style={styles.header}>
             <TouchableOpacity
-                onPress={() => {navigation.navigate(page)}}
+                onPress={() => { // @ts-ignore
+                    navigation.navigate(page)}}
                 style={{alignItems: 'center', flex:0.2, flexDirection:'row'}}>
 
                 <FontAwesomeIcon
