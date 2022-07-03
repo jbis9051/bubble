@@ -45,6 +45,7 @@ const styles = StyleSheet.create({
     },
     heading: {
         fontSize: 24,
+        fontWeight: '800',
         marginBottom: 10
     }
 });
@@ -102,7 +103,8 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
     >
         <Text 
             style={{
-                fontSize: 20
+                fontSize: 20,
+                fontWeight: '500'
             }}
         >{title}: {detail}</Text>
     </View>
@@ -123,12 +125,8 @@ const SlideUpComponent = () => (
             <InfoComponent title='Username' detail='johnappleseed' />
             <InfoComponent title='Last seen' detail='San Franscico, California' />
             <InfoComponent title='Last seen' detail='San Franscico, California' />
-
             <InfoComponent title='Last seen' detail='San Franscico, California' />
-
             <InfoComponent title='Last seen' detail='San Franscico, California' />
-
-
         </View>
     </View>
 );
