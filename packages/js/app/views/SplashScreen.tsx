@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {Text, View, StyleSheet, ImageBackground, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import colors from '../../constants/Colors';
+import colors from '../constants/Colors';
 
 type RootStackParamList = {
     Login: undefined,
@@ -56,7 +56,7 @@ function Splash({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require('../../assets/background.png')}
+                source={require('../assets/background.png')}
                 style={styles.backgroundImage}
             >
                 <View style={styles.titleContainer}>

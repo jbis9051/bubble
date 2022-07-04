@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import {ImageBackground, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import Header from '../../components/Header';
-import TextInputBox from "../../components/TextInputBox";
-import colors from '../../constants/Colors';
+import Header from '../components/Header';
+import TextInputBox from "../components/TextInputBox";
+import colors from '../constants/Colors';
 
 type RootStackParamList = {
     Login: undefined,
@@ -11,6 +11,7 @@ type RootStackParamList = {
     Signup2: undefined,
     Splash: undefined,
 };
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const styles = StyleSheet.create({
@@ -66,7 +67,7 @@ function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require('../../assets/background.png')}
+                source={require('../assets/background.png')}
                 style={styles.backgroundImage}
             >
                 <Header page={'Splash'}/>
@@ -85,7 +86,7 @@ function Login({route, navigation}: Props) {
                     <TouchableOpacity style={styles.login}>
                         <Text>Log In</Text>
                     </TouchableOpacity>
-                    <Text style={styles.forgot} onPress={() => {navigation.navigate('')}}>Forgot password?</Text>
+                    <Text style={styles.forgot} onPress={() => {navigation.navigate('Home')}}>Forgot password?</Text>
                 </View>
             </ImageBackground>
         </View>

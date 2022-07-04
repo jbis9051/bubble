@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {TextInput, Text, View, StyleSheet, TouchableOpacity, ImageBackground} from 'react-native';
+import {TextInput, Text, View, StyleSheet, ImageBackground, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import Header from '../../components/Header';
 import TextInputBox from "../../components/TextInputBox";
@@ -11,7 +11,8 @@ type RootStackParamList = {
     Signup2: undefined,
     Splash: undefined,
 };
-type Props = NativeStackScreenProps<RootStackParamList, 'Signup1'>;
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Signup2'>;
 
 const styles = StyleSheet.create({
     container: {
@@ -24,16 +25,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        flex: 0.5,
+        flex: 1,
         alignItems:'center',
         fontSize: 30,
         fontWeight: '100',
     },
     signupContainer:{
-        flex: 6,
+        flex: 4,
         justifyContent: 'center',
     },signupButtonContainer:{
-        flex: 4,
+        flex: 5,
     },
     signupButton:{
         height: 40,
@@ -53,33 +54,26 @@ function Signup({route, navigation}: Props) {
                 source={require('../../assets/background.png')}
                 style={styles.backgroundImage}
             >
-                <Header page={'Splash'}/>
+                <Header page={'Signup1'}/>
                 <Text style={styles.title}>Enter Account Details</Text>
                 <View style={styles.signupContainer}>
                     <TextInputBox
-                        descriptor="Phone Number"
+                        descriptor="Username"
                         required={true}
                     />
                     <TextInputBox
-                        descriptor="Email"
-                        required={false}
-                    />
-                    <TextInputBox
-                        descriptor="First Name"
+                        descriptor="Password"
                         required={true}
                     />
                     <TextInputBox
-                        descriptor="Last Name"
+                        descriptor="Confirm Password"
                         required={true}
                     />
                 </View>
                 <View style={styles.signupButtonContainer}>
-                    <TouchableOpacity
-                        style={styles.signupButton}
-                        onPress={() => navigation.navigate('Signup2')}
-                    >
-                        <Text>Next</Text>
-                    </TouchableOpacity>
+                   <TouchableOpacity style={styles.signupButton}>
+                       <Text>Sign Up</Text>
+                   </TouchableOpacity>
                 </View>
             </ImageBackground>
         </View>

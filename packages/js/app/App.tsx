@@ -3,10 +3,10 @@ import {TextInput, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} 
 import { NavigationContainer } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StackNavigationProp} from "@react-navigation/stack";
-import login from './screens/LoginScreen/index';
-import signup1 from './screens/SignupScreen/signup1';
-import signup2 from './screens/SignupScreen/signup2';
-import splash from './screens/SplashScreen/index';
+import login from './views/LoginScreen';
+import signup1 from './views/SignupScreens/Signup1';
+import signup2 from './views/SignupScreens/Signup2';
+import splash from './views/SplashScreen';
 
 type RootStackParamList = {
     Login: undefined,
@@ -18,6 +18,7 @@ type RootStackParamList = {
 
 const App = () => {
     const RootStack = createNativeStackNavigator<RootStackParamList>();
+
     return(
     <NavigationContainer>
         <RootStack.Navigator initialRouteName={"Splash"}>
@@ -34,11 +35,13 @@ const App = () => {
             <RootStack.Screen
                 name="Signup1"
                 component={signup1}
-                options={{headerShown: false, title: "Sign Up"}}/>
+                options={{headerShown: false, title: "Sign Up"}}
+            />
             <RootStack.Screen
                 name="Signup2"
                 component={signup2}
-                options={{headerShown: false, title: "Sign Up"}}/>
+                options={{headerShown: false, title: "Sign Up"}}
+            />
         </RootStack.Navigator>
     </NavigationContainer>
 );

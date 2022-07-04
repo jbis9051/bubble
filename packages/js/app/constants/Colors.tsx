@@ -5,5 +5,6 @@ const colors = {
     black: '#000000',
     primary: '#ff6339',
     secondary: '#ff3a66',
+    unselected: '#748c94',
 };
 export default colors
