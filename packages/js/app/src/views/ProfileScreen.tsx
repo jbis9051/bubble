@@ -16,6 +16,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
+import colors from '../constants/colors';
+
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -120,6 +122,7 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
                 <View style={{flexDirection: 'row'}}>
                     <FontAwesomeIcon
                         icon={icon}
+                        color={colors.primary}
                     />
                     <Text style={{marginLeft: 5}}>
                         {title}
