@@ -8,8 +8,17 @@ import {
     ImageBackground
 } from 'react-native';
 
+import { 
+    faEnvelope as mailIcon,
+    faPhone as phoneIcon,
+    faLocationDot as locationIcon,
+    faUser as userIcon
+} from '@fortawesome/free-solid-svg-icons';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+
 import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
 const styles = StyleSheet.create({
     shadow: {
@@ -92,10 +101,11 @@ const MapComponent = () => (
 
 interface InfoProps {
     title: string,
-    detail: string
+    detail: string,
+    icon: IconProp
 }
 
-const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail='' }) => (
+const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail='', icon }) => (
     <View
         style={{
             marginBottom: 10,
@@ -105,12 +115,29 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
             ...styles.shadow
         }}
     >
+        {
+            icon ? (
+                <View style={{flexDirection: 'row'}}>
+                    <FontAwesomeIcon
+                        icon={icon}
+                    />
+                    <Text style={{marginLeft: 5}}>
+                        {title}
+                    </Text>
+                </View>
+            ) : (
+                <View>
+                    <Text>{title}</Text>
+                </View>
+            )
+        }
         <Text 
             style={{
                 fontSize: 20,
-                fontWeight: '500'
+                fontWeight: '500',
+                marginTop: 10
             }}
-        >{title}: {detail}</Text>
+        >{detail}</Text>
     </View>
 );
 
@@ -124,13 +151,10 @@ const SlideUpComponent = () => (
             backgroundColor: '#ffffff',
             paddingBottom: 24
         }}>
-            <InfoComponent title='Email' detail='johnappleseed@bubble.com' />
-            <InfoComponent title='Phone' detail='123-456-7890' />
-            <InfoComponent title='Username' detail='johnappleseed' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
-            <InfoComponent title='Last seen' detail='San Franscico, California' />
+            <InfoComponent title='Email' detail='johnappleseed@bubble.com' icon={mailIcon} />
+            <InfoComponent title='Phone' detail='123-456-7890' icon={phoneIcon} />
+            <InfoComponent title='Username' detail='johnappleseed' icon={userIcon} />
+            <InfoComponent title='Last seen' detail='San Franscico, California' icon={locationIcon} />
         </View>
     </View>
 );
