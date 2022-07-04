@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
     shadow: {
         shadowColor: '#171717',
         shadowOffset: {width: -3, height: 10},
-        shadowOpacity: 0.8,
+        shadowOpacity: 0.1,
         shadowRadius: 10,
     },
     header: {
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
     },
     heading: {
-        fontSize: 24,
+        fontSize: 30,
         fontWeight: '800',
         marginBottom: 10
     }
@@ -79,7 +79,7 @@ const MapComponent = () => (
                 latitude: 37.78825,
                 longitude: -122.4324,
                 latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
+                longitudeDelta: 0.0421
             }}
             style={{
                 height: 300,
@@ -98,7 +98,11 @@ interface InfoProps {
 const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail='' }) => (
     <View
         style={{
-            marginBottom: 20
+            marginBottom: 10,
+            padding: 20,
+            backgroundColor: '#ffffff',
+            borderRadius: 10,
+            ...styles.shadow
         }}
     >
         <Text 
