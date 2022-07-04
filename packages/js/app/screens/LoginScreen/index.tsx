@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
         alignItems:'center',
         justifyContent:'center',
     },forgot:{
+        fontWeight: '200',
         fontSize: 13,
         textAlign: 'center',
     }
@@ -65,7 +66,7 @@ function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require('../../constants/background.png')}
+                source={require('../../assets/background.png')}
                 style={styles.backgroundImage}
             >
                 <Header page={'Splash'}/>

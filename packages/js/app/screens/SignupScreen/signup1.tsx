@@ -50,7 +50,7 @@ function Signup({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require('../../constants/background.png')}
+                source={require('../../assets/background.png')}
                 style={styles.backgroundImage}
             >
                 <Header page={'Splash'}/>

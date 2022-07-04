@@ -37,6 +37,9 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+#Watchman
+.watchmanconfig
+
 # BUCK
 buck-out/
 \.buckd/
