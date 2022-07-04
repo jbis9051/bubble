@@ -12,7 +12,8 @@
         "prettier:fix": "prettier --write --check .",
         "fix": "yarn run prettier:fix && yarn run lint:fix && yarn run prettier:fix",
         "lint:check": "yarn run prettier && yarn run lint",
-        "build": "lerna run build --stream"
+        "build": "lerna run build --stream",
+        "build:ci": "yarn run build"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.10.2",
