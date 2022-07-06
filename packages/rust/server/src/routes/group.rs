@@ -4,6 +4,9 @@ use axum::routing::{get, post};
 use axum::handler::Handler;
 use axum::extract;
 use axum::{Json, Router};
+use crate::models::group;
+use crate::models::group::Group;
+
 
 pub fn router() -> Router {
     let app = Router::new()
@@ -28,12 +31,15 @@ pub struct GroupInfo {
 
 //Respond with JSON: id, name, created_date
 
-async fn create(Path(params): Path<String>){
-    let name: String = params.get("name");
-
-    // Call create in models
-    // Return reply JSON
-    todo!();
+async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
+    let name = params.get("name");
+    let group_response = Group.create(name);
+    let new_group = GroupInfo {
+        id: group_response.id,
+        name: group_response.group_name,
+        created: group_response.created,
+    };
+    Json(new_group)
 }
 
 // respond with JSON: id, name, created_date
@@ -64,7 +70,7 @@ async fn add_users(Path(id): Path<i32>, extract::Json(payload): extract::Json<Us
 //request JSON: vec<user_ids>
 async fn delete_users(Path(id): Path<i32>, extract::Json(payload): extract::Json<UsersIDs>) {
     let group_id = id.get("id");
-    let users_to_delete = user_ids_to_delete.get("users_to_delete");
+    let users_to_delete = payload.users;
     todo!();
 }
 
@@ -80,6 +86,7 @@ async fn change_name(Path(id): Path<i32>, Json(payload): Json<String>) -> Json<N
     let name_to_change = payload.name;
     todo!();
 }
+
 
 //none, just id passed from path
 async fn delete_group(Path(params): fn(Path<String>)) {
