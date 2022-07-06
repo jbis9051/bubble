@@ -9,9 +9,9 @@ services:
     ports:
       - "5433:5432"
   migrate:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile_migrate
+    build: db
+    command:
+      - migrate
     environment:
         DATABASE_URL: postgres://user:pass@postgres:5432/db
     depends_on:

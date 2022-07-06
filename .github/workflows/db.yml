@@ -1,0 +1,23 @@
+name: Database Tests
+on:
+  pull_request:
+    paths-ignore:
+      - README.md
+  push:
+    branches:
+      - master
+      - "feature/*"
+    paths-ignore:
+      - README.md
+
+defaults:
+  run:
+    working-directory: packages/rust
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - run: docker compose -f docker-compose-ci.yml up -d
+      - run: cd db && test.sh
