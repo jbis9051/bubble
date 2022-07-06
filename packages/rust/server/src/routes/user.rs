@@ -1,17 +1,20 @@
 use std::collections::HashMap;
+use std::io::Error;
 use axum::{extract, Json};
 use axum::extract::{Extension, Path};
 use axum::routing::{get, post, delete};
 use axum::handler::Handler;
 use axum::Router;
 use serde::Deserialize;
-use crate::models;
 
+use crate::models::user;
+use crate::models::user::User;
 
 
 pub fn router() {
     let user_routes = Router::new()
         .route("/user/signup", post(signup))
+        .route("/user/signup-confirm", post(signup_confirm))
         .route("/user/signin/:email/:password", post(signin))
         .route("/user/signout/:token", post(signout))
         .route("/user/forgot/:email", post(forgot))
@@ -35,12 +38,24 @@ async fn signup(Json(payload): Json<CreateUser>) {
     let phone = payload.phone;
     let name = payload.name;
 
-    //pass to models
+    let user = match User::create(username, email, password, phone, name) {
+        Ok(user) => user,
+        Err(E) => {
+            println!("Error: {:?}", E);
+            todo!()
+        },
+    };
+
+    println!("Sending Email to {}", user.email);
+}
+
+struct Confirm {
+    link_id: String,
+}
+async fn signup_confirm(Json(payload): Json<Confirm>) -> Result<String, Error> {
+    let link_id = payload.link_id;
 
 
-
-
-    todo!();
 }
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
