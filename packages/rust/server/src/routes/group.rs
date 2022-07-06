@@ -71,7 +71,7 @@ async fn add_users(Path(id): Path<String>, extract::Json(payload): extract::Json
 async fn delete_users(Path(params): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
     let group_id = params.get("id");
     let users_to_delete = payload.users;
-    todo!();
+    Group.delete_users(group_id, users_to_delete);
 }
 
 #[derive(Serialize)]
@@ -84,12 +84,12 @@ async fn change_name(Path(params): Path<String>, extract::Json(payload): extract
     let group_id = params.get("id");
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change = payload.name;
-    todo!();
+    Group.change_name(group_id, name_to_change);
 }
 
 
 //none, just id passed from path
-async fn delete_group(Path(params): fn(Path<String>)) {
+async fn delete_group(Path(params): Path<String>) {
     let group_id = params.get("id");
-    todo!();
+    Group.delete_group(group_id);
 }
