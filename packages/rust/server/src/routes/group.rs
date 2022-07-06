@@ -12,9 +12,9 @@ pub fn router() -> Router {
     let app = Router::new()
         .route("/group/:name", post(create))
         .route("/group/:id", get(read))
-        .route("/group/:id/:new_users", post(add_users))
-        .route("/group/:id/:users_to_delete", post(delete_users))
-        .route("/group/:id/:name", post(change_name))
+        .route("/group/:id/new_users", post(add_users))
+        .route("/group/:id/users_to_delete", post(delete_users))
+        .route("/group/:id/name", post(change_name))
         .route("/group/:id", delete(delete_group));
 }
 
@@ -24,7 +24,7 @@ pub fn router() -> Router {
 //create and read functions
 #[derive(Serialize)]
 pub struct GroupInfo {
-    id: i32,
+    uuid: String,
     name: String,
     created: String,
 }
@@ -35,7 +35,7 @@ async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
     let name = params.get("name");
     let group_response = Group.create(name);
     let new_group = GroupInfo {
-        id: group_response.id,
+        uuid: group_response.uuid,
         name: group_response.group_name,
         created: group_response.created,
     };
@@ -43,11 +43,11 @@ async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
 }
 
 // respond with JSON: id, name, created_date
-async fn read(Path(params): Path<i32>) -> Json<GroupInfo> {
-    let id = params.get("id");
-    let group_response = Group.read(id);
+async fn read(Path(params): Path<String>) -> Json<GroupInfo> {
+    let uuid = params.get("id");
+    let group_response = Group.read(uuid);
     let new_group = GroupInfo {
-        id: group_response.id,
+        uuid: group_response.uuid,
         name: group_response.group_name,
         created: group_response.created,
     };
@@ -61,15 +61,15 @@ pub struct UsersIDs {
 
 
 //request JSON: vec<user_ids>
-async fn add_users(Path(id): Path<i32>, extract::Json(payload): extract::Json<UsersIDs>) {
+async fn add_users(Path(id): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
     let group_id = id.get("id");
     let user_ids: Vec<i32> = payload.users;
     Group.add_users(group_id, user_ids);
 }
 
 //request JSON: vec<user_ids>
-async fn delete_users(Path(id): Path<i32>, extract::Json(payload): extract::Json<UsersIDs>) {
-    let group_id = id.get("id");
+async fn delete_users(Path(params): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
+    let group_id = params.get("id");
     let users_to_delete = payload.users;
     todo!();
 }
@@ -80,8 +80,8 @@ pub struct NameChange {
 }
 
 //request json: name
-async fn change_name(Path(id): Path<i32>, Json(payload): Json<String>) -> Json<NameChange> {
-    let group_id = id.get("id");
+async fn change_name(Path(params): Path<String>, extract::Json(payload): extract::Json<NameChange>) {
+    let group_id = params.get("id");
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change = payload.name;
     todo!();
