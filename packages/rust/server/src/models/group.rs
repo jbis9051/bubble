@@ -1,18 +1,19 @@
 use std::time::{Duration, SystemTime};
 // Based on up.sql
-struct Group{
-    id: String,
+pub struct Group{
+    //ids and uuids are mutually unique
+    id: i32,
     uuid: String,
-    group_name: String,
-    created: String,
-    members: Vec<String>
+    pub group_name: String,
+    pub created: String,
+    pub members: Vec<i32>
 }
 
 // CRUD functions
 impl Group{
-    fn create(&self, name: String) -> Group {
+    pub fn create(name: String) -> Group {
        let group = Group {
-           id: "".to_string(),
+           id: 2,
            uuid: "".to_string(),
            group_name: String::from(name),
            created: SystemTime::now().to_string(),
@@ -20,23 +21,23 @@ impl Group{
        };
         group
     }
-    fn read(&mut self){
+    pub fn read(&mut self){
         todo!();
     }
-    fn add_users(&mut self, mut new_users: Vec<String>){
+    pub fn add_users(&mut self, mut new_users: &[i32]){
         *self.members.append(&mut new_users);
     }
-    fn delete_users(&mut self, users_to_delete: Vec<String>){
+    pub fn delete_users(&mut self, users_to_delete: Vec<i32>){
         for i in users_to_delete{
             if &self.members.contains(&i){
                 &self.members.retain(|x| *x != &i);
             }
         }
     }
-    fn change_name(&self, name: String){
+    pub fn change_name(&self, name: String){
         &self.group_name = &name;
     }
-    fn delete_group(&self){
+    pub fn delete_group(&self){
         todo!();
     }
 }
