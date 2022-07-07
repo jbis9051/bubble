@@ -5,6 +5,7 @@ use axum::extract::{Path};
 use axum::routing::{post, delete};
 
 use axum::Router;
+use serde::de::Unexpected::Str;
 use serde::Deserialize;
 use sqlx::pool::PoolConnection;
 use sqlx::Postgres;
@@ -35,25 +36,19 @@ struct CreateUser {
 }
 async fn signup(conn: PoolConnection<Postgres>, Json(payload): Json<CreateUser>) -> Result<(), io::Error> {
 
-    let tmp_uuid = String::new();
-    let tmp_id: i32 = 0;
-    let tmp_profile_picture= String::new();
-    let tmp_created = String::new();
-
-    let mut user: User = User {
-        id: tmp_id,
-        uuid: tmp_uuid,
+    let user: User = User {
+        id: 0,
+        uuid: String::new(),
         username: payload.username,
         password: payload.password,
-        profile_picture: tmp_profile_picture,
+        profile_picture: String::new(),
         email: payload.email,
         phone: payload.phone,
         name: payload.name,
-        created: tmp_created,
+        created: String::new(),
     };
     User::signup(conn, &user);
 
-    //todo!("Implement email");
     println!("Sending Email to {}", user.email);
     Ok(())
 }
