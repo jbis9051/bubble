@@ -1,13 +1,17 @@
-use axum::extract::{Path};
-use axum::routing::{delete, post};
-use axum::Router;
-use axum::{extract, Json};
-use serde::Deserialize;
 use std::collections::HashMap;
-use std::io::Error;
+use std::io;
+use axum::{Json};
+use axum::extract::{Path};
+use axum::routing::{post, delete};
+
+use axum::Router;
+use serde::Deserialize;
+use sqlx::pool::PoolConnection;
+use sqlx::Postgres;
 
 use crate::models::user;
 use crate::models::user::User;
+
 
 pub fn router() {
     let user_routes = Router::new()
@@ -16,10 +20,7 @@ pub fn router() {
         .route("/user/signin/:email/:password", post(signin))
         .route("/user/signout/:token", post(signout))
         .route("/user/forgot/:email", post(forgot))
-        .route(
-            "/user/forgot-confirm/:email/:password",
-            post(forgot_confirm),
-        )
+        .route("/user/forgot-confirm/:email/:password", post(forgot_confirm))
         .route("/user/change_email/:email", post(change_email))
         .route("/user/:password", delete(delete_user));
 }
@@ -32,22 +33,29 @@ struct CreateUser {
     phone: Option<String>,
     name: String,
 }
-async fn signup(Json(payload): Json<CreateUser>) {
-    let email = payload.email;
-    let username = payload.username;
-    let password = payload.password;
-    let phone = payload.phone;
-    let name = payload.name;
+async fn signup(conn: PoolConnection<Postgres>, Json(payload): Json<CreateUser>) -> Result<(), io::Error> {
 
-    let user = match User::create(username, email, password, phone, name) {
-        Ok(user) => user,
-        Err(E) => {
-            println!("Error: {:?}", E);
-            todo!()
-        }
+    let tmp_uuid = String::new();
+    let tmp_id: i32 = 0;
+    let tmp_profile_picture= String::new();
+    let tmp_created = String::new();
+
+    let mut user: User = User {
+        id: tmp_id,
+        uuid: tmp_uuid,
+        username: payload.username,
+        password: payload.password,
+        profile_picture: tmp_profile_picture,
+        email: payload.email,
+        phone: payload.phone,
+        name: payload.name,
+        created: tmp_created,
     };
+    User::signup(conn, &user);
 
+    //todo!("Implement email");
     println!("Sending Email to {}", user.email);
+    Ok(())
 }
 
 struct Confirm {
@@ -55,11 +63,14 @@ struct Confirm {
 }
 async fn signup_confirm(Json(payload): Json<Confirm>) -> Result<String, Error> {
     let link_id = payload.link_id;
+
+
 }
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
     let email = params.get("email");
     let password = params.get("password");
+
 
     todo!();
 }
