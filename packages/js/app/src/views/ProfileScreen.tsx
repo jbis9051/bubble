@@ -5,6 +5,7 @@ import {
     Text, 
     Image, 
     StyleSheet,
+    Pressable,
     ImageBackground
 } from 'react-native';
 
@@ -12,7 +13,8 @@ import {
     faEnvelope as mailIcon,
     faPhone as phoneIcon,
     faLocationDot as locationIcon,
-    faUser as userIcon
+    faUser as userIcon,
+    faGear as gearIcon
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
@@ -29,22 +31,35 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
     },
+    navigation: {
+        height: 40,
+        width: '100%',
+        justifyContent: 'flex-end',
+        flexDirection: 'row',
+        paddingRight: 20
+    },
+    editButton: {
+        color: '#ffffff',
+        fontSize: 24,
+        fontWeight: '600'
+    },
     header: {
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
         padding: 10,
-        height: 256,
+        height: 206
     },
     profileImage: {
-        height: 150,
-        width: 150,
+        height: 140,
+        width: 140,
         borderRadius: 100,
         borderWidth: 2.5,
         borderColor: '#d3d3d3'
     },
     info: {
         padding: 20,
+        paddingTop: 10,
         paddingBottom: 30,
         backgroundColor: '#ffffff',
         borderTopRightRadius: 30,
@@ -62,6 +77,14 @@ const styles = StyleSheet.create({
     }
 });
 
+const NavigationComponent = () => (
+    <View style={styles.navigation}>
+        <Pressable>
+            <Text style={styles.editButton}>Edit</Text>
+        </Pressable>
+    </View>
+);
+
 const HeaderComponent = () => (
     <View style={styles.header}>
         <Image 
@@ -72,8 +95,7 @@ const HeaderComponent = () => (
             John Appleseed
         </Text>
         <Text style={{
-            ...styles.headerText,
-            fontSize: 14,
+            fontSize: 16,
             marginTop: 3,
             color: '#e3e3e3'
         }}>
@@ -147,6 +169,9 @@ const InfoComponent: React.FunctionComponent<InfoProps> = ({ title='', detail=''
 
 const SlideUpComponent = () => (
     <View style={styles.info}>
+        <View style={{width: '100%', alignItems: 'center', justifyContent: 'center'}}>
+            <View style={{width: 64, height: 8, backgroundColor: '#d3d3d3', borderRadius: 100}} ></View>
+        </View>
         <Text style={styles.heading}>Map</Text>
         <MapComponent />
         <Text style={styles.heading}>Information</Text>
@@ -168,13 +193,13 @@ const ProfileScreen = () => (
         source={require('../../assets/background.png')}
     >
         <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
+            <NavigationComponent />
             <HeaderComponent />
         </SafeAreaView>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView style={{flex: 0}} showsVerticalScrollIndicator={false}>
             <SlideUpComponent />
         </ScrollView>
     </ImageBackground>
-   
 );
 
 export default ProfileScreen;
