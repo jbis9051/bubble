@@ -1,15 +1,13 @@
+use axum::extract::{Path};
+use axum::routing::{delete, post};
+use axum::Router;
+use axum::{extract, Json};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::io::Error;
-use axum::{extract, Json};
-use axum::extract::{Extension, Path};
-use axum::routing::{get, post, delete};
-use axum::handler::Handler;
-use axum::Router;
-use serde::Deserialize;
 
 use crate::models::user;
 use crate::models::user::User;
-
 
 pub fn router() {
     let user_routes = Router::new()
@@ -18,7 +16,10 @@ pub fn router() {
         .route("/user/signin/:email/:password", post(signin))
         .route("/user/signout/:token", post(signout))
         .route("/user/forgot/:email", post(forgot))
-        .route("/user/forgot-confirm/:email/:password", post(forgot_confirm))
+        .route(
+            "/user/forgot-confirm/:email/:password",
+            post(forgot_confirm),
+        )
         .route("/user/change_email/:email", post(change_email))
         .route("/user/:password", delete(delete_user));
 }
@@ -43,7 +44,7 @@ async fn signup(Json(payload): Json<CreateUser>) {
         Err(E) => {
             println!("Error: {:?}", E);
             todo!()
-        },
+        }
     };
 
     println!("Sending Email to {}", user.email);
@@ -54,14 +55,11 @@ struct Confirm {
 }
 async fn signup_confirm(Json(payload): Json<Confirm>) -> Result<String, Error> {
     let link_id = payload.link_id;
-
-
 }
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
     let email = params.get("email");
     let password = params.get("password");
-
 
     todo!();
 }
