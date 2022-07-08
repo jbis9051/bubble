@@ -1,10 +1,5 @@
 import React from 'react';
-import { 
-    ScrollView,
-    ImageBackground
-} from 'react-native';
-
-
+import { ScrollView, ImageBackground } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,14 +8,13 @@ import ProfileHeader from '../components/Profile/ProfileHeader';
 import SlideCardComponent from '../components/Profile/SlideCard';
 
 const ProfileScreen = () => (
-    <ImageBackground
-        source={require('../../assets/background.png')}
-    >
-        <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
+    // eslint-disable-next-line global-require
+    <ImageBackground source={require('../../assets/background.png')}>
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
             <Navigation />
             <ProfileHeader />
         </SafeAreaView>
-        <ScrollView style={{flex: 0}} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 0 }} showsVerticalScrollIndicator={false}>
             <SlideCardComponent />
         </ScrollView>
     </ImageBackground>
