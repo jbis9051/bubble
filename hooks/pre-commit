@@ -3,5 +3,4 @@
 set -e
 
 cd packages/js || exit 1
-echo "$ yarn lint:check"
 yarn lint:check
