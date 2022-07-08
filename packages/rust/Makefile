@@ -6,3 +6,7 @@ stop_ci:
 test_db: stop_ci
 	docker compose -f docker-compose-ci.yml up -d
 	cd db && ./test.sh && cd ..
+
+fmt:
+	cargo fmt --all
+	cargo clippy --fix --allow-dirty

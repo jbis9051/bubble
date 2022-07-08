@@ -1,7 +1,7 @@
-use sqlx::postgres::{PgRow, Postgres};
-use sqlx::pool::PoolConnection;
-use sqlx::{Error, Row};
 use crate::DbPool;
+use sqlx::pool::PoolConnection;
+use sqlx::postgres::{PgRow, Postgres};
+use sqlx::{Error, Row};
 
 pub struct User {
     pub id: i32,
@@ -12,19 +12,18 @@ pub struct User {
     pub email: String,
     pub phone: Option<String>,
     pub name: String,
-    pub created: String
+    pub created: String,
 }
 
 impl User {
-    pub async fn signup(db: & DbPool, user: &User) -> Result<String, sqlx::Error> {
-
+    pub async fn signup(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
         sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7, $8, $9)")
             .bind(&user.id)
             .bind(&user.uuid)
             .bind(&user.username)
             .bind(&user.password)
             .bind(&user.profile_picture)
-            .bind(None: Option<String>)
+            .bind(Option::<String>::None)
             .bind(&user.phone)
             .bind(&user.name)
             .bind(&user.created)
@@ -45,7 +44,7 @@ impl User {
         Ok(link_id)
     }
 
-    async fn get_by_id(mut conn: PoolConnection<Postgres>, id: String) -> Result<User, Error> {
+    async fn get_by_id(mut conn: PoolConnection<Postgres>, _id: String) -> Result<User, Error> {
         let select_query = sqlx::query("SELECT id FROM user");
         let user: User = select_query
             .map(|row: PgRow| User {
@@ -64,16 +63,15 @@ impl User {
         Ok(user)
     }
 
-    fn get_by_uuid(mut conn: PoolConnection<Postgres>, uuid: String) -> Result<User, sqlx::Error> {
+    fn get_by_uuid(_conn: PoolConnection<Postgres>, _uuid: String) -> Result<User, sqlx::Error> {
         todo!();
     }
-    fn update(&self, mut conn: PoolConnection<Postgres>) {
+    fn update(&self, _conn: PoolConnection<Postgres>) {
         todo!();
     }
-    fn delete(&self, mut conn: PoolConnection<Postgres>) {
+    fn delete(&self, _conn: PoolConnection<Postgres>) {
         todo!();
         // remove routes from a whole bunch of things
         // delete routes row
     }
 }
-

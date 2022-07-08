@@ -1,19 +1,19 @@
 use crate::models::group::Group;
 use axum::extract;
 use axum::extract::Path;
+use axum::routing::delete;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use serde::{Serialize, Deserialize};
-use axum::routing::delete;
+use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
-    let app = Router::new()
-        .route("/group/:name", post(create))
-        .route("/group/:id", get(read))
-        .route("/group/:id/new_users", post(add_users))
-        .route("/group/:id/users_to_delete", post(delete_users))
-        .route("/group/:id/name", post(change_name))
-        .route("/group/:id", delete(delete_group));
+    Router::new()
+    /* .route("/group/:name", post(create))
+    .route("/group/:id", get(read))
+    .route("/group/:id/new_users", post(add_users))
+    .route("/group/:id/users_to_delete", post(delete_users))
+    .route("/group/:id/name", post(change_name))
+    .route("/group/:id", delete(delete_group))*/
 }
 
 // Accept data -> deserialiable
