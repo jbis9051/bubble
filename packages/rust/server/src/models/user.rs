@@ -1,5 +1,5 @@
-use sqlx::{FromRow, Row};
 use sqlx::postgres::{PgPoolOptions, PgRow};
+use sqlx::{Row};
 
 pub struct User {
     id: i32,
@@ -10,19 +10,22 @@ pub struct User {
     email: String,
     phone: Option<String>,
     name: String,
-    created: String
+    created: String,
 }
 
 impl User {
-    pub fn create(username: String, email: String, password: String, phone: Option<String>, name: String) -> Result<User, Error> {
-
-
+    pub fn create(
+        username: String,
+        email: String,
+        password: String,
+        phone: Option<String>,
+        name: String,
+    ) -> Result<User, E> {
         let t_id: i32 = 0;
         let t_uuid: String = "0".to_string();
         let t_created: String = "0".to_string();
 
         let user = sqlx::query("select * from user where id is (id)")
-            .fetch_one(&mut pool)
             .await?;
 
         let user = User {
@@ -34,13 +37,13 @@ impl User {
             phone,
             name,
             created: t_created,
+            profile_picture: "".to_string()
         };
-
 
         Ok(user)
     }
 
-    async fn get_by_id(id: String) -> Option<User> {
+    async fn get_by_id(id: String) -> User {
         let select_query = sqlx::query("SELECT id FROM user");
         let user: User = select_query
             .map(|row: PgRow| User {
@@ -54,8 +57,7 @@ impl User {
                 name: row.get("name"),
                 created: row.get("created"),
             })
-            .fetch_one(&pool)
-            .await?;
+            .fetch_one(&pool);
         user
     }
     fn get_by_uuid(uuid: String) -> Option<User> {
@@ -70,4 +72,3 @@ impl User {
         // delete routes row
     }
 }
-

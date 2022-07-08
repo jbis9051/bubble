@@ -1,10 +1,10 @@
-use std::time::{Duration, SystemTime};
+use std::time::{SystemTime};
 
 // Based on up.sql
 pub struct Group {
     //ids and uuids are mutually unique
     id: i32,
-    uuid: String,
+    pub(crate) uuid: String,
     pub group_name: String,
     pub created: String,
     pub members: Vec<i32>,
@@ -22,23 +22,23 @@ impl Group {
         };
         group
     }
-    pub fn read(&mut self, uuid: String) {
+    pub fn read(uuid: String) {
         todo!();
     }
     pub fn add_users(&mut self, uuid: String, mut new_users: &[i32]) {
         *self.members.append(&mut new_user);
     }
-    pub fn delete_users(&mut self, uuid: String, users_to_delete: Vec<i32>) {
+    pub fn delete_users(uuid: String, users_to_delete: Vec<i32>) {
         for i in users_to_delete {
-            if &self.members.contains(&i) {
+            if members.contains(&i) {
                 &self.members.retain(|x| *x != &i);
             }
         }
     }
-    pub fn change_name(&self, uuid: String, name: String) {
+    pub fn change_name(uuid: String, name: String) {
         &self.group_name = &name;
     }
-    pub fn delete_group(&self, uuid: String) {
+    pub fn delete_group(uuid: String) {
         todo!();
     }
 }
