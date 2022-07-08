@@ -1,14 +1,14 @@
 use sqlx::postgres::{PgRow, Postgres};
-use std::time::SystemTime;
 use sqlx::pool::PoolConnection;
 use sqlx::{Error, Row};
+use crate::DbPool;
 
 pub struct User {
     pub id: i32,
     pub uuid: String,
     pub username: String,
     pub password: String,
-    pub profile_picture: String,
+    pub profile_picture: Option<String>,
     pub email: String,
     pub phone: Option<String>,
     pub name: String,
@@ -16,37 +16,33 @@ pub struct User {
 }
 
 impl User {
-    pub async fn signup(mut conn: PoolConnection<Postgres>, user: &User) -> Result<User, sqlx::Error> {
+    pub async fn signup(db: & DbPool, user: &User) -> Result<String, sqlx::Error> {
 
-        let user = sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7, $8, $9)")
-            .bind(tmp_id)
-            .bind(tmp_uuid)
-            .bind(username)
-            .bind(password)
-            .bind(tmp_profile_picture)
-            .bind(email)
-            .bind(phone)
-            .bind(name)
-            .bind(tmp_created)
-            .fetch_one(&mut conn)
+        sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+            .bind(&user.id)
+            .bind(&user.uuid)
+            .bind(&user.username)
+            .bind(&user.password)
+            .bind(&user.profile_picture)
+            .bind(None: Option<String>)
+            .bind(&user.phone)
+            .bind(&user.name)
+            .bind(&user.created)
+            .execute(db)
             .await?;
 
-        let confirm = sqlx::query()
+        let confirmation_id = "".to_string();
+        let link_id = "qwerty".to_string();
+        sqlx::query("INSERT INTO confirmation($1, $2, $3, $4, $5) RETURNING link_id")
+            .bind(confirmation_id)
+            .bind(&user.id)
+            .bind(&link_id)
+            .bind(&user.email)
+            .bind(&user.created)
+            .execute(db)
+            .await?;
 
-        let user = User {
-            id: tmp_id,
-            uuid: tmp_uuid,
-            username,
-            email,
-            password,
-            phone,
-            name,
-            created: tmp_created,
-            profile_picture: "".to_string()
-        };
-
-
-        Ok(user)
+        Ok(link_id)
     }
 
     async fn get_by_id(mut conn: PoolConnection<Postgres>, id: String) -> Result<User, Error> {
@@ -68,7 +64,7 @@ impl User {
         Ok(user)
     }
 
-    fn get_by_uuid(mut conn: PoolConnection<Postgres>, uuid: String) -> Option<User> {
+    fn get_by_uuid(mut conn: PoolConnection<Postgres>, uuid: String) -> Result<User, sqlx::Error> {
         todo!();
     }
     fn update(&self, mut conn: PoolConnection<Postgres>) {
