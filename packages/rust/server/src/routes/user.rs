@@ -1,29 +1,29 @@
 use std::collections::HashMap;
 use std::io;
-use axum::{Json};
-use axum::extract::{Path};
+use axum::{Extension, Json};
+use axum::extract::Path;
 use axum::routing::{post, delete};
 
 use axum::Router;
-use serde::de::Unexpected::Str;
 use serde::Deserialize;
 use sqlx::pool::PoolConnection;
-use sqlx::Postgres;
+use sqlx::{Pool, Postgres};
+use crate::DbPool;
 
-use crate::models::user;
+
 use crate::models::user::User;
 
 
-pub fn router() {
-    let user_routes = Router::new()
-        .route("/user/signup", post(signup))
-        .route("/user/signup-confirm", post(signup_confirm))
-        .route("/user/signin/:email/:password", post(signin))
-        .route("/user/signout/:token", post(signout))
-        .route("/user/forgot/:email", post(forgot))
-        .route("/user/forgot-confirm/:email/:password", post(forgot_confirm))
-        .route("/user/change_email/:email", post(change_email))
-        .route("/user/:password", delete(delete_user));
+pub fn router() -> Router {
+    Router::new()
+        .route("/signup", post(signup))
+        .route("/signup-confirm", post(signup_confirm))
+        .route("/signin", post(signin))
+        .route("/signout/:token", post(signout))
+        .route("/forgot", post(forgot))
+        .route("/forgot-confirm", post(forgot_confirm))
+        .route("/change_email", post(change_email))
+        .route("", delete(delete_user))
 }
 
 #[derive(Deserialize)]
@@ -34,32 +34,33 @@ struct CreateUser {
     phone: Option<String>,
     name: String,
 }
-async fn signup(conn: PoolConnection<Postgres>, Json(payload): Json<CreateUser>) -> Result<(), io::Error> {
-
+async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) {
     let user: User = User {
         id: 0,
         uuid: String::new(),
         username: payload.username,
         password: payload.password,
-        profile_picture: String::new(),
+        profile_picture: None,
         email: payload.email,
         phone: payload.phone,
         name: payload.name,
         created: String::new(),
     };
-    User::signup(conn, &user);
+    let link_id = match User::signup(& db.0, &user).await {
+        Ok(link_id) => link_id,
+        _ => return,
+    };
 
     println!("Sending Email to {}", user.email);
-    Ok(())
 }
 
 struct Confirm {
     link_id: String,
 }
-async fn signup_confirm(Json(payload): Json<Confirm>) -> Result<String, Error> {
+async fn signup_confirm(conn: PoolConnection<Postgres>, Json(payload): Json<Confirm>) -> Result<User, io::Error> {
     let link_id = payload.link_id;
 
-
+    Ok(())
 }
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
