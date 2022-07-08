@@ -5,6 +5,7 @@ set -e
 cd packages/rust || exit 1
 cargo fmt --all -- --check
 cargo clippy --all --all-features
+cd ../../
 
 cd ../
 
