@@ -59,13 +59,13 @@ struct Confirm {
 async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
-) -> Result<Json<Token>, sqlx::Error> {
-    let user = User::retrieve_by_link_id(&db.0, &payload.link_id).await?;
+) -> Json<Token> {
+    let user = User::retrieve_by_link_id(&db.0, &payload.link_id).await.unwrap();
 
     let session_token = User::create_session(&db.0, &user).await.unwrap();
-    Ok(Json(Token {
-        token: "".to_string(),
-    }))
+    Json(Token {
+        token: session_token,
+    })
 }
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
