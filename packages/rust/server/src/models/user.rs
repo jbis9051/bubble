@@ -3,8 +3,7 @@ use sqlx::pool::PoolConnection;
 use sqlx::postgres::{PgRow, Postgres};
 use sqlx::{Error, Row};
 
-use rand_core::{RngCore, OsRng};
-use serde::de::Unexpected::Str;
+use rand_core::{OsRng, RngCore};
 
 pub struct User {
     pub id: i32,

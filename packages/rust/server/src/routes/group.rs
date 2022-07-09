@@ -5,10 +5,11 @@ use axum::routing::delete;
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub fn router() -> Router {
-    Router::new()
-    /* .route("/group/:name", post(create))
+    Router::new().route("/group/:name", post(create))
+        /*
     .route("/group/:id", get(read))
     .route("/group/:id/new_users", post(add_users))
     .route("/group/:id/users_to_delete", post(delete_users))
@@ -30,16 +31,21 @@ pub struct GroupInfo {
 //Respond with JSON: id, name, created_date
 
 async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
-    let name: String = params.get("name").to_string();
-    let group_response = Group::create(name);
+    let group: Group = Group {
+        id: 0,
+        uiud: Uuid::new_v4().to_string(),
+        group_name: params.group_name,
+        created: "".to_string(),
+    };
+    Group::create(&db.0, &group);
     let new_group = GroupInfo {
-        uuid: group_response.uuid,
-        name: group_response.group_name,
-        created: group_response.created,
+        uuid: group.uuid,
+        name: group.group_name,
+        created: group.created,
     };
     Json(new_group)
 }
-
+/*
 // respond with JSON: id, name, created_date
 async fn read(Path(params): Path<String>) -> Json<GroupInfo> {
     let uuid = params.get("id").to_string();
@@ -92,3 +98,4 @@ async fn delete_group(Path(params): Path<String>) {
     let group_id = params.get("id").to_string();
     Group::delete_group(group_id);
 }
+/*
