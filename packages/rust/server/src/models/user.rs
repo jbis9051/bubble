@@ -44,19 +44,36 @@ impl User {
         Ok(link_id)
     }
 
-    async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
+    pub async fn get_by_link_id(db: &DbPool, link_id: String) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("SELECT (1) FROM confirmation WHERE link_id IS $1")
+            .bind(link_id)
+            .fetch_one(db)
+            .await?;
+
+        let user = User::user_by_row(row).await;
+        Ok(user)
+    }
+
+    pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT (1) FROM user WHERE id IS $1")
             .bind(id)
             .fetch_one(db)
             .await?;
 
-        let user = User::user_by_row(row);
+        let user = User::user_by_row(row).await;
         Ok(user)
     }
 
-    fn get_by_uuid(_conn: PoolConnection<Postgres>, _uuid: String) -> Result<User, sqlx::Error> {
-        todo!();
+    pub async fn get_by_uuid(db: &DbPool, uuid: String) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("SELECT (1) FROM user WHERE uuid IS $1")
+            .bind(uuid)
+            .fetch_one(db)
+            .await?;
+
+        let user = User::user_by_row(row).await;
+        Ok(user)
     }
+
     fn update(&self, _conn: PoolConnection<Postgres>) {
         todo!();
     }
@@ -65,7 +82,7 @@ impl User {
         // remove routes from a whole bunch of things
         // delete routes row
     }
-    fn user_by_row(row: PgRow) -> User {
+    async fn user_by_row(row: PgRow) -> User {
         User {
             id: row.get("id"),
             uuid: row.get("uuid"),
