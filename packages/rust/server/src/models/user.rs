@@ -50,7 +50,7 @@ impl User {
         Ok(link_id)
     }
 
-    pub async fn get_by_link_id(db: &DbPool, link_id: String) -> Result<User, sqlx::Error> {
+    pub async fn get_by_link_id(db: &DbPool, link_id: &str) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM confirmation WHERE link_id IS $1;")
             .bind(link_id)
             .fetch_one(db)
@@ -70,7 +70,7 @@ impl User {
         Ok(user)
     }
 
-    pub async fn get_by_uuid(db: &DbPool, uuid: String) -> Result<User, sqlx::Error> {
+    pub async fn get_by_uuid(db: &DbPool, uuid: &str) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user WHERE uuid IS $1;")
             .bind(uuid)
             .fetch_one(db)
