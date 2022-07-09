@@ -53,15 +53,17 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) {
 struct Confirm {
     link_id: String,
 }
-/*
-async fn signup_confirm(
-    conn: PoolConnection<Postgres>,
-    Json(payload): Json<Confirm>,
-) -> Result<User, io::Error> {
-    let link_id = payload.link_id;
+async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) {
+    let user = match User::get_by_link_id(&db.0, payload.link_id).await {
+        Ok(user) => user,
+        Err(E) => {
+            println!("Error: {:?}", E);
+            return;
+        },
+    };
 
     Ok(())
-}*/
+}
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
     let _email = params.get("email");

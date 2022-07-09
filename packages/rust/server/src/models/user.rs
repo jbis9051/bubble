@@ -1,7 +1,7 @@
 use crate::DbPool;
 use sqlx::pool::PoolConnection;
 use sqlx::postgres::{PgRow, Postgres};
-use sqlx::{Error, Row};
+use sqlx::Row;
 
 use rand_core::{OsRng, RngCore};
 
