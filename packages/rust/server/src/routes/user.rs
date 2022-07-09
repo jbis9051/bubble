@@ -1,4 +1,5 @@
 use axum::extract::Path;
+
 use axum::routing::post;
 use axum::{Extension, Json};
 use std::collections::HashMap;
@@ -13,7 +14,7 @@ use crate::models::user::User;
 
 pub fn router() -> Router {
     Router::new().route("/signup", post(signup))
-    /*   .route("/signup-confirm", post(signup_confirm))
+    /*.route("/signup-confirm", post(signup_confirm))
     .route("/signin", post(signin))
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
@@ -42,7 +43,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) {
         name: payload.name,
         created: String::new(),
     };
-    let _link_id = match User::signup(&db.0, &user).await {
+    let _link_id = match User::create(&db.0, &user).await {
         Ok(link_id) => link_id,
         _ => return,
     };
@@ -50,19 +51,22 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) {
     println!("Sending Email to {}", user.email);
 }
 
+struct Token {
+    token: String,
+}
 struct Confirm {
     link_id: String,
 }
-async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) {
-    let user = match User::get_by_link_id(&db.0, payload.link_id).await {
-        Ok(user) => user,
-        Err(E) => {
-            println!("Error: {:?}", E);
-            return;
-        },
-    };
-
-    Ok(())
+async fn signup_confirm(
+    db: Extension<DbPool>,
+    Json(payload): Json<Confirm>,
+) -> Result<Json<Token>, sqlx::Error> {
+    let _user = User::get_by_link_id(&db.0, payload.link_id).await?;
+    //delete confirmation table
+    //create session table
+    Ok(Json(Token {
+        token: "".to_string(),
+    }))
 }
 
 async fn signin(Path(params): Path<HashMap<String, String>>) {
