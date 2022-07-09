@@ -7,6 +7,8 @@ use crate::DbPool;
 use axum::Router;
 use serde::Deserialize;
 
+use uuid::Uuid;
+
 use crate::models::user::User;
 
 pub fn router() -> Router {
@@ -31,7 +33,7 @@ struct CreateUser {
 async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) {
     let user: User = User {
         id: 0,
-        uuid: String::new(),
+        uuid: Uuid::new_v4().to_string(),
         username: payload.username,
         password: payload.password,
         profile_picture: None,
