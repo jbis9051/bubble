@@ -60,9 +60,9 @@ async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
 ) -> Result<Json<Token>, sqlx::Error> {
-    let _user = User::get_by_link_id(&db.0, &payload.link_id).await?;
-    //delete confirmation table
-    //create session table
+    let user = User::retrieve_by_link_id(&db.0, &payload.link_id).await?;
+
+    let session_token = User::create_session(&db.0, &user).await.unwrap();
     Ok(Json(Token {
         token: "".to_string(),
     }))
