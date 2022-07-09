@@ -19,7 +19,7 @@ pub struct User {
 
 impl User {
     pub async fn signup(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
-        sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7, $8)")
+        sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7)")
             .bind(&user.uuid)
             .bind(&user.username)
             .bind(&user.password)
@@ -27,7 +27,6 @@ impl User {
             .bind(Option::<String>::None)
             .bind(&user.phone)
             .bind(&user.name)
-            .bind(&user.created)
             .execute(db)
             .await?;
 
@@ -35,33 +34,23 @@ impl User {
         OsRng.fill_bytes(&mut key);
         let link_id = String::from_utf8_lossy(key.as_slice()).to_string();
 
-        sqlx::query("INSERT INTO confirmation($1, $2, $3, $4)")
+        sqlx::query("INSERT INTO confirmation($1, $2, $3)")
             .bind(&user.id)
             .bind(&link_id)
             .bind(&user.email)
-            .bind(&user.created)
             .execute(db)
             .await?;
 
         Ok(link_id)
     }
 
-    async fn get_by_id(mut conn: PoolConnection<Postgres>, _id: String) -> Result<User, Error> {
-        let select_query = sqlx::query("SELECT id FROM user");
-        let user: User = select_query
-            .map(|row: PgRow| User {
-                id: row.get("id"),
-                uuid: row.get("uuid"),
-                username: row.get("username"),
-                password: row.get("password"),
-                profile_picture: row.get("profile_picture"),
-                email: row.get("email"),
-                phone: row.get("phone"),
-                name: row.get("name"),
-                created: row.get("created"),
-            })
-            .fetch_one(&mut conn)
+    async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("SELECT (1) FROM user WHERE id IS $1")
+            .bind(id)
+            .fetch_one(db)
             .await?;
+
+        let user = User::user_by_row(row);
         Ok(user)
     }
 
@@ -75,5 +64,18 @@ impl User {
         todo!();
         // remove routes from a whole bunch of things
         // delete routes row
+    }
+    fn user_by_row(row: PgRow) -> User {
+        User {
+            id: row.get("id"),
+            uuid: row.get("uuid"),
+            username: row.get("username"),
+            password: row.get("password"),
+            profile_picture: row.get("profile_picture"),
+            email: row.get("email"),
+            phone: row.get("phone"),
+            name: row.get("name"),
+            created: row.get("created"),
+        }
     }
 }
