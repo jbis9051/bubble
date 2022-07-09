@@ -1,9 +1,9 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
 
 const Styles = StyleSheet.create({
     shadow: {
         shadowColor: '#171717',
-        shadowOffset: {width: -3, height: 10},
+        shadowOffset: { width: -3, height: 10 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
     },
@@ -14,21 +14,21 @@ const Styles = StyleSheet.create({
         backgroundColor: '#ffffff',
         borderTopRightRadius: 30,
         borderTopLeftRadius: 30,
-        marginTop: 256
+        marginTop: 256,
     },
     infoCardTemplate: {
         marginBottom: 10,
         padding: 20,
         backgroundColor: '#ffffff',
-        borderRadius: 10
+        borderRadius: 10,
     },
     navigation: {
         height: 40,
         width: '100%',
         justifyContent: 'flex-end',
         flexDirection: 'row',
-        paddingRight: 20
-    }
+        paddingRight: 20,
+    },
 });
 
 export default Styles;
