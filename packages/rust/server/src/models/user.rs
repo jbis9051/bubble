@@ -1,6 +1,6 @@
 use crate::DbPool;
 
-use sqlx::postgres::{PgRow};
+use sqlx::postgres::PgRow;
 use sqlx::Row;
 
 use rand_core::{OsRng, RngCore};
@@ -50,8 +50,8 @@ impl User {
         Ok(link_id)
     }
 
-    pub async fn get_by_link_id(db: &DbPool, link_id: &str) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM confirmation WHERE link_id IS $1;")
+    pub async fn retrieve_by_link_id(db: &DbPool, link_id: &str) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("DELETE FROM confirmation WHERE link_id IS $1 RETURNING *;")
             .bind(link_id)
             .fetch_one(db)
             .await?;
@@ -78,6 +78,20 @@ impl User {
 
         let user = User::user_by_row(&row).await;
         Ok(user)
+    }
+
+    pub async fn create_session(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
+        let mut key = [0u8; 32];
+        OsRng.fill_bytes(&mut key);
+        let token = String::from_utf8_lossy(key.as_slice()).to_string();
+
+        sqlx::query("INSERT INTO session_token (user_id, token) VALUES ($1, $2);")
+            .bind(&user.id)
+            .bind(&token)
+            .execute(db)
+            .await?;
+
+        Ok(token)
     }
 
     /*
