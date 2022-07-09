@@ -3,6 +3,9 @@ use sqlx::pool::PoolConnection;
 use sqlx::postgres::{PgRow, Postgres};
 use sqlx::{Error, Row};
 
+use rand_core::{RngCore, OsRng};
+use serde::de::Unexpected::Str;
+
 pub struct User {
     pub id: i32,
     pub uuid: String,
@@ -17,8 +20,7 @@ pub struct User {
 
 impl User {
     pub async fn signup(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
-        sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7, $8, $9)")
-            .bind(&user.id)
+        sqlx::query("INSERT INTO user($1, $2, $3, $4, $5, $6, $7, $8)")
             .bind(&user.uuid)
             .bind(&user.username)
             .bind(&user.password)
@@ -30,10 +32,11 @@ impl User {
             .execute(db)
             .await?;
 
-        let confirmation_id = "".to_string();
-        let link_id = "qwerty".to_string();
-        sqlx::query("INSERT INTO confirmation($1, $2, $3, $4, $5) RETURNING link_id")
-            .bind(confirmation_id)
+        let mut key = [0u8; 16];
+        OsRng.fill_bytes(&mut key);
+        let link_id = String::from_utf8_lossy(key.as_slice()).to_string();
+
+        sqlx::query("INSERT INTO confirmation($1, $2, $3, $4)")
             .bind(&user.id)
             .bind(&link_id)
             .bind(&user.email)
