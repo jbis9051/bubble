@@ -1,5 +1,8 @@
+
 use axum::routing::post;
 use axum::{Extension, Json};
+use axum::http::StatusCode;
+
 
 use crate::DbPool;
 use axum::Router;
@@ -11,8 +14,8 @@ use crate::models::user::User;
 
 pub fn router() -> Router {
     Router::new().route("/signup", post(signup))
-    /*.route("/signup-confirm", post(signup_confirm))
-    .route("/signin", post(signin))
+    .route("/signup-confirm", post(signup_confirm))
+    /*.route("/signin", post(signin))
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
     .route("/forgot-confirm", post(forgot_confirm))
@@ -28,40 +31,51 @@ struct CreateUser {
     phone: Option<String>,
     name: String,
 }
-async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) {
+async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> StatusCode {
     let user: User = User {
         id: 0,
         uuid: Uuid::new_v4().to_string(),
         username: payload.username,
         password: payload.password,
         profile_picture: None,
-        email: payload.email,
+        email: None,
         phone: payload.phone,
         name: payload.name,
         created: String::new(),
     };
-    let _link_id = match User::create(&db.0, &user).await {
+    match User::create(&db.0, &user).await {
+        Ok(()) => (),
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    }
+    let link_id = match User::create_confirmation(&db.0, &user, &payload.email).await {
         Ok(link_id) => link_id,
-        _ => return,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
     };
 
-    println!("Sending Email to {}", user.email);
+    println!("Sending Email with link_id {:?} to {:?}", link_id, user.email);
+    StatusCode::CREATED
 }
 
-struct Token {
+struct ConfirmResponse {
+    status_code: StatusCode,
     token: String,
 }
 struct Confirm {
     link_id: String,
 }
-async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> Json<Token> {
-    let user = User::retrieve_by_link_id(&db.0, &payload.link_id)
-        .await
-        .unwrap();
+async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> ConfirmResponse {
+    let user = match User::retrieve_by_link_id(&db.0, &payload.link_id).await {
+        Ok(user) => user,
+        Err(E) => return ConfirmResponse { status_code: StatusCode::INTERNAL_SERVER_ERROR, token: String::new() },
+    };
+
     let token = User::create_session(&db.0, &user).await.unwrap();
-    Json(Token { token })
+    ConfirmResponse { status_code: StatusCode::CREATED, token }
 }
 
+//get user
+
+/*
 struct SignInJson {
     email: String,
     password: String,
@@ -73,7 +87,7 @@ async fn signin(db: Extension<DbPool>, Json(payload): Json<SignInJson>) -> Json<
     let token = User::create_session(&db.0, &user).await.unwrap();
     Json(Token { token })
 }
-/*
+
 async fn signout(Path(params): &str) {
     let token = params.get("token");
 
