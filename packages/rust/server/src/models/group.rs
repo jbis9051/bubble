@@ -43,6 +43,7 @@ impl Group {
          }
         Ok(group)
     }
+
     pub fn call_user(row: PgRow) -> Group{
         Group {
             id: row.get("id"),
@@ -52,18 +53,59 @@ impl Group {
             members: (),
         }
     }
-    /*
-    pub fn add_users( uuid: String, mut new_users: &[i32]) {
-        /self.members.append(&mut new_user);
 
+    pub fn get_group_id(uuid: &str) -> i32 {
+        let groupID = sqlx::query("SELECT id FROM group WHERE uuid = $1")
+            .bind(uuid)
+            .execute(db)
+            .await?;
+
+        groupID
     }
-    pub fn delete_users(uuid: String, users_to_delete: Vec<i32>) {
 
+    pub fn add_users(db: &DbPool, uuid: &str, mut new_users: &[i32]) {
+        for i in new_users {
+            let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
+                .bind(i)
+                .execute(db)
+                .await?;
+            sqlx::query("INSERT INTO user_group (user_id, group_id, role_id, created)
+                        VALUES ($1, $2, $3, $4);")
+                .bind(userID)
+                .bind(get_group_id(uuid))
+                .bind(roleID)
+                .bind(SystemTime::now())
+                .execute(db)
+                .await?;
+        }
     }
-    pub fn change_name(uuid: String, name: String) {
 
+    pub fn delete_users(db: &DbPool, uuid: &str, users_to_delete: &[i32]) {
+        for i in users_to_delete {
+            let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
+                .bind(i)
+                .execute(db)
+                .await?;
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 && group_id = $2")
+                .bind(userID)
+                .bind(get_group_id(uuid))
+                .execute(db)
+                .await?;
+        }
     }
-    pub fn delete_group(uuid: String) {
 
-    }*/
+    pub fn change_name(db: &DbPool, uuid: &str, name: String) {
+        sqlx::query("UPDATE group SET group_name = $1 WHERE id = $2")
+            .bind(name)
+            .bind(get_group_id(uuid))
+            .execute(db)
+            .await?;
+    }
+
+    pub fn delete_group(db: &DpPool, uuid: &str) {
+        sqlx::query("DELETE FROM group WHERE uuid = $1")
+            .bind(uuid)
+            .execute(db)
+            .await?;
+    }
 }
