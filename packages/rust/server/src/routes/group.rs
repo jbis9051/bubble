@@ -45,7 +45,7 @@ async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
     };
     Json(new_group)
 }
-/*
+
 // respond with JSON: id, name, created_date
 async fn read(Path(params): Path<String>) -> Json<GroupInfo> {
     let uuid = params.get("id").to_string();
@@ -57,7 +57,7 @@ async fn read(Path(params): Path<String>) -> Json<GroupInfo> {
     };
     Json(new_group)
 }
-
+/*
 #[derive(Deserialize)]
 pub struct UsersIDs {
     users: Vec<i32>,
@@ -75,7 +75,7 @@ async fn delete_users(Path(params): Path<String>, extract::Json(payload): extrac
     let group_id = params.get("id").to_string();
     let users_to_delete = payload.users;
     Group::delete_users(group_id, users_to_delete);
-}
+}*/
 
 #[derive(Serialize)]
 pub struct NameChange {
@@ -98,4 +98,3 @@ async fn delete_group(Path(params): Path<String>) {
     let group_id = params.get("id").to_string();
     Group::delete_group(group_id);
 }
-/*
