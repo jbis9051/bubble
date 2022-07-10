@@ -38,7 +38,7 @@ async fn create(db: Extension<&DbPool>, Path(params): Path<String>) -> Json<Grou
         created: "".to_string(),
         members: vec![],
     };
-    Group::create(&db.0, &group);
+    Group::create(&db, &group);
     let new_group = GroupInfo {
         uuid: group.uuid,
         name: group.group_name,
