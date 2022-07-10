@@ -80,7 +80,11 @@ impl User {
         Ok(user)
     }
 
-    pub async fn get_by_signin(db: &DbPool, email: &str, password: &str) -> Result<User, sqlx::Error> {
+    pub async fn get_by_signin(
+        db: &DbPool,
+        email: &str,
+        password: &str,
+    ) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user WHERE email IS $1 AND password IS $2;")
             .bind(email)
             .bind(password)
