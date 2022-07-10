@@ -17,49 +17,68 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: colors.white,
         width: '100%',
         height: '100%',
-    },
-    backgroundImage:{
-        alignItems: 'center',
-    },
-    title: {
-        flex: 0.7,
-        alignItems: 'center',
-        fontSize: 45,
-        fontWeight: '100',
-    },
-    textContainer:{
+    },titleContainer:{
+        top: '12%',
         flex: 3,
         justifyContent: 'center',
     },
-    textInput: {
-        borderTopColor: colors.white,
-        borderRightColor: colors.white,
-        borderLeftColor: colors.white,
+    textContainer:{
+        flex: 1.25,
+        justifyContent: 'center',
+    },
+    loginContainer: {
+        flex: 1.5,
+        justifyContent: 'center',
+    },noAccountContainer:{
+        flex: 1.5,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    title: {
+        fontSize: 45,
+        fontWeight: '400',
+        color: colors.primary,
+    },
+    textInputDescriptors:{
+        color: colors.darkGrey,
+    },
+    login:{
         height: 50,
         width: 300,
         margin: 7,
-        borderWidth: 1,
-    },textInputDescriptors:{
-        color: colors.darkGrey,
-    },loginContainer: {
-        flex: 5,
-    },
-    login:{
-        height: 40,
-        width: 200,
-        margin: 7,
-        borderWidth: 1,
-        borderRadius: 15,
+        borderRadius: 25,
         padding: 10,
         alignItems:'center',
         justifyContent:'center',
+        backgroundColor: colors.primary,
     },forgot:{
         fontWeight: '200',
         fontSize: 13,
         textAlign: 'center',
+    },otherLoginButtons:{
+        height: 40,
+        width: 40,
+        margin: 7,
+        borderWidth: 1,
+        borderRadius: 20,
+        padding: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },buttonText:{
+        color: colors.white,
+        fontWeight: '600',
+    },noAccountText:{
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '300',
+    },noAccountTextLink:{
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '300',
     }
 })
 
@@ -67,26 +86,36 @@ function Login({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require('../assets/background.png')}
-                style={styles.backgroundImage}
+                source={require('../assets/LoginBackground.png')}
+                style={{height: '100%', width: '100%', alignItems: 'center'}}
             >
-                <Header page={'Splash'}/>
-                <Text style={styles.title}>Welcome back</Text>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>Sign In</Text>
+                </View>
                 <View style={styles.textContainer}>
                     <TextInputBox
                         descriptor='Username'
-                        required={false}
+                        secure={false}
+                        input={""}
                     />
                     <TextInputBox
                         descriptor='Password'
-                        required={false}
+                        secure={true}
+                        input={""}
                     />
                 </View>
                 <View style={styles.loginContainer}>
                     <TouchableOpacity style={styles.login}>
-                        <Text>Log In</Text>
+                        <Text style={styles.buttonText}>Sign In</Text>
                     </TouchableOpacity>
-                    <Text style={styles.forgot} onPress={() => {navigation.navigate('Home')}}>Forgot password?</Text>
+                </View>
+                <View style={styles.noAccountContainer}>
+                    <Text style={styles.noAccountText}>Don't have an account?</Text>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Signup1')}
+                    >
+                      <Text style={styles.noAccountTextLink}>Sign up</Text>
+                    </TouchableOpacity>
                 </View>
             </ImageBackground>
         </View>

@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         width: '100%',
         height: 95,
-        backgroundColor: colors.primary
+        backgroundColor: 'rgba(255, 255, 255, 0)',
     }
 })
 

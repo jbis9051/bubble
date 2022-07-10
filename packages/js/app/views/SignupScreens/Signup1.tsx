@@ -23,55 +23,73 @@ const styles = StyleSheet.create({
     },
     backgroundImage:{
         alignItems: 'center',
+    },titleContainer:{
+        top: '12%',
+        flex: 3,
+        justifyContent: 'center',
+    }, signupContainer:{
+        flex: 4,
+        justifyContent: 'center',
+    }, signupButtonContainer:{
+        flex: 2,
+    },accountExistContainer:{
+        flex: 1,
+        alignItems: 'center',
+        bottom: '2.6%',
     },
     title: {
-        flex: 0.5,
-        alignItems:'center',
-        fontSize: 30,
-        fontWeight: '100',
-    },
-    signupContainer:{
-        flex: 6,
-        justifyContent: 'center',
-    },signupButtonContainer:{
-        flex: 4,
+        fontSize: 45,
+        fontWeight: '400',
+        color: colors.primary,
     },
     signupButton:{
-        height: 40,
-        width: 150,
+        height: 50,
+        width: 300,
         margin: 7,
-        borderWidth: 1,
         borderRadius: 15,
         padding: 10,
         alignItems:'center',
-    },
+        justifyContent:'center',
+        backgroundColor: colors.primary,
+    },buttonText:{
+        color: colors.white,
+        fontWeight: '600',
+    },noAccountText:{
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '300',
+    },accountExistTextLink:{
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '300',
+    }
 })
 
 function Signup({route, navigation}: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
-                source={require('../../assets/background.png')}
-                style={styles.backgroundImage}
+                source={require('../../assets/SignUpBackground.png')}
+                style={{height: '100%', width: '100%', alignItems: 'center',}}
             >
-                <Header page={'Splash'}/>
-                <Text style={styles.title}>Enter Account Details</Text>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>Sign Up</Text>
+                </View>
                 <View style={styles.signupContainer}>
                     <TextInputBox
                         descriptor="Phone Number"
-                        required={true}
+                        secure={false}
+                        input={"telephoneNumber"}
                     />
                     <TextInputBox
-                        descriptor="Email"
-                        required={false}
+                        descriptor="Username"
+                        secure={true}
+                        input={""}
                     />
                     <TextInputBox
-                        descriptor="First Name"
-                        required={true}
-                    />
-                    <TextInputBox
-                        descriptor="Last Name"
-                        required={true}
+                        descriptor="Password"
+                        secure={true}
+                        input={""}
                     />
                 </View>
                 <View style={styles.signupButtonContainer}>
@@ -79,7 +97,17 @@ function Signup({route, navigation}: Props) {
                         style={styles.signupButton}
                         onPress={() => navigation.navigate('Signup2')}
                     >
-                        <Text>Next</Text>
+                        <Text style={styles.buttonText}>Create Account</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.accountExistContainer}>
+                    <Text style={styles.noAccountText}>Already have an account?</Text>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Login')}
+                    >
+                        <Text style={styles.accountExistTextLink}>
+                            Sign In
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </ImageBackground>

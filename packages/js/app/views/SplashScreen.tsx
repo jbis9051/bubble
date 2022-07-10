@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {Text, View, StyleSheet, ImageBackground, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import login from './LoginScreen';
 import colors from '../constants/Colors';
 
 type RootStackParamList = {
@@ -25,14 +26,15 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     title: {
-        fontSize: 95,
-        fontWeight: '100',
+        fontSize: 80,
+        fontWeight: '300',
+        justifyContent: 'center',
     },
     titleContainer:{
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    }, info:{
+    }, /*info:{
         flex: 1,
         textAlign: 'center',
     },buttonsContainer:{
@@ -41,18 +43,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttons:{
-            height: 50,
-            width: 250,
-            margin: 7,
-            borderWidth: 1,
-            borderRadius: 15,
-            padding: 10,
-            alignItems:'center',
-            justifyContent:'center',
-    },
+        height: 50,
+        width: 250,
+        margin: 7,
+        borderRadius: 30,
+        padding: 10,
+        alignItems:'center',
+        justifyContent:'center',
+        backgroundColor: colors.primary,
+    },buttonText:{
+        color: colors.white,
+        fontWeight: '600',
+    } */
 })
 
+
 function Splash({route, navigation}: Props) {
+    setTimeout(() =>{
+        navigation.navigate('Login')
+        }, 2000
+    );
     return (
         <View style={styles.container}>
             <ImageBackground
@@ -61,19 +71,6 @@ function Splash({route, navigation}: Props) {
             >
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Bubble</Text>
-                </View>
-                <View style={styles.buttonsContainer}>
-                    <TouchableOpacity
-                        style={styles.buttons}
-                        onPress={() => {navigation.navigate('Signup1')}}>
-                        <Text>Sign up</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.buttons}
-                        onPress={() => {navigation.navigate('Login')}}>
-                        <Text>Log in</Text>
-                    </TouchableOpacity>
                 </View>
             </ImageBackground>
         </View>
