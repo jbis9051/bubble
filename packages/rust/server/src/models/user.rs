@@ -11,28 +11,33 @@ pub struct User {
     pub username: String,
     pub password: String,
     pub profile_picture: Option<String>,
-    pub email: String,
+    pub email: Option<String>,
     pub phone: Option<String>,
     pub name: String,
     pub created: String,
 }
 
 impl User {
-    pub async fn create(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
+    pub async fn create(db: &DbPool, user: &User) -> Result<(), sqlx::Error> {
         sqlx::query(
-            "INSERT INTO user (uuid, username, password, profile_picture, email, phone, name)
+            "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
                              VALUES ($1, $2, $3, $4, $5, $6, $7);",
         )
-        .bind(&user.uuid)
-        .bind(&user.username)
-        .bind(&user.password)
-        .bind(&user.profile_picture)
-        .bind(Option::<String>::None)
-        .bind(&user.phone)
-        .bind(&user.name)
-        .execute(db)
-        .await?;
+            .bind(&user.uuid)
+            .bind(&user.username)
+            .bind(&user.password)
+            .bind(&user.profile_picture)
+            .bind(Option::<String>::None)
+            .bind(&user.phone)
+            .bind(&user.name)
+            .execute(db)
+            .await
+            .unwrap();
 
+        Ok(())
+    }
+
+    pub async fn create_confirmation(db: &DbPool, user: &User, email: &str) -> Result<String, sqlx::Error> {
         let mut key = [0u8; 32];
         OsRng.fill_bytes(&mut key);
         let link_id = String::from_utf8_lossy(key.as_slice()).to_string();
@@ -43,7 +48,7 @@ impl User {
         )
         .bind(&user.id)
         .bind(&link_id)
-        .bind(&user.email)
+        .bind(&email)
         .execute(db)
         .await?;
 
@@ -60,6 +65,21 @@ impl User {
         Ok(user)
     }
 
+    pub async fn create_session(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
+        let mut key = [0u8; 32];
+        OsRng.fill_bytes(&mut key);
+        let token = String::from_utf8_lossy(key.as_slice()).to_string();
+
+        sqlx::query("INSERT INTO session_token (user_id, token) VALUES ($1, $2);")
+            .bind(&user.id)
+            .bind(&token)
+            .execute(db)
+            .await?;
+
+        Ok(token)
+    }
+
+    /*
     pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user WHERE id IS $1;")
             .bind(id)
@@ -95,21 +115,6 @@ impl User {
         Ok(user)
     }
 
-    pub async fn create_session(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
-        let mut key = [0u8; 32];
-        OsRng.fill_bytes(&mut key);
-        let token = String::from_utf8_lossy(key.as_slice()).to_string();
-
-        sqlx::query("INSERT INTO session_token (user_id, token) VALUES ($1, $2);")
-            .bind(&user.id)
-            .bind(&token)
-            .execute(db)
-            .await?;
-
-        Ok(token)
-    }
-
-    /*
     fn update(&self, _conn: PoolConnection<Postgres>) {
         todo!();
     }
