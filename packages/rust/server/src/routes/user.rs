@@ -1,8 +1,6 @@
-
+use axum::http::StatusCode;
 use axum::routing::post;
 use axum::{Extension, Json};
-use axum::http::StatusCode;
-
 
 use crate::DbPool;
 use axum::Router;
@@ -14,7 +12,7 @@ use crate::models::user::User;
 
 pub fn router() -> Router {
     Router::new().route("/signup", post(signup))
-    .route("/signup-confirm", post(signup_confirm))
+    //   .route("/signup-confirm", post(signup_confirm))
     /*.route("/signin", post(signin))
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
@@ -52,7 +50,10 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
     };
 
-    println!("Sending Email with link_id {:?} to {:?}", link_id, user.email);
+    println!(
+        "Sending Email with link_id {:?} to {:?}",
+        link_id, user.email
+    );
     StatusCode::CREATED
 }
 
@@ -66,11 +67,19 @@ struct Confirm {
 async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> ConfirmResponse {
     let user = match User::retrieve_by_link_id(&db.0, &payload.link_id).await {
         Ok(user) => user,
-        Err(E) => return ConfirmResponse { status_code: StatusCode::INTERNAL_SERVER_ERROR, token: String::new() },
+        Err(E) => {
+            return ConfirmResponse {
+                status_code: StatusCode::INTERNAL_SERVER_ERROR,
+                token: String::new(),
+            }
+        }
     };
 
     let token = User::create_session(&db.0, &user).await.unwrap();
-    ConfirmResponse { status_code: StatusCode::CREATED, token }
+    ConfirmResponse {
+        status_code: StatusCode::CREATED,
+        token,
+    }
 }
 
 //get user
