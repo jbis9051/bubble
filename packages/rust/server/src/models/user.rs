@@ -80,6 +80,17 @@ impl User {
         Ok(user)
     }
 
+    pub async fn get_by_signin(db: &DbPool, email: &str, password: &str) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM user WHERE email IS $1 AND password IS $2;")
+            .bind(email)
+            .bind(password)
+            .fetch_one(db)
+            .await?;
+
+        let user = User::user_by_row(&row).await;
+        Ok(user)
+    }
+
     pub async fn create_session(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
         let mut key = [0u8; 32];
         OsRng.fill_bytes(&mut key);

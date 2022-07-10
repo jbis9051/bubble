@@ -61,18 +61,22 @@ async fn signup_confirm(
     Json(payload): Json<Confirm>,
 ) -> Json<Token> {
     let user = User::retrieve_by_link_id(&db.0, &payload.link_id).await.unwrap();
-
-    let session_token = User::create_session(&db.0, &user).await.unwrap();
+    let token = User::create_session(&db.0, &user).await.unwrap();
     Json(Token {
-        token: session_token,
+        token,
     })
 }
 
-async fn signin(Path(params): Path<HashMap<String, String>>) {
-    let _email = params.get("email");
-    let _password = params.get("password");
-
-    todo!();
+struct SignInJson {
+    email: String,
+    password: String,
+}
+async fn signin(db: Extension<DbPool>, Json(payload): Json<SignInJson>) -> Json<Token> {
+    let user = User::get_by_signin(&db.0, &payload.email, &payload.password).await.unwrap();
+    let token = User::create_session(&db.0, &user).await.unwrap();
+    Json(Token {
+        token,
+    })
 }
 /*
 async fn signout(Path(params): &str) {
