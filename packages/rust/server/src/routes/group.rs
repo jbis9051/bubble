@@ -64,15 +64,15 @@ pub struct UsersIDs {
 }
 
 //request JSON: vec<user_ids>
-async fn add_users(Path(id): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
-    let group_id = id.get("id").to_string();
+async fn add_users(db: Extension<DbPool>, Path(id): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
+    let group_id = id.get("uuid").to_string();
     let user_ids: &[i32] = &*payload.users;
-    Group::add_users(group_id, user_ids);
+    Group::add_users(&db.0, group_id, user_ids);
 }
 
 //request JSON: vec<user_ids>
-async fn delete_users(Path(params): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
-    let group_id = params.get("id").to_string();
+async fn delete_users(db: Extension<DbPool>, Path(params): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
+    let group_id = params.get("uuid").to_string();
     let users_to_delete = payload.users;
     Group::delete_users(&db.0, group_id, users_to_delete);
 }
@@ -87,10 +87,10 @@ async fn change_name(db: Extension<DbPool>,
                      Path(params): Path<String>,
                      extract::Json(payload): extract::Json<NameChange>,
 ) {
-    let group_id = params.get("id").to_string();
+    let group_id = params.get("uuid").to_string();
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change = payload.name;
-    Group::change_name(group_id, name_to_change);
+    Group::change_name(&db.0, group_id, name_to_change);
 }
 
 //none, just id passed from path
