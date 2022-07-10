@@ -1,18 +1,17 @@
 use axum::http::StatusCode;
 use axum::routing::post;
 use axum::{Extension, Json};
+use sqlx::types::uuid::Uuid;
 
 use crate::DbPool;
 use axum::Router;
 use serde::Deserialize;
 
-use sqlx::types::Uuid;
-
 use crate::models::user::User;
 
 pub fn router() -> Router {
     Router::new().route("/signup", post(signup))
-    //   .route("/signup-confirm", post(signup_confirm))
+    .route("/signup-confirm", post(signup_confirm))
     /*.route("/signin", post(signin))
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
@@ -57,29 +56,24 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
     StatusCode::CREATED
 }
 
-struct ConfirmResponse {
-    status_code: StatusCode,
-    token: String,
-}
+#[derive(Deserialize)]
 struct Confirm {
     link_id: String,
 }
-async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> ConfirmResponse {
+async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> (StatusCode, Json<String>) {
     let user = match User::retrieve_by_link_id(&db.0, &payload.link_id).await {
         Ok(user) => user,
         Err(E) => {
-            return ConfirmResponse {
-                status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                token: String::new(),
-            }
+            let error = match E {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return (error, Json(String::new()))
         }
     };
 
     let token = User::create_session(&db.0, &user).await.unwrap();
-    ConfirmResponse {
-        status_code: StatusCode::CREATED,
-        token,
-    }
+    (StatusCode::CREATED, Json(token))
 }
 
 //get user

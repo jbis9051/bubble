@@ -3,6 +3,7 @@ use crate::DbPool;
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 
+
 use rand_core::{OsRng, RngCore};
 
 pub struct User {
