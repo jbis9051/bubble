@@ -9,12 +9,12 @@ use uuid::Uuid;
 
 pub fn router() -> Router {
     Router::new().route("/group/:name", post(create))
-        /*
-    .route("/group/:id", get(read))
-    .route("/group/:id/new_users", post(add_users))
-    .route("/group/:id/users_to_delete", post(delete_users))
-    .route("/group/:id/name", post(change_name))
-    .route("/group/:id", delete(delete_group))*/
+    /*
+.route("/group/:id", get(read))
+.route("/group/:id/new_users", post(add_users))
+.route("/group/:id/users_to_delete", post(delete_users))
+.route("/group/:id/name", post(change_name))
+.route("/group/:id", delete(delete_group))*/
 }
 
 // Accept data -> deserialiable
@@ -30,7 +30,7 @@ pub struct GroupInfo {
 
 //Respond with JSON: id, name, created_date
 
-async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
+async fn create(db: Extension<DbPool>, Path(params): Path<String>) -> Json<GroupInfo> {
     let group: Group = Group {
         id: 0,
         uiud: Uuid::new_v4().to_string(),
@@ -47,9 +47,9 @@ async fn create(Path(params): Path<String>) -> Json<GroupInfo> {
 }
 
 // respond with JSON: id, name, created_date
-async fn read(Path(params): Path<String>) -> Json<GroupInfo> {
-    let uuid = params.get("id").to_string();
-    let group_response = Group::read(uuid);
+async fn read(db: Extension<DbPool>, Path(params): Path<String>) -> Json<GroupInfo> {
+    let uuid = params.get("uuid").to_string();
+    let group_response = Group::read(&db.0, uuid);
     let new_group = GroupInfo {
         uuid: group_response.uuid,
         name: group_response.group_name,
@@ -57,7 +57,7 @@ async fn read(Path(params): Path<String>) -> Json<GroupInfo> {
     };
     Json(new_group)
 }
-/*
+
 #[derive(Deserialize)]
 pub struct UsersIDs {
     users: Vec<i32>,
@@ -74,8 +74,8 @@ async fn add_users(Path(id): Path<String>, extract::Json(payload): extract::Json
 async fn delete_users(Path(params): Path<String>, extract::Json(payload): extract::Json<UsersIDs>) {
     let group_id = params.get("id").to_string();
     let users_to_delete = payload.users;
-    Group::delete_users(group_id, users_to_delete);
-}*/
+    Group::delete_users(&db.0, group_id, users_to_delete);
+}
 
 #[derive(Serialize)]
 pub struct NameChange {
@@ -83,9 +83,9 @@ pub struct NameChange {
 }
 
 //request json: name
-async fn change_name(
-    Path(params): Path<String>,
-    extract::Json(payload): extract::Json<NameChange>,
+async fn change_name(db: Extension<DbPool>,
+                     Path(params): Path<String>,
+                     extract::Json(payload): extract::Json<NameChange>,
 ) {
     let group_id = params.get("id").to_string();
     //must resolve where normal rust or json is how requests replies sent
@@ -94,7 +94,7 @@ async fn change_name(
 }
 
 //none, just id passed from path
-async fn delete_group(Path(params): Path<String>) {
-    let group_id = params.get("id").to_string();
-    Group::delete_group(group_id);
+async fn delete_group(db: Extension<DbPool>, Path(params): Path<String>) {
+    let group_id = params.get("uuid").to_string();
+    Group::delete_group(&db.0, group_id);
 }

@@ -27,7 +27,8 @@ impl Group {
             .await?;
     }
     //TENTATIVE, PoolConnection<Postgres> is not used
-    pub async fn read(db: &DbPool, id: i32) -> Result<Group, Error> {
+    pub async fn read(db: &DbPool, uuid: &str) -> Result<Group, Error> {
+        let id = get_group_id(uuid);
         let stream = sqlx::query("SELECT * FROM group WHERE id = $1")
             .bind(id)
             .execute(db)
