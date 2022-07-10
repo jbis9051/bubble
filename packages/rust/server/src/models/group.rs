@@ -14,8 +14,7 @@ pub struct Group {
 // CRUD functions
 impl Group {
     pub async fn create(db: &DbPool, group: &Group) -> Result<(), sqlx::Error> {
-        sqlx::query("INSERT INTO \"group\" (id, uuid, group_name) VALUES ($1, $2, $3);")
-            .bind(&group.id)
+        sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2);")
             .bind(&group.uuid)
             .bind(&group.group_name)
             .execute(db)

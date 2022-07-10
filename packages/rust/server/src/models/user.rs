@@ -23,21 +23,25 @@ impl User {
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
                              VALUES ($1, $2, $3, $4, $5, $6, $7);",
         )
-            .bind(&user.uuid)
-            .bind(&user.username)
-            .bind(&user.password)
-            .bind(&user.profile_picture)
-            .bind(Option::<String>::None)
-            .bind(&user.phone)
-            .bind(&user.name)
-            .execute(db)
-            .await
-            .unwrap();
+        .bind(&user.uuid)
+        .bind(&user.username)
+        .bind(&user.password)
+        .bind(&user.profile_picture)
+        .bind(Option::<String>::None)
+        .bind(&user.phone)
+        .bind(&user.name)
+        .execute(db)
+        .await
+        .unwrap();
 
         Ok(())
     }
 
-    pub async fn create_confirmation(db: &DbPool, user: &User, email: &str) -> Result<String, sqlx::Error> {
+    pub async fn create_confirmation(
+        db: &DbPool,
+        user: &User,
+        email: &str,
+    ) -> Result<String, sqlx::Error> {
         let mut key = [0u8; 32];
         OsRng.fill_bytes(&mut key);
         let link_id = String::from_utf8_lossy(key.as_slice()).to_string();
