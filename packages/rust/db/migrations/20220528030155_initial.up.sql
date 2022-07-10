@@ -75,7 +75,7 @@ CREATE TABLE confirmation
 (
     id      serial PRIMARY KEY,
     user_id INT REFERENCES "user" (id) NOT NULL,
-    link_id VARCHAR(32) UNIQUE         NOT NULL,
+    link_id UUID UNIQUE         NOT NULL,
     email   VARCHAR(255)               NOT NULL,
     created TIMESTAMP                  DEFAULT CURRENT_TIMESTAMP
 );

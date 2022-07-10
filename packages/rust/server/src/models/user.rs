@@ -1,28 +1,29 @@
 use crate::DbPool;
 
 use sqlx::postgres::PgRow;
+use sqlx::types::chrono;
+use sqlx::types::Uuid;
 use sqlx::Row;
-
 
 use rand_core::{OsRng, RngCore};
 
 pub struct User {
     pub id: i32,
-    pub uuid: String,
+    pub uuid: Uuid,
     pub username: String,
     pub password: String,
     pub profile_picture: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
     pub name: String,
-    pub created: String,
+    pub created: chrono::NaiveDateTime,
 }
 
 impl User {
-    pub async fn create(db: &DbPool, user: &User) -> Result<(), sqlx::Error> {
-        sqlx::query(
+    pub async fn create(db: &DbPool, user: &User) -> Result<User, sqlx::Error> {
+        let row = sqlx::query(
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
-                             VALUES ($1, $2, $3, $4, $5, $6, $7);",
+                             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;",
         )
         .bind(&user.uuid)
         .bind(&user.username)
@@ -31,11 +32,12 @@ impl User {
         .bind(Option::<String>::None)
         .bind(&user.phone)
         .bind(&user.name)
-        .execute(db)
+        .fetch_one(db)
         .await
         .unwrap();
 
-        Ok(())
+        let user = User::user_by_row(&row).await;
+        Ok(user)
     }
 
     pub async fn create_confirmation(

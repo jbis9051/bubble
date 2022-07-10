@@ -1,17 +1,21 @@
+use crate::DbPool;
+
 use axum::http::StatusCode;
 use axum::routing::post;
-use axum::{Extension, Json};
-use sqlx::types::uuid::Uuid;
-
-use crate::DbPool;
 use axum::Router;
+use axum::{Extension, Json};
+
+use sqlx::types::chrono::NaiveDateTime;
+use sqlx::types::Uuid;
+
 use serde::Deserialize;
 
 use crate::models::user::User;
 
 pub fn router() -> Router {
-    Router::new().route("/signup", post(signup))
-    .route("/signup-confirm", post(signup_confirm))
+    Router::new()
+        .route("/signup", post(signup))
+        .route("/signup-confirm", post(signup_confirm))
     /*.route("/signin", post(signin))
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
@@ -31,19 +35,19 @@ struct CreateUser {
 async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> StatusCode {
     let user: User = User {
         id: 0,
-        uuid: Uuid::new_v4().to_string(),
+        uuid: Uuid::new_v4(),
         username: payload.username,
         password: payload.password,
         profile_picture: None,
         email: None,
         phone: payload.phone,
         name: payload.name,
-        created: String::new(),
+        created: NaiveDateTime::from_timestamp(0, 0),
     };
-    match User::create(&db.0, &user).await {
-        Ok(()) => (),
+    let user = match User::create(&db.0, &user).await {
+        Ok(user) => user,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
-    }
+    };
     let link_id = match User::create_confirmation(&db.0, &user, &payload.email).await {
         Ok(link_id) => link_id,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
@@ -51,7 +55,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 
     println!(
         "Sending Email with link_id {:?} to {:?}",
-        link_id, user.email
+        link_id, payload.email
     );
     StatusCode::CREATED
 }
@@ -60,7 +64,10 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 struct Confirm {
     link_id: String,
 }
-async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> (StatusCode, Json<String>) {
+async fn signup_confirm(
+    db: Extension<DbPool>,
+    Json(payload): Json<Confirm>,
+) -> (StatusCode, Json<String>) {
     let user = match User::retrieve_by_link_id(&db.0, &payload.link_id).await {
         Ok(user) => user,
         Err(E) => {
@@ -68,7 +75,7 @@ async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> 
                 sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             };
-            return (error, Json(String::new()))
+            return (error, Json(String::new()));
         }
     };
 
