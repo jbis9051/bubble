@@ -56,15 +56,12 @@ struct Token {
 struct Confirm {
     link_id: String,
 }
-async fn signup_confirm(
-    db: Extension<DbPool>,
-    Json(payload): Json<Confirm>,
-) -> Json<Token> {
-    let user = User::retrieve_by_link_id(&db.0, &payload.link_id).await.unwrap();
+async fn signup_confirm(db: Extension<DbPool>, Json(payload): Json<Confirm>) -> Json<Token> {
+    let user = User::retrieve_by_link_id(&db.0, &payload.link_id)
+        .await
+        .unwrap();
     let token = User::create_session(&db.0, &user).await.unwrap();
-    Json(Token {
-        token,
-    })
+    Json(Token { token })
 }
 
 struct SignInJson {
@@ -72,11 +69,11 @@ struct SignInJson {
     password: String,
 }
 async fn signin(db: Extension<DbPool>, Json(payload): Json<SignInJson>) -> Json<Token> {
-    let user = User::get_by_signin(&db.0, &payload.email, &payload.password).await.unwrap();
+    let user = User::get_by_signin(&db.0, &payload.email, &payload.password)
+        .await
+        .unwrap();
     let token = User::create_session(&db.0, &user).await.unwrap();
-    Json(Token {
-        token,
-    })
+    Json(Token { token })
 }
 /*
 async fn signout(Path(params): &str) {
