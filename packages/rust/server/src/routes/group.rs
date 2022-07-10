@@ -6,10 +6,10 @@ use axum::routing::post;
 use axum::Extension;
 use axum::{Json, Router};
 use serde::Serialize;
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 pub fn router() -> Router {
-    Router::new().route("/group/:name", post(create))
+    Router::new().route("/:name", post(create))
     // .route("/group/:id", get(read))
     // .route("/group/:id/new_users", post(add_users))
     // .route("/group/:id/users_to_delete", post(delete_users))
@@ -30,17 +30,18 @@ pub struct GroupInfo {
 
 //Respond with JSON: id, name, created_date
 
-async fn create(db: Extension<&DbPool>, Path(params): Path<String>) -> Json<GroupInfo> {
+async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupInfo> {
     let group: Group = Group {
         id: 0,
-        uuid: Uuid::new_v4().to_string(),
-        group_name: params,
+        uuid: Uuid::new_v4(),
+        group_name: name,
         created: "".to_string(),
         members: vec![],
     };
-    Group::create(&db, &group);
+
+    Group::create(&db.0, &group).await.unwrap();
     let new_group = GroupInfo {
-        uuid: group.uuid,
+        uuid: group.uuid.to_string(),
         name: group.group_name,
         created: group.created,
     };

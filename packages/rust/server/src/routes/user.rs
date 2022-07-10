@@ -8,7 +8,7 @@ use crate::DbPool;
 use axum::Router;
 use serde::Deserialize;
 
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 use crate::models::user::User;
 
