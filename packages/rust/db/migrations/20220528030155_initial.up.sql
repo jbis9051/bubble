@@ -25,7 +25,7 @@ CREATE TABLE "group"
     id         serial PRIMARY KEY,
     uuid       UUID UNIQUE  NOT NULL,
     group_name VARCHAR(255) NOT NULL,
-    created    TIMESTAMP    NOT NULL
+    created    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE location_group
