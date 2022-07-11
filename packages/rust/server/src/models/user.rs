@@ -5,6 +5,7 @@ use sqlx::types::chrono;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
+use crate::routes::user::Confirmation;
 use rand_core::{OsRng, RngCore};
 
 pub struct User {
@@ -44,10 +45,8 @@ impl User {
         db: &DbPool,
         user: &User,
         email: &str,
-    ) -> Result<String, sqlx::Error> {
-        let mut key = [0u8; 32];
-        OsRng.fill_bytes(&mut key);
-        let link_id = String::from_utf8_lossy(key.as_slice()).to_string();
+    ) -> Result<Uuid, sqlx::Error> {
+        let link_id = Uuid::new_v4();
 
         sqlx::query(
             "INSERT INTO confirmation (user_id, link_id, email)
@@ -62,14 +61,28 @@ impl User {
         Ok(link_id)
     }
 
-    pub async fn retrieve_by_link_id(db: &DbPool, link_id: &str) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("DELETE FROM confirmation WHERE link_id IS $1 RETURNING *;")
+    pub async fn get_by_link_id(db: &DbPool, link_id: Uuid) -> Result<Confirmation, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM confirmation WHERE link_id IS $1 RETURNING *;")
             .bind(link_id)
             .fetch_one(db)
             .await?;
 
-        let user = User::user_by_row(&row).await;
-        Ok(user)
+        let confirmation = crate::routes::user::Confirmation {
+            id: row.get("id"),
+            user_id: row.get("user_id"),
+            link_id: row.get("link_id"),
+            email: row.get("email"),
+            created: row.get("created"),
+        };
+        Ok(confirmation)
+    }
+
+    pub async fn delete_confirmation(db: &DbPool, conf_id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM confirmation WHERE id IS $1")
+            .bind(conf_id)
+            .execute(db)
+            .await?;
+        Ok(())
     }
 
     pub async fn create_session(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
@@ -86,7 +99,6 @@ impl User {
         Ok(token)
     }
 
-    /*
     pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user WHERE id IS $1;")
             .bind(id)
@@ -96,7 +108,7 @@ impl User {
         let user = User::user_by_row(&row).await;
         Ok(user)
     }
-
+    /*
     pub async fn get_by_uuid(db: &DbPool, uuid: &str) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user WHERE uuid IS $1;")
             .bind(uuid)
@@ -122,9 +134,14 @@ impl User {
         Ok(user)
     }
 
-    fn update(&self, _conn: PoolConnection<Postgres>) {
-        todo!();
+
+    pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("")
+
+        Ok(())
     }
+
+
     fn delete(&self, _conn: PoolConnection<Postgres>) {
         todo!();
         // remove routes from a whole bunch of things
