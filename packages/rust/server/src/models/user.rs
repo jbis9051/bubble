@@ -144,6 +144,14 @@ impl User {
         Ok(())
     }
 
+    pub async fn delete_session(db: &DbPool, token: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM session_token WHERE token = $1;")
+            .bind(token)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+
     async fn user_from_row(&mut self, row: &PgRow) -> Result<(), sqlx::Error> {
         self.id = row.get("id");
         self.uuid = row.get("uuid");
