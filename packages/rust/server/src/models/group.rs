@@ -86,7 +86,7 @@ impl Group {
 //     }
 // }
 //
-// pub fn delete_users(db: Extension<&DbPool>, uuid: &str, users_to_delete: &[i32]) {
+// pub fn delete_users(db: &DbPool, uuid: &str, users_to_delete: &[i32]) {
 //     for i in users_to_delete {
 //         let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
 //             .bind(i)
@@ -100,7 +100,7 @@ impl Group {
 //     }
 // }
 //
-// pub fn change_name(db: Extension<&DbPool>, uuid: &str, name: String) {
+// pub fn change_name(db: &DbPool, uuid: &str, name: String) {
 //     sqlx::query("UPDATE group SET group_name = $1 WHERE id = $2")
 //         .bind(name)
 //         .bind(get_group_id(uuid))
@@ -108,7 +108,7 @@ impl Group {
 //         .await?;
 // }
 //
-// pub fn delete_group(db: Extension<&DbPool>, uuid: &str) {
+// pub fn delete_group(db: &DbPool, uuid: &str) {
 //     sqlx::query("DELETE FROM group WHERE uuid = $1")
 //         .bind(uuid)
 //         .execute(db)
