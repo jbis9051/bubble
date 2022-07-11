@@ -140,8 +140,6 @@ impl User {
 
         Ok(())
     }
-
-
     fn delete(&self, _conn: PoolConnection<Postgres>) {
         todo!();
         // remove routes from a whole bunch of things
