@@ -1,12 +1,9 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import {View, StyleSheet,TextInput, Text} from 'react-native';
-import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-import {faAsterisk} from "@fortawesome/free-solid-svg-icons/faAsterisk";
-import colors from '../constants/Colors';
+import colors from '../constants/colors';
 
 const styles = StyleSheet.create({
     container:{
-        flexDirection: 'column',
         padding: 10,
     },
     textInput: {
@@ -26,32 +23,37 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
         color: colors.black,
         fontWeight: '200',
-    },asterisk:{
-        flex:1,
-        justifyContent: 'flex-end',
     },
 })
 
 
 
-const TextInputBox: React.FC<{descriptor: string, required: boolean}> = ({descriptor, required}) => {
+const TextInputBox: React.FC<{descriptor: string, secure: boolean, input: string}> =
+    ({descriptor, secure, input}) => {
+    const [isFocused, setFocus] = useState(false);
+    const isPhone = input==="telephoneNumber"
     return (
         <View style={styles.container}>
             <View style={styles.descriptors}>
                 <Text style={styles.textInputDescriptors}>{descriptor}</Text>
-                {required &&
-                <FontAwesomeIcon
-                    style={styles.asterisk}
-                    icon={faAsterisk}
-                    color={colors.primary}
-                    size={15}
-                />}
+                <Text style={[styles.textInputDescriptors,
+                    {color: isFocused ? colors.primary : colors.black}]}
+                    // {color: colors.black}]}
+                >{descriptor}</Text>
             </View>
 
             <TextInput
                 style={styles.textInput}
                 underlineColorAndroid='transparent'
                 keyboardType="default"/>
+                style={[styles.textInput,
+                    {borderBottomColor: isFocused ? colors.primary : colors.black}]}
+                onFocus = {() => setFocus(true)}
+                onBlur = {() => setFocus(false)}
+                secureTextEntry={secure}
+                textContentType={isPhone ? 'telephoneNumber' : undefined}
+                keyboardType="default"
+            />
         </View>
     )
 }
