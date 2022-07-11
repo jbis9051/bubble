@@ -4,10 +4,10 @@ import ProfileImageTemplate from '../ProfileImageTemplate';
 
 import Styles from './Styles';
 
-const ProfileHeader: React.FunctionComponent<{ profileImage: string }> = ({ profileImage }) => (
+const ProfileHeader = () => (
     <View style={Styles.header}>
         <ProfileImageTemplate 
-            source={profileImage}
+            source=''
             size={140}
         />
         <Text style={Styles.headerText}>John Appleseed</Text>

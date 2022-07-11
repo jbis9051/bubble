@@ -14,7 +14,7 @@ const ProfileScreen = () => (
     >
         <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
             <Navigation />
-            <ProfileHeader profileImage='../../assets/user.jpeg'/>
+            <ProfileHeader />
         </SafeAreaView>
         <ScrollView style={{ flex: 0 }} showsVerticalScrollIndicator={false}>
             <SlideCardComponent />
