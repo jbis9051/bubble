@@ -1,5 +1,5 @@
 use crate::models::group::Group;
-use crate::DbPool;
+use crate::types::DbPool;
 use axum::extract::Path;
 use axum::routing::post;
 use axum::Extension;

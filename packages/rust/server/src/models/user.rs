@@ -1,10 +1,9 @@
-use crate::DbPool;
-
 use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
 use crate::routes::user::Confirmation;
+use crate::types::DbPool;
 use rand_core::{OsRng, RngCore};
 use sqlx::types::chrono::NaiveDateTime;
 
