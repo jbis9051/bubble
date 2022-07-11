@@ -26,13 +26,6 @@ const Styles = StyleSheet.create({
         padding: 10,
         height: 206,
     },
-    profileImage: {
-        height: 140,
-        width: 140,
-        borderRadius: 100,
-        borderWidth: 2.5,
-        borderColor: '#d3d3d3',
-    },
     headerText: {
         fontSize: 36,
         color: '#ffffff',

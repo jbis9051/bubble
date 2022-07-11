@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Image, Text } from 'react-native';
+import ProfileImageTemplate from '../ProfileImageTemplate';
 
 import Styles from './Styles';
 
-const ProfileHeader = () => (
+const ProfileHeader: React.FunctionComponent<{ profileImage: string }> = ({ profileImage }) => (
     <View style={Styles.header}>
-        <Image
-            /* eslint-disable global-require */
-            source={require('../../../assets/user.jpeg')}
-            style={Styles.profileImage}
+        <ProfileImageTemplate 
+            source={profileImage}
+            size={140}
         />
         <Text style={Styles.headerText}>John Appleseed</Text>
         <Text

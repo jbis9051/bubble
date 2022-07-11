@@ -29,6 +29,11 @@ const Styles = StyleSheet.create({
         flexDirection: 'row',
         paddingRight: 20,
     },
+    profileImage: {
+        borderRadius: 100,
+        borderWidth: 2.5,
+        borderColor: '#d3d3d3',
+    }
 });
 
 export default Styles;
