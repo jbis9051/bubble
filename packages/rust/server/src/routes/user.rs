@@ -8,7 +8,7 @@ use axum::{Extension, Json};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::models::user::User;
 
@@ -64,23 +64,40 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 struct Confirm {
     link_id: String,
 }
+#[derive(Serialize)]
+struct SessionToken {
+    token: String,
+}
+pub struct Confirmation {
+    pub(crate) id: i32,
+    pub(crate) user_id: i32,
+    pub(crate) link_id: Uuid,
+    pub(crate) email: String,
+    pub(crate) created: NaiveDateTime,
+}
 async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
-) -> (StatusCode, Json<String>) {
-    let user = match User::retrieve_by_link_id(&db.0, &payload.link_id).await {
-        Ok(user) => user,
-        Err(E) => {
-            let error = match E {
-                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            return (error, Json(String::new()));
-        }
-    };
+) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
+    let confirmation =
+        match User::get_by_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap()).await {
+            Ok(conf) => conf,
+            Err(e) => {
+                let error = match e {
+                    sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                    _ => StatusCode::INTERNAL_SERVER_ERROR,
+                };
+                return Err(error);
+            }
+        };
+    User::delete_confirmation(&db.0, confirmation.id)
+        .await
+        .unwrap();
+    let mut user = User::get_by_id(&db.0, confirmation.user_id).await.unwrap();
+    user.email = Some(confirmation.email);
 
     let token = User::create_session(&db.0, &user).await.unwrap();
-    (StatusCode::CREATED, Json(token))
+    Ok((StatusCode::CREATED, Json(SessionToken { token })))
 }
 
 //get user
