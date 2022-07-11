@@ -63,7 +63,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 struct Confirm {
     link_id: String,
 }
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct SessionToken {
     token: String,
 }
@@ -112,13 +112,12 @@ async fn signin(
     }
     Err(StatusCode::NOT_FOUND)
 }
-/*
-async fn signout(Path(params): &str) {
-    let token = params.get("token");
 
-    todo!();
+async fn signout(db: Extension<DbPool>, Json(payload): Json<SessionToken>) -> StatusCode {
+    User::delete_session(&db.0, &payload.token).await.unwrap();
+    StatusCode::OK
 }
-
+/*
 async fn forgot(Path(params): &str) {
     let email = params.get("email");
 
