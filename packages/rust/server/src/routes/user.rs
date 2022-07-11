@@ -1,5 +1,3 @@
-use crate::DbPool;
-
 use axum::http::StatusCode;
 use axum::routing::post;
 use axum::Router;
@@ -8,9 +6,9 @@ use axum::{Extension, Json};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
-use serde::{Deserialize, Serialize};
-
 use crate::models::user::User;
+use crate::types::DbPool;
+use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
     Router::new()
@@ -25,13 +23,13 @@ pub fn router() -> Router {
     .route("", delete(delete_user))*/
 }
 
-#[derive(Deserialize)]
-struct CreateUser {
-    email: String,
-    username: String,
-    password: String,
-    phone: Option<String>,
-    name: String,
+#[derive(Deserialize, Serialize)]
+pub struct CreateUser {
+    pub email: String,
+    pub username: String,
+    pub password: String,
+    pub phone: Option<String>,
+    pub name: String,
 }
 async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> StatusCode {
     let user: User = User {
@@ -70,11 +68,11 @@ struct SessionToken {
     token: String,
 }
 pub struct Confirmation {
-    pub(crate) id: i32,
-    pub(crate) user_id: i32,
-    pub(crate) link_id: Uuid,
-    pub(crate) email: String,
-    pub(crate) created: NaiveDateTime,
+    pub id: i32,
+    pub user_id: i32,
+    pub link_id: Uuid,
+    pub email: String,
+    pub created: NaiveDateTime,
 }
 async fn signup_confirm(
     db: Extension<DbPool>,

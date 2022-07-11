@@ -1,4 +1,4 @@
-use crate::DbPool;
+use crate::types::DbPool;
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono;
 use sqlx::types::Uuid;
