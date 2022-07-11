@@ -16,7 +16,8 @@ pub fn router() -> Router {
     Router::new()
         .route("/signup", post(signup))
         .route("/signup-confirm", post(signup_confirm))
-    /*.route("/signin", post(signin))
+        .route("/signin", post(signin))
+    /*
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
     .route("/forgot-confirm", post(forgot_confirm))
@@ -97,19 +98,23 @@ async fn signup_confirm(
 
 //get user
 
-/*
+#[derive(Deserialize)]
 struct SignInJson {
     email: String,
     password: String,
 }
-async fn signin(db: Extension<DbPool>, Json(payload): Json<SignInJson>) -> Json<Token> {
-    let user = User::get_by_signin(&db.0, &payload.email, &payload.password)
-        .await
-        .unwrap();
-    let token = User::create_session(&db.0, &user).await.unwrap();
-    Json(Token { token })
+async fn signin(
+    db: Extension<DbPool>,
+    Json(payload): Json<SignInJson>,
+) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
+    let user = User::get_by_email(&db.0, &payload.email).await.unwrap();
+    if user.password == payload.password {
+        let token = User::create_session(&db.0, &user).await.unwrap();
+        return Ok((StatusCode::CREATED, Json(SessionToken { token })));
+    }
+    Err(StatusCode::NOT_FOUND)
 }
-
+/*
 async fn signout(Path(params): &str) {
     let token = params.get("token");
 

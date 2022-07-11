@@ -111,6 +111,17 @@ impl User {
         Ok(user)
     }
 
+    pub async fn get_by_email(db: &DbPool, email: &str) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM \"user\" WHERE email = $1")
+            .bind(email)
+            .fetch_one(db)
+            .await?;
+
+        let mut user = User::empty_user().await;
+        user.user_from_row(&row).await.unwrap();
+        Ok(user)
+    }
+
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query(
             "UPDATE \"user\"
