@@ -44,7 +44,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
         name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let user = match User::create(&db.0, &user).await {
+    let user = match User::create(&db.0, user).await {
         Ok(user) => user,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
     };
@@ -82,19 +82,14 @@ async fn signup_confirm(
     let confirmation =
         match User::get_by_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap()).await {
             Ok(conf) => conf,
-            Err(e) => {
-                let error = match e {
-                    sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                    _ => StatusCode::INTERNAL_SERVER_ERROR,
-                };
-                return Err(error);
-            }
+            _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
         };
     User::delete_confirmation(&db.0, confirmation.id)
         .await
         .unwrap();
     let mut user = User::get_by_id(&db.0, confirmation.user_id).await.unwrap();
     user.email = Some(confirmation.email);
+    user.update(&db.0).await.unwrap();
 
     let token = User::create_session(&db.0, &user).await.unwrap();
     Ok((StatusCode::CREATED, Json(SessionToken { token })))

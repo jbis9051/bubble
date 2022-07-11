@@ -1,12 +1,12 @@
 use crate::DbPool;
 
 use sqlx::postgres::PgRow;
-use sqlx::types::chrono;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
 use crate::routes::user::Confirmation;
 use rand_core::{OsRng, RngCore};
+use sqlx::types::chrono::NaiveDateTime;
 
 pub struct User {
     pub id: i32,
@@ -17,11 +17,11 @@ pub struct User {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub name: String,
-    pub created: chrono::NaiveDateTime,
+    pub created: NaiveDateTime,
 }
 
 impl User {
-    pub async fn create(db: &DbPool, user: &User) -> Result<User, sqlx::Error> {
+    pub async fn create(db: &DbPool, mut user: User) -> Result<User, sqlx::Error> {
         let row = sqlx::query(
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
                              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;",
@@ -37,7 +37,7 @@ impl User {
         .await
         .unwrap();
 
-        let user = User::user_by_row(&row).await;
+        user.user_from_row(&row).await.unwrap();
         Ok(user)
     }
 
@@ -62,12 +62,12 @@ impl User {
     }
 
     pub async fn get_by_link_id(db: &DbPool, link_id: Uuid) -> Result<Confirmation, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM confirmation WHERE link_id IS $1 RETURNING *;")
+        let row = sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
             .bind(link_id)
             .fetch_one(db)
             .await?;
 
-        let confirmation = crate::routes::user::Confirmation {
+        let confirmation = Confirmation {
             id: row.get("id"),
             user_id: row.get("user_id"),
             link_id: row.get("link_id"),
@@ -78,7 +78,7 @@ impl User {
     }
 
     pub async fn delete_confirmation(db: &DbPool, conf_id: i32) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM confirmation WHERE id IS $1")
+        sqlx::query("DELETE FROM confirmation WHERE id = $1")
             .bind(conf_id)
             .execute(db)
             .await?;
@@ -100,63 +100,65 @@ impl User {
     }
 
     pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM user WHERE id IS $1;")
+        let row = sqlx::query("SELECT * FROM user WHERE id = $1;")
             .bind(id)
             .fetch_one(db)
             .await?;
 
-        let user = User::user_by_row(&row).await;
+        let mut user = User::empty_user().await;
+        user.user_from_row(&row).await.unwrap();
         Ok(user)
     }
-    /*
-    pub async fn get_by_uuid(db: &DbPool, uuid: &str) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM user WHERE uuid IS $1;")
-            .bind(uuid)
-            .fetch_one(db)
-            .await?;
-
-        let user = User::user_by_row(&row).await;
-        Ok(user)
-    }
-
-    pub async fn get_by_signin(
-        db: &DbPool,
-        email: &str,
-        password: &str,
-    ) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM user WHERE email IS $1 AND password IS $2;")
-            .bind(email)
-            .bind(password)
-            .fetch_one(db)
-            .await?;
-
-        let user = User::user_by_row(&row).await;
-        Ok(user)
-    }
-
 
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
-        sqlx::query("")
+        sqlx::query(
+            "UPDATE user
+                  SET username = $1,
+                      password = $2,
+                      profile_picture = $3,
+                      email = $4,
+                      phone = $5,
+                      name = $6
+                  WHERE id = $7",
+        )
+        .bind(&self.username)
+        .bind(&self.password)
+        .bind(&self.profile_picture)
+        .bind(&self.email)
+        .bind(&self.phone)
+        .bind(&self.name)
+        .bind(&self.id)
+        .execute(db)
+        .await?;
+        Ok(())
+    }
+
+    async fn user_from_row(&mut self, row: &PgRow) -> Result<(), sqlx::Error> {
+        self.id = row.get("id");
+        self.uuid = row.get("uuid");
+        self.username = row.get("username");
+        self.password = row.get("password");
+        self.profile_picture = row.get("profile_picture");
+        self.email = row.get("email");
+        self.phone = row.get("phone");
+        self.name = row.get("name");
+        self.created = row.get("created");
 
         Ok(())
     }
-    fn delete(&self, _conn: PoolConnection<Postgres>) {
-        todo!();
-        // remove routes from a whole bunch of things
-        // delete routes row
-    }
-    */
-    async fn user_by_row(row: &PgRow) -> User {
-        User {
-            id: row.get("id"),
-            uuid: row.get("uuid"),
-            username: row.get("username"),
-            password: row.get("password"),
-            profile_picture: row.get("profile_picture"),
-            email: row.get("email"),
-            phone: row.get("phone"),
-            name: row.get("name"),
-            created: row.get("created"),
-        }
+
+    async fn empty_user() -> User {
+        let user: User = User {
+            id: Default::default(),
+            uuid: Default::default(),
+            username: "".to_string(),
+            password: "".to_string(),
+            profile_picture: None,
+            email: None,
+            phone: None,
+            name: "".to_string(),
+            created: NaiveDateTime::from_timestamp(0, 0),
+        };
+        user
     }
 }
