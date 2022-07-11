@@ -22,9 +22,12 @@ const Styles = StyleSheet.create({
     header: {
         alignItems: 'center',
         justifyContent: 'center',
-        flexDirection: 'column',
         padding: 10,
-        height: 206,
+        height: 186,
+    },
+    headerContent: {
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     headerText: {
         fontSize: 36,
