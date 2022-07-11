@@ -43,14 +43,14 @@ async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupIn
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
-        created: group.created,
+        created: group.created.to_string(),
     };
     Json(new_group)
 }
-//
-// // respond with JSON: id, name, created_date
-// async fn read(db: &DbPool, Path(params): Path<String>) -> Json<GroupInfo> {
-//     let uuid = params.get("uuid").to_string();
+
+// respond with JSON: id, name, created_date
+// async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo> {
+//     // let uuid: = params.get("uuid");
 //     let group_response = Group::read(&db.0, uuid);
 //     let new_group = GroupInfo {
 //         uuid: group_response.uuid,
