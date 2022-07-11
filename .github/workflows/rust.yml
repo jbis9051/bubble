@@ -36,4 +36,8 @@ jobs:
           toolchain: stable
           override: true
           profile: minimal
+      - run: docker compose -f docker-compose-ci.yml up -d
+      - run: docker run --rm --network="host" -e DATABASE_URL=postgres://user:pass@localhost:5433/db db migrate
       - run: cargo test --tests
+        env:
+          DB_URL: postgres://user:pass@localhost:5433/db
