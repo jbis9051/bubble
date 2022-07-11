@@ -113,7 +113,7 @@ impl User {
 
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query(
-            "UPDATE user
+            "UPDATE \"user\"
                   SET username = $1,
                       password = $2,
                       profile_picture = $3,
