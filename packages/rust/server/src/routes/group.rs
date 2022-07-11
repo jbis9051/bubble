@@ -1,11 +1,11 @@
 use crate::models::group::Group;
 use crate::DbPool;
 use axum::extract::Path;
-
 use axum::routing::post;
 use axum::Extension;
 use axum::{Json, Router};
 use serde::Serialize;
+use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 pub fn router() -> Router {
@@ -31,15 +31,15 @@ pub struct GroupInfo {
 //Respond with JSON: id, name, created_date
 
 async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupInfo> {
-    let group: Group = Group {
+    let mut group: Group = Group {
         id: 0,
         uuid: Uuid::new_v4(),
         group_name: name,
-        created: "".to_string(),
+        created: NaiveDateTime::from_timestamp(0, 0),
         members: vec![],
     };
 
-    Group::create(&db.0, &group).await.unwrap();
+    Group::create(&db.0, &mut group).await.unwrap();
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
