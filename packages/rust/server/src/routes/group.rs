@@ -49,16 +49,23 @@ async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupIn
 }
 
 // respond with JSON: id, name, created_date
-// async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo> {
-//     // let uuid: = params.get("uuid");
-//     let group_response = Group::read(&db.0, uuid);
-//     let new_group = GroupInfo {
-//         uuid: group_response.uuid,
-//         name: group_response.group_name,
-//         created: group_response.created,
-//     };
-//     Json(new_group)
-// }
+async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo> {
+    // let uuid: = params.get("uuid");
+    let mut group: Group = Group {
+        id: 0,
+        uuid: Uuid::new_v4(),
+        group_name: String::new(),
+        created: NaiveDateTime::from_timestamp(0, 0),
+        members: vec![],
+    };
+    Group::read(&db.0, &mut group, uuid);
+    let new_group = GroupInfo {
+        uuid: group.uuid.to_string(),
+        name: group.group_name,
+        created: group.created.to_string(),
+    };
+    Json(new_group)
+}
 //
 // #[derive(Deserialize)]
 // pub struct UsersIDs {
