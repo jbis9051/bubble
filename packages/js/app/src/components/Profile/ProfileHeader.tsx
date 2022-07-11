@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import ProfileImageTemplate from '../ProfileImageTemplate';
-import ProfileInfo from './ProfileInfo';
 
 import Styles from './Styles';
 
-const ProfileHeader = () => (
-    <View style={Styles.header}>
-        <ProfileInfo />
-    </View>
-);
+const ProfileHeader = () => {
+    // image, username, email will come from API
+
+    const [name, setName] = useState('John Appleseed');
+    const [email, setEmail] = useState('johnappleseed@bubble.com');
+    const [source, setSource] = useState('');
+
+    return (
+        <View style={Styles.header}>
+            <ProfileImageTemplate 
+                source={source}
+                size={140}
+            />
+            <Text style={Styles.headerText}>{name}</Text>
+            <Text
+                style={{
+                    fontSize: 16,
+                    marginTop: 3,
+                    color: '#e3e3e3',
+                }}
+            >
+                {email}
+            </Text>
+        </View>
+    );
+};
 
 export default ProfileHeader;
