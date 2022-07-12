@@ -59,13 +59,13 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
     StatusCode::CREATED
 }
 
-#[derive(Deserialize)]
-struct Confirm {
-    link_id: String,
+#[derive(Serialize, Deserialize)]
+pub struct Confirm {
+    pub link_id: String,
 }
 #[derive(Serialize, Deserialize)]
 struct SessionToken {
-    token: String,
+    pub token: String,
 }
 pub struct Confirmation {
     pub id: i32,
