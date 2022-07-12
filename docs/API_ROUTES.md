@@ -98,7 +98,14 @@ Request Data:
 
 # User
 
+#### Flow:
 
+```mermaid
+flowchart TD
+    Start --> Stop
+```
+
+---
 
 ## User Signup
 
