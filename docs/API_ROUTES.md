@@ -102,7 +102,11 @@ Request Data:
 
 ```mermaid
 flowchart TD
-    Start --> Stop
+    A[User Signs Up] --> B{{Application Sends Email Confirmaton}};
+    B --> C[User Responds?];
+    C -- Yes --> D[Confirms User];
+    C -- No --> E[Confirmation dies after x amount of time];
+    D --> F{{Application Responds with Token}};
 ```
 
 ---
