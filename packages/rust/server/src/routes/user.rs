@@ -19,8 +19,8 @@ pub fn router() -> Router {
     .route("/signout/:token", post(signout))
     .route("/forgot", post(forgot))
     .route("/forgot-confirm", post(forgot_confirm))
-    .route("/change_email", post(change_email))
-    .route("", delete(delete_user))*/
+    .route("/change-email", post(change_email))
+    .route("/delete", delete(delete_user))*/
 }
 
 #[derive(Deserialize, Serialize)]

@@ -12,7 +12,7 @@ pub fn router() -> Router {
     Router::new().route("/:name", post(create))
     // .route("/group/:id", get(read))
     // .route("/group/:id/new_users", post(add_users))
-    // .route("/group/:id/users_to_delete", post(delete_users))
+    // .route("/group/:id/delete_users", post(delete_users))
     // .route("/group/:id/name", post(change_name))
     // .route("/group/:id", delete(delete_group))
 }
