@@ -9,7 +9,7 @@ test_db: stop_ci
 
 fmt:
 	cargo fmt --all
-	cargo clippy --fix --allow-dirty
+	cargo clippy --fix --allow-dirty --allow-staged
 
 dev:
 	docker compose -f docker-compose-dev.yml down
