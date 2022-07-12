@@ -78,19 +78,61 @@ async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let confirmation =
-        match User::get_by_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap()).await {
-            Ok(conf) => conf,
-            _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-        };
-    User::delete_confirmation(&db.0, confirmation.id)
-        .await
-        .unwrap();
-    let mut user = User::get_by_id(&db.0, confirmation.user_id).await.unwrap();
-    user.email = Some(confirmation.email);
-    user.update(&db.0).await.unwrap();
+    let confirmation = match User::get_by_link_id(
+        &db.0,
+        Uuid::parse_str(&payload.link_id).expect("Couldn't read link_id to UUID"),
+    )
+    .await
+    {
+        Ok(conf) => conf,
+        _ => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
 
-    let token = User::create_session(&db.0, &user).await.unwrap();
+    match User::delete_confirmation(&db.0, confirmation.id).await {
+        Ok(_) => (),
+        Err(e) => {
+            let status = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return Err(status);
+        }
+    }
+
+    let mut user = match User::get_by_id(&db.0, confirmation.user_id).await {
+        Ok(user) => user,
+        Err(e) => {
+            let status = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return Err(status);
+        }
+    };
+
+    user.email = Some(confirmation.email);
+    match user.update(&db.0).await {
+        Ok(_) => (),
+        Err(e) => {
+            let status = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return Err(status);
+        }
+    }
+
+    let token = match User::create_session(&db.0, &user).await {
+        Ok(token) => token,
+        Err(e) => {
+            let status = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return Err(status);
+        }
+    };
+
     Ok((StatusCode::CREATED, Json(SessionToken { token })))
 }
 
