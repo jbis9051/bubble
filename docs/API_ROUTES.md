@@ -106,7 +106,7 @@ Request Data:
 POST /user/signup
 ```
 
-####Request:
+#### Request:
 
 ```json
 {
@@ -118,7 +118,7 @@ POST /user/signup
 }
 ```
 
-####Response: 
+#### Response: 
 ```
 (Sends an email to user)
 ```
@@ -130,13 +130,13 @@ POST /user/signup
 ```http request
 POST /user/signup-confirm
 ```
-####Request:
+#### Request:
 ```json
 {
   "link_id": "<link_id>"
 }
 ```
-####Response:
+#### Response:
 ```json
 {
   "token": "<token>"
@@ -149,14 +149,14 @@ POST /user/signup-confirm
 ```http request
 POST /user/signin
 ```
-####Request:
+#### Request:
 ```json
 {
   "email": "<email>",
   "password": "<password>"
 }
 ```
-####Response:
+#### Response:
 ```json
 {
   "token": "<token>"
@@ -168,7 +168,7 @@ POST /user/signin
 ```http request
 POST /user/signout
 ```
-####Request:
+#### Request:
 ```json
 {
   "token": "<token>"
@@ -179,18 +179,18 @@ POST /user/signout
 ```http request
 POST /user/forgot
 ```
-####Request:
+#### Request:
 ```json
 {
   "email": "<email>"
 }
 ```
-####Response:
+#### Response:
 ```
 (sends email)
 ```
 ---
-#Ignore Everything Below
+# Ignore Everything Below
 ## User Forgot Password Confirm
 ```http request
 POST /user/forgot-confirm
