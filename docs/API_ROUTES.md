@@ -1,11 +1,12 @@
 # API Routes
 
+---
 
-## Groups
+## Group
 
 ### Creating a Group
 
-```
+```http request
 POST /group/<name>
 ```
 
@@ -23,7 +24,7 @@ Response:
 
 ### Get Information About Group
 
-```
+```http request
 GET /group/<id>
 ```
 
@@ -39,7 +40,7 @@ Response:
 
 ### Update Group Name
 
-``` 
+```http request
 POST /group/<id>/name
 ```
 
@@ -53,13 +54,13 @@ Request:
 
 ### Delete Group
 
-```
+```http request
 DELETE /group/<id>
 ```
 
 ### Adding Users to Group
 
-```
+```http request
 POST /group/<id>/new_users
 ```
 
@@ -77,7 +78,7 @@ Request Data:
 
 ### Remove Users From Group
 
-```
+```http request
 POST /group/<id>/delete_users
 ```
 
@@ -93,16 +94,19 @@ Request Data:
 }
 ```
 
-### Users
+---
+
+# User
 
 
-### Create User, Signup
 
-```
+## User Signup
+
+```http request
 POST /user/signup
 ```
 
-Request Data:
+####Request:
 
 ```json
 {
@@ -111,41 +115,90 @@ Request Data:
   "email": "<email",
   "phone": "<phone>",
   "name": "<name>"
-
 }
-
-### Confirm Signup
-
 ```
+
+####Response: 
+```
+(Sends an email to user)
+```
+
+---
+
+## User Confirm
+
+```http request
 POST /user/signup-confirm
 ```
-
-### Signin
-
+####Request:
+```json
+{
+  "link_id": "<link_id>"
+}
 ```
+####Response:
+```json
+{
+  "token": "<token>"
+}
+```
+
+---
+
+## User Sign In
+```http request
 POST /user/signin
 ```
-
-### Signout
-
+####Request:
+```json
+{
+  "email": "<email>",
+  "password": "<password>"
+}
 ```
+####Response:
+```json
+{
+  "token": "<token>"
+}
+```
+
+---
+## User Sign Out
+```http request
 POST /user/signout
 ```
-
-### Forgot Password
-
+####Request:
+```json
+{
+  "token": "<token>"
+}
 ```
+---
+## User Forgot Password
+```http request
 POST /user/forgot
 ```
-
-### Forgot Password Confirmation
-
+####Request:
+```json
+{
+  "email": "<email>"
+}
 ```
+####Response:
+```
+(sends email)
+```
+---
+#Ignore Everything Below
+## User Forgot Password Confirm
+```http request
 POST /user/forgot-confirm
 ```
-
-### Change Email
-
+```json
+{
+  
+}
 ```
 POST /user/change-email
 ```
