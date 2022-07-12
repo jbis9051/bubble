@@ -1,13 +1,8 @@
 use crate::helper::start_server;
-use axum::body::Body;
 use axum::http::StatusCode;
 use bubble::models::user::User;
 use bubble::routes::user::{Confirm, Confirmation, CreateUser};
-use sqlx::postgres::PgRow;
-use sqlx::postgres::PgSeverity::Error;
 use sqlx::Row;
-use tokio::time;
-use tokio::time::sleep;
 
 mod helper;
 
