@@ -99,7 +99,6 @@ impl User {
     }
 
     pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
-        println!("{}", id);
         let row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
             .bind(id)
             .fetch_one(db)
@@ -166,7 +165,7 @@ impl User {
         Ok(())
     }
 
-    async fn empty_user() -> User {
+    pub async fn empty_user() -> User {
         let user: User = User {
             id: Default::default(),
             uuid: Default::default(),
