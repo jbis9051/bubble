@@ -19,5 +19,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - run: docker compose -f docker-compose-ci.yml up -d
-      - run: cd db && ./test.sh
+      - run: make test_db_ci
