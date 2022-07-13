@@ -353,6 +353,13 @@ PODS:
     - React-perflogger (= 0.68.2)
   - RNCMaskedView (0.1.11):
     - React
+  - rnmapbox-maps (10.0.0-beta.18):
+    - React
+    - React-Core
+    - rnmapbox-maps/DynamicLibrary (= 10.0.0-beta.18)
+  - rnmapbox-maps/DynamicLibrary (10.0.0-beta.18):
+    - React
+    - React-Core
   - RNScreens (3.10.2):
     - React-Core
     - React-RCTImage
@@ -421,6 +428,7 @@ DEPENDENCIES:
   - React-runtimeexecutor (from `../node_modules/react-native/ReactCommon/runtimeexecutor`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
+  - "rnmapbox-maps (from `../node_modules/@rnmapbox/maps`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -510,6 +518,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCMaskedView:
     :path: "../node_modules/@react-native-community/masked-view"
+  rnmapbox-maps:
+    :path: "../node_modules/@rnmapbox/maps"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -564,12 +574,13 @@ SPEC CHECKSUMS:
   React-runtimeexecutor: b960b687d2dfef0d3761fbb187e01812ebab8b23
   ReactCommon: 095366164a276d91ea704ce53cb03825c487a3f2
   RNCMaskedView: 0e1bc4bfa8365eba5fbbb71e07fbdc0555249489
+  rnmapbox-maps: 286239faa59d054d51702509092e2f6d8573e987
   RNScreens: d6da2b9e29cf523832c2542f47bf1287318b1868
   RNSVG: 302bfc9905bd8122f08966dc2ce2d07b7b52b9f8
   SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
   Yoga: 99652481fcd320aefa4a7ef90095b95acd181952
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: e7829ab2918d1c9b033dd087443b49c3a19ca424
+PODFILE CHECKSUM: f7941fa759d62982b1702ddb0b31c2903b201285
 
 COCOAPODS: 1.11.3
