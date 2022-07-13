@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import {View, StyleSheet,TouchableOpacity, Text} from 'react-native';
-import colors from '../constants/Colors';
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faArrowLeftLong} from "@fortawesome/free-solid-svg-icons/faArrowLeftLong";
 import { useNavigation } from '@react-navigation/native';
@@ -19,7 +18,7 @@ const Header: React.FC<{page: string, message?: string}> = ({page, message}) =>{
     return (
         <View style={styles.header}>
             <TouchableOpacity
-                onPress={() => { // @ts-ignore
+                onPress={() => {
                     navigation.navigate(page)}}
                 style={{alignItems: 'center', flex:0.2, flexDirection:'row'}}>
 

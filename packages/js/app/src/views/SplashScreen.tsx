@@ -14,9 +14,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
 const styles = StyleSheet.create({
     container: {
-        borderWidth: 1,
-        flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: colors.white,
         width: '100%',
         height: '100%',

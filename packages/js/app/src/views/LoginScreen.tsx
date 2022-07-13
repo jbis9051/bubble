@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import {ImageBackground, Text, View, StyleSheet, Button, StatusBar, TouchableOpacity} from 'react-native';
+import React from 'react';
+import {ImageBackground, Text, View, StyleSheet, TouchableOpacity} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../components/Header';
 import TextInputBox from "../components/TextInputBox";
@@ -79,6 +79,11 @@ function Login({route, navigation}: Props) {
                     <TextInputBox
                         descriptor='Password'
                         required={false}
+                        params={""}
+                    />
+                    <TextInputBox
+                        descriptor='Password'
+                        params={"password"}
                     />
                 </View>
                 <View style={styles.loginContainer}>

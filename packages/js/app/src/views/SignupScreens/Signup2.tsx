@@ -58,15 +58,15 @@ function Signup({route, navigation}: Props) {
                 <View style={styles.signupContainer}>
                     <TextInputBox
                         descriptor="Username"
-                        required={true}
+                        params={""}
                     />
                     <TextInputBox
                         descriptor="Password"
-                        required={true}
+                        params={""}
                     />
                     <TextInputBox
                         descriptor="Confirm Password"
-                        required={true}
+                        params={""}
                     />
                 </View>
                 <View style={styles.signupButtonContainer}>

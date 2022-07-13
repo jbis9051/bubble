@@ -1,7 +1,6 @@
-import React, { Component } from 'react';
-import {TextInput, Text, View, StyleSheet, TouchableOpacity, ImageBackground} from 'react-native';
+import React, {useState} from 'react';
+import {Text, View, StyleSheet, TouchableOpacity, ImageBackground} from 'react-native';
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
-import Header from '../../components/Header';
 import TextInputBox from "../../components/TextInputBox";
 import colors from '../../constants/Colors';
 
@@ -46,6 +45,7 @@ const styles = StyleSheet.create({
     },
 })
 
+
 function Signup({route, navigation}: Props) {
     return (
         <View style={styles.container}>
@@ -58,19 +58,15 @@ function Signup({route, navigation}: Props) {
                 <View style={styles.signupContainer}>
                     <TextInputBox
                         descriptor="Phone Number"
-                        required={true}
+                        params={"telephoneNumber"}
                     />
                     <TextInputBox
-                        descriptor="Email"
-                        required={false}
+                        descriptor="Username"
+                        params={""}
                     />
                     <TextInputBox
-                        descriptor="First Name"
-                        required={true}
-                    />
-                    <TextInputBox
-                        descriptor="Last Name"
-                        required={true}
+                        descriptor="Password"
+                        params={"password"}
                     />
                 </View>
                 <View style={styles.signupButtonContainer}>
