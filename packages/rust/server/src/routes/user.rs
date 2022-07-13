@@ -15,12 +15,11 @@ pub fn router() -> Router {
         .route("/signup", post(signup))
         .route("/signup-confirm", post(signup_confirm))
         .route("/signin", post(signin))
-    /*
-    .route("/signout/:token", post(signout))
-    .route("/forgot", post(forgot))
-    .route("/forgot-confirm", post(forgot_confirm))
-    .route("/change-email", post(change_email))
-    .route("/delete", delete(delete_user))*/
+        .route("/signout/:token", post(signout)) /*
+                                                 .route("/forgot", post(forgot))
+                                                 .route("/forgot-confirm", post(forgot_confirm))
+                                                 .route("/change-email", post(change_email))
+                                                 .route("/delete", delete(delete_user))*/
 }
 
 #[derive(Deserialize, Serialize)]
@@ -43,6 +42,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
         name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
+    //TODO add verification that email being used to create "confirmation" table is not in "user" table
     let user = match User::create(&db.0, user).await {
         Ok(user) => user,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
