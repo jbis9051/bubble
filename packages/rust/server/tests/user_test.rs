@@ -1,14 +1,21 @@
-use crate::helper::start_server;
+use crate::helper::{start_server, Cleanup};
 use axum::http::StatusCode;
 use bubble::models::user::User;
 use bubble::routes::user::{Confirm, Confirmation, CreateUser};
-use sqlx::Row;
+use bubble::types::DbPool;
+use sqlx::{Executor, Row};
 
 mod helper;
 
 #[tokio::test]
 async fn create_user() {
     let (db, client) = start_server().await;
+
+    let _clean = cleanup!(|db| {
+        db.execute("DELETE FROM \"confirmation\"").await.unwrap();
+        db.execute("DELETE FROM \"session_token\"").await.unwrap();
+        db.execute("DELETE FROM \"user\"").await.unwrap();
+    });
 
     let res = client
         .post("/user/signup")
