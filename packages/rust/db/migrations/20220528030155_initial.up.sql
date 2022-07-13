@@ -84,7 +84,7 @@ CREATE TABLE forgot_password
 (
     id        SERIAL PRIMARY KEY,
     user_id   INT REFERENCES "user" (id) NOT NULL,
-    forgot_id VARCHAR(32) UNIQUE         NOT NULL,
+    forgot_id UUID UNIQUE         NOT NULL,
     created   TIMESTAMP                  DEFAULT CURRENT_TIMESTAMP
 );
 

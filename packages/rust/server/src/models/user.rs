@@ -120,6 +120,18 @@ impl User {
         Ok(user)
     }
 
+    pub async fn create_forgot(db: &DbPool, user: &User) -> Result<Uuid, sqlx::Error> {
+        let forgot_id = Uuid::new_v4();
+        sqlx::query("INSERT INTO forgot_password (user_id, forgot_id) VALUES ($1, $2);")
+            .bind(&user.id)
+            .bind(forgot_id)
+            .execute(db)
+            .await
+            .unwrap();
+
+        Ok(forgot_id)
+    }
+
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query(
             "UPDATE \"user\"
