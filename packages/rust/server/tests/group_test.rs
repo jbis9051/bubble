@@ -1,7 +1,7 @@
 use crate::helper::start_server;
 use axum::http::StatusCode;
 use bubble::models::group::Group;
-use bubble::routes::group::GroupInfo;
+use bubble::routes::group::{GroupName};
 
 mod helper;
 
@@ -10,8 +10,14 @@ async fn create_group() {
     let (db, client) = start_server().await;
 
     let res = client
-        .post("/group/test_group")
+        .post("/group/create")
         .header("Content-Type", "application/json")
+        .body(
+            serde_json::to_string(&GroupName {
+                name: "test_group".to_string(),
+            })
+            .unwrap(),
+        )
         .send()
         .await;
     //201 is successful http request
