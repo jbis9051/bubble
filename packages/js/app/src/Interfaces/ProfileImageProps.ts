@@ -1,6 +1,6 @@
 interface ProfileImageProps {
-    source: string,
-    size: number
-};
+    source: string;
+    size: number;
+}
 
 export default ProfileImageProps;

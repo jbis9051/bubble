@@ -13,10 +13,7 @@ const ProfileHeader = () => {
 
     return (
         <View style={Styles.header}>
-            <ProfileImageTemplate 
-                source={source}
-                size={140}
-            />
+            <ProfileImageTemplate source={source} size={140} />
             <Text style={Styles.headerText}>{name}</Text>
             <Text
                 style={{

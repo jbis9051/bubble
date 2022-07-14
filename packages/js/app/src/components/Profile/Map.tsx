@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Platform } from 'react-native';
 import MapView from 'react-native-maps';
-import MapboxGL from "@rnmapbox/maps";
+import MapboxGL from '@rnmapbox/maps';
 
-const Map = () => {
-    return Platform.OS === 'ios' ? (
+const Map = () =>
+    Platform.OS === 'ios' ? (
         <View>
             <MapView
                 initialRegion={{
@@ -22,27 +22,22 @@ const Map = () => {
         </View>
     ) : (
         <View>
-            <MapboxGL.MapView 
-                style={{ 
+            <MapboxGL.MapView
+                style={{
                     overflow: 'hidden',
-                    height: 300, 
-                    borderRadius: 15, 
-                    marginBottom: 10 
-                }} 
+                    height: 300,
+                    borderRadius: 15,
+                    marginBottom: 10,
+                }}
                 styleURL={MapboxGL.StyleURL.Street}
             >
                 <MapboxGL.Camera
                     zoomLevel={10}
-                    centerCoordinate={[
-                        -122.4324,
-                        37.78825
-                    ]}
+                    centerCoordinate={[-122.4324, 37.78825]}
                 />
-                <MapboxGL.UserLocation
-                />
+                <MapboxGL.UserLocation />
             </MapboxGL.MapView>
         </View>
     );
-};
 
 export default Map;

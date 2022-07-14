@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 
 import {
@@ -12,7 +12,6 @@ import Map from './Map';
 import InfoCard from './InfoCard';
 
 import Styles from './Styles';
-
 
 const ChildrenComponent = () => {
     const [email, setEmail] = useState('johnappleseed@bubble.com');
@@ -33,11 +32,7 @@ const ChildrenComponent = () => {
                     paddingBottom: 24,
                 }}
             >
-                <InfoCard
-                    title="Email"
-                    detail={email}
-                    icon={mailIcon}
-                />
+                <InfoCard title="Email" detail={email} icon={mailIcon} />
                 <InfoCard title="Phone" detail={phone} icon={phoneIcon} />
                 <InfoCard title="Username" detail={username} icon={userIcon} />
                 <InfoCard
@@ -48,15 +43,12 @@ const ChildrenComponent = () => {
             </View>
         </View>
     );
-    
 };
 
-const SlideCard = () => {
-    return (
-        <SlideCardTemplate>
-            <ChildrenComponent />
-        </SlideCardTemplate>
-    );
-}
+const SlideCard = () => (
+    <SlideCardTemplate>
+        <ChildrenComponent />
+    </SlideCardTemplate>
+);
 
 export default SlideCard;

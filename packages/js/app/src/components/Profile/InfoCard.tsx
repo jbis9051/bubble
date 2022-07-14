@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import InfoCardTemplate from '../InfoCardTemplate';
 import InfoProps from '../../Interfaces/InfoProps';
 
-import colors from '../../constants/Colors';
+import Colors from '../../constants/Colors';
 
 const ChildrenComponent: React.FunctionComponent<InfoProps> = ({
     title,
@@ -15,7 +15,7 @@ const ChildrenComponent: React.FunctionComponent<InfoProps> = ({
     <View>
         {icon ? (
             <View style={{ flexDirection: 'row' }}>
-                <FontAwesomeIcon icon={icon} color={colors.primary} />
+                <FontAwesomeIcon icon={icon} color={Colors.primary} />
                 <Text style={{ marginLeft: 5 }}>{title}</Text>
             </View>
         ) : (
