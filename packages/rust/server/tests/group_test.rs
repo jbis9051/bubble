@@ -1,7 +1,7 @@
 use crate::helper::start_server;
 use axum::http::StatusCode;
 use bubble::models::group::Group;
-use bubble::routes::group::{GroupName};
+use bubble::routes::group::GroupName;
 
 mod helper;
 
