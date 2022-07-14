@@ -1,7 +1,7 @@
 use crate::helper::start_server;
 use axum::http::StatusCode;
 use bubble::models::group::Group;
-use bubble::routes::group::GroupInfo;
+
 
 mod helper;
 
@@ -15,10 +15,10 @@ async fn create_group() {
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
-    let group = Group::get_group_by_id(db, 1)
+    let group = Group::get_group_by_id(&db, 1)
         .await
         .expect("No group exists in database.");
-    assert_equal!(group.id, 1);
-    assert_equal!(group.group_name, "test_group");
+    assert_eq!(group.id, 1);
+    assert_eq!(group.group_name, "test_group");
     //must eventually check for joined table and resolve issues with
 }
