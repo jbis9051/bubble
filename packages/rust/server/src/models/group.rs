@@ -39,10 +39,11 @@ pub fn get_group_by_row(row: &PgRow) -> Group {
         members: Vec::new(),
     }
 }
+
 // CRUD functions
 impl Group {
     pub async fn get_group_by_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM group WHERE id = $1")
+        let row = sqlx::query("SELECT * FROM \"group\" WHERE id = $1")
             .bind(id)
             .fetch_one(db)
             .await?;

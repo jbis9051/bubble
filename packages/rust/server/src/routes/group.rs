@@ -4,6 +4,7 @@ use axum::extract::Path;
 use axum::routing::{get, post};
 use axum::Extension;
 use axum::{Json, Router};
+use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
@@ -31,7 +32,7 @@ pub struct GroupInfo {
 
 //Respond with JSON: id, name, created_date
 
-async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupInfo> {
+async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> (StatusCode, Json<GroupInfo>) {
     let mut group: Group = Group {
         id: 0,
         uuid: Uuid::new_v4(),
@@ -46,7 +47,7 @@ async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupIn
         name: group.group_name,
         created: group.created.to_string(),
     };
-    Json(new_group)
+    (StatusCode::CREATED, Json(new_group))
 }
 
 // respond with JSON: id, name, created_date

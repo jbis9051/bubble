@@ -1,7 +1,7 @@
 use crate::helper::start_server;
 use axum::http::StatusCode;
 use bubble::models::group::Group;
-
+use bubble::routes::group::GroupInfo;
 
 mod helper;
 
@@ -14,6 +14,7 @@ async fn create_group() {
         .header("Content-Type", "application/json")
         .send()
         .await;
+    //201 is successful http request
     assert_eq!(res.status(), StatusCode::CREATED);
     let group = Group::get_group_by_id(&db, 1)
         .await
