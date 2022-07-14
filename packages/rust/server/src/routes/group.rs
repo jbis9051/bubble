@@ -1,17 +1,17 @@
 use crate::models::group::Group;
 use crate::types::DbPool;
 use axum::extract::Path;
+use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::Extension;
 use axum::{Json, Router};
-use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/:name", post(create))
+        .route("/create", post(create))
         .route("/info/:id", get(read))
     // .route("/group/:id/new_users", post(add_users))
     // .route("/group/:id/delete_users", post(delete_users))
@@ -25,18 +25,25 @@ pub fn router() -> Router {
 //create and read functions
 #[derive(Serialize)]
 pub struct GroupInfo {
-    uuid: String,
-    name: String,
-    created: String,
+    pub uuid: String,
+    pub name: String,
+    pub created: String,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct GroupName {
+    pub name: String,
+}
 //Respond with JSON: id, name, created_date
 
-async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> (StatusCode, Json<GroupInfo>) {
+async fn create(
+    db: Extension<DbPool>,
+    Json(payload): Json<GroupName>,
+) -> (StatusCode, Json<GroupInfo>) {
     let mut group: Group = Group {
         id: 0,
         uuid: Uuid::new_v4(),
-        group_name: name,
+        group_name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
         members: vec![],
     };
@@ -71,7 +78,7 @@ async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo
 
 #[derive(Deserialize, Serialize)]
 pub struct UsersIDs {
-    users: Vec<i32>,
+    pub users: Vec<i32>,
 }
 
 //request JSON: vec<user_ids>
