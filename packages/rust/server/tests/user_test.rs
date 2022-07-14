@@ -2,7 +2,7 @@ use crate::helper::{start_server, Cleanup};
 use axum::http::StatusCode;
 use bubble::models::user::User;
 use bubble::routes::user::{Confirm, Confirmation, CreateUser};
-use bubble::types::DbPool;
+
 use sqlx::{Executor, Row};
 
 mod helper;

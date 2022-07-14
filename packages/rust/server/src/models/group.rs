@@ -16,28 +16,9 @@ pub struct Group {
     pub members: Vec<i32>,
 }
 
-pub fn get_group_by_row(row: &PgRow) -> Group {
-    Group {
-        id: row.get("id"),
-        uuid: row.get("uuid"),
-        group_name: row.get("group_name"),
-        created: row.get("created"),
-        members: Vec::new(),
-    }
-}
-
 #[derive(sqlx::FromRow)]
 pub struct UserID {
     id: i32,
-}
-
-pub async fn get_group_by_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error> {
-    let row = sqlx::query("SELECT * FROM group WHERE id = $1")
-        .bind(id)
-        .fetch_one(db)
-        .await?;
-    let group = get_group_by_row(&row);
-    Ok(group)
 }
 
 //FIX ISSUE WITH .GET
@@ -49,9 +30,26 @@ pub async fn get_group_by_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error>
 //
 //     groupID.get("id")
 // }
-
+pub fn get_group_by_row(row: &PgRow) -> Group {
+    Group {
+        id: row.get("id"),
+        uuid: row.get("uuid"),
+        group_name: row.get("group_name"),
+        created: row.get("created"),
+        members: Vec::new(),
+    }
+}
 // CRUD functions
 impl Group {
+    pub async fn get_group_by_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM group WHERE id = $1")
+            .bind(id)
+            .fetch_one(db)
+            .await?;
+        let group = get_group_by_row(&row);
+        Ok(group)
+    }
+
     pub async fn create(db: &DbPool, group: &mut Group) -> Result<(), sqlx::Error> {
         let row =
             sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2) RETURNING *;")

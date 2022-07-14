@@ -2,11 +2,11 @@ use crate::models::group::Group;
 use crate::types::DbPool;
 use axum::extract::Path;
 use axum::routing::{get, post};
+use axum::Extension;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
-use axum::Extension;
 
 pub fn router() -> Router {
     Router::new()
