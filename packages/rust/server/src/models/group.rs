@@ -1,6 +1,8 @@
 use crate::types::DbPool;
+
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono;
+
 use sqlx::types::Uuid;
 use sqlx::Row;
 
@@ -24,8 +26,23 @@ pub fn get_group_by_row(row: &PgRow) -> Group {
     }
 }
 
-// pub async fn get_group_id(db: &DbPool, uuid: String) -> i32 {
-//     let groupID = sqlx::query("SELECT id FROM group WHERE uuid = $1")
+#[derive(sqlx::FromRow)]
+pub struct UserID {
+    id: i32,
+}
+
+pub async fn get_group_by_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error> {
+    let row = sqlx::query("SELECT * FROM group WHERE id = $1")
+        .bind(id)
+        .fetch_one(db)
+        .await?;
+    let group = get_group_by_row(&row);
+    Ok(group)
+}
+
+//FIX ISSUE WITH .GET
+// pub async fn get_group_id(db: &DbPool, uuid: &str) -> i32 {
+//     let groupID = sqlx::query_as::<_,UserID>("SELECT id FROM group WHERE uuid = $1")
 //         .bind(uuid)
 //         .fetch_one(db)
 //         .await;
