@@ -10,7 +10,6 @@ import {
 import SlideCardTemplate from '../SlideCardTemplate';
 import Map from './Map';
 import InfoCard from './InfoCard';
-import MapSegmentedControl from './MapSegmentedControl';
 
 import Styles from './Styles';
 
@@ -22,19 +21,10 @@ const ChildrenComponent = () => {
     const [lastLocation, setLastLocation] = useState('San Francisco');
     const [mapType, setMapType] = useState('Street');
 
-    // useEffect(() => {
-
-    // }, [mapType]);
-
     return (
         <View>
             <Text style={Styles.heading}>Map</Text>
-            <Map 
-                mapType={mapType}
-            />
-            <MapSegmentedControl 
-                setMap={setMapType}
-            />
+            <Map />
             <Text style={Styles.heading}>Information</Text>
             <View
                 style={{

@@ -3,9 +3,7 @@ import { View, Platform } from 'react-native';
 import MapView from 'react-native-maps';
 import MapboxGL from "@rnmapbox/maps";
 
-const Map: React.FunctionComponent<{ mapType: string }> = ({ mapType }) => {
-    const mapStyle = mapType === 'Street' ? MapboxGL.StyleURL.Street : MapboxGL.StyleURL.Satellite;
-
+const Map = () => {
     return Platform.OS === 'ios' ? (
         <View>
             <MapView
@@ -31,7 +29,7 @@ const Map: React.FunctionComponent<{ mapType: string }> = ({ mapType }) => {
                     borderRadius: 15, 
                     marginBottom: 10 
                 }} 
-                styleURL={mapStyle}
+                styleURL={MapboxGL.StyleURL.Street}
             >
                 <MapboxGL.Camera
                     zoomLevel={10}
