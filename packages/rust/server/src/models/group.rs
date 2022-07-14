@@ -80,29 +80,29 @@ impl Group {
         // }
         Ok(())
     }
+
+    // pub async fn add_users(db: &DbPool, uuid: String, mut new_users: &[i32]) -> Result<(), sqlx::Error> {
+    //     let uuid_ref = &uuid;
+    //     for i in new_users {
+    //         let mut user_id = sqlx::query_as::<_, UserID>("SELECT id FROM user WHERE uuid = $1")
+    //             .bind(i)
+    //             .execute(db)
+    //             .await?;
+    //         sqlx::query(
+    //             "INSERT INTO user_group (user_id, group_id, role_id, created)
+    //                 VALUES ($1, $2, $3, $4);",
+    //         )
+    //             .bind(user_id)
+    //             .bind(get_group_id(db, uuid_ref))
+    //             .bind("Temp")
+    //             .bind(NaiveDateTime::from_timestamp(0, 0))
+    //             .execute(db)
+    //             .await?;
+    //     }
+    //     Ok(())
+    // }
 }
 
-//
-//
-// pub fn add_users(db: &DbPool, uuid: &str, mut new_users: &[i32]) {
-//     for i in new_users {
-//         let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
-//             .bind(i)
-//             .execute(db)
-//             .await?;
-//         sqlx::query(
-//             "INSERT INTO user_group (user_id, group_id, role_id, created)
-//                     VALUES ($1, $2, $3, $4);",
-//         )
-//         .bind(userID)
-//         .bind(get_group_id(uuid))
-//         .bind(roleID)
-//         .bind(SystemTime::now())
-//         .execute(db)
-//         .await?;
-//     }
-// }
-//
 // pub fn delete_users(db: &DbPool, uuid: &str, users_to_delete: &[i32]) {
 //     for i in users_to_delete {
 //         let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
