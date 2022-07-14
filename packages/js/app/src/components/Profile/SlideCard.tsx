@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 
 import {
@@ -10,6 +10,7 @@ import {
 import SlideCardTemplate from '../SlideCardTemplate';
 import Map from './Map';
 import InfoCard from './InfoCard';
+import MapSegmentedControl from './MapSegmentedControl';
 
 import Styles from './Styles';
 
@@ -19,11 +20,21 @@ const ChildrenComponent = () => {
     const [phone, setPhone] = useState('123-456-7890');
     const [username, setUsername] = useState('johnappleseed');
     const [lastLocation, setLastLocation] = useState('San Francisco');
+    const [mapType, setMapType] = useState('Street');
+
+    // useEffect(() => {
+
+    // }, [mapType]);
 
     return (
         <View>
             <Text style={Styles.heading}>Map</Text>
-            <Map />
+            <Map 
+                mapType={mapType}
+            />
+            <MapSegmentedControl 
+                setMap={setMapType}
+            />
             <Text style={Styles.heading}>Information</Text>
             <View
                 style={{

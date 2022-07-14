@@ -4,6 +4,7 @@ export default {
     darkGrey: '#BFBFBF',
     black: '#000000',
     primary: '#ff6339',
+    primaryLight: 'rgba(255, 99, 57, 0.8)',
     secondary: '#ff3a66',
     unselected: '#748c94',
 };

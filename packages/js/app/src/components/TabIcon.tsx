@@ -4,7 +4,7 @@ import { View, Text } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
-import colors from '../constants/colors';
+import colors from '../constants/Colors';
 
 interface TabIconProps {
     name: string;

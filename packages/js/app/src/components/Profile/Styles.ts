@@ -32,7 +32,8 @@ const Styles = StyleSheet.create({
     heading: {
         fontSize: 30,
         fontWeight: '800',
-        marginBottom: 10,
+        marginTop: 10,
+        marginBottom: 5
     },
 });
 

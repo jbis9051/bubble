@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import colors from '../constants/Colors';
 
 const Styles = StyleSheet.create({
     shadow: {
@@ -33,6 +34,15 @@ const Styles = StyleSheet.create({
         borderRadius: 100,
         borderWidth: 2.5,
         borderColor: '#d3d3d3',
+    },
+    segmentedControl: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        backgroundColor: colors.primaryLight,
+        padding: 5,
+        borderRadius: 10,
     }
 });
 

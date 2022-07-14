@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import InfoCardTemplate from '../InfoCardTemplate';
 import InfoProps from '../../Interfaces/InfoProps';
 
-import colors from '../../constants/colors';
+import colors from '../../constants/Colors';
 
 const ChildrenComponent: React.FunctionComponent<InfoProps> = ({
     title,
