@@ -2,7 +2,7 @@ use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
-use crate::routes::user::Confirmation;
+use crate::routes::user::{Confirmation, ForgotRow};
 use crate::types::DbPool;
 use rand_core::{OsRng, RngCore};
 use sqlx::types::chrono::NaiveDateTime;
@@ -130,6 +130,31 @@ impl User {
             .unwrap();
 
         Ok(forgot_id)
+    }
+
+    pub async fn get_forgot(db: &DbPool, forgot_id: &str) -> Result<ForgotRow, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
+            .bind(forgot_id)
+            .fetch_one(db)
+            .await
+            .unwrap();
+
+        Ok(ForgotRow {
+            id: row.get("id"),
+            user_id: row.get("user_id"),
+            forgot_id: row.get("forgot_id"),
+            created: row.get("created"),
+        })
+    }
+
+    pub async fn delete_forgot(db: &DbPool, forgot_id: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM forgot_password WHERE forgot_id = $1")
+            .bind(forgot_id)
+            .execute(db)
+            .await
+            .unwrap();
+
+        Ok(())
     }
 
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
