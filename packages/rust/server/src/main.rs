@@ -1,4 +1,3 @@
-use axum::Router;
 use bubble::{config, router};
 use sqlx::postgres::PgPoolOptions;
 

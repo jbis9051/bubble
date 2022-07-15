@@ -30,6 +30,7 @@ pub struct CreateUser {
     pub phone: Option<String>,
     pub name: String,
 }
+
 async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> StatusCode {
     let user: User = User {
         id: 0,
@@ -63,10 +64,12 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 pub struct Confirm {
     pub link_id: String,
 }
+
 #[derive(Serialize, Deserialize)]
 struct SessionToken {
     pub token: String,
 }
+
 pub struct Confirmation {
     pub id: i32,
     pub user_id: i32,
@@ -74,6 +77,7 @@ pub struct Confirmation {
     pub email: String,
     pub created: NaiveDateTime,
 }
+
 async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
@@ -143,6 +147,7 @@ struct SignInJson {
     email: String,
     password: String,
 }
+
 async fn signin(
     db: Extension<DbPool>,
     Json(payload): Json<SignInJson>,

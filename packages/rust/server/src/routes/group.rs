@@ -1,16 +1,18 @@
 use crate::models::group::Group;
 use crate::types::DbPool;
 use axum::extract::Path;
-use axum::routing::post;
+use axum::http::StatusCode;
+use axum::routing::{get, post};
 use axum::Extension;
 use axum::{Json, Router};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 pub fn router() -> Router {
-    Router::new().route("/:name", post(create))
-    // .route("/group/:id", get(read))
+    Router::new()
+        .route("/create", post(create))
+        .route("/info/:id", get(read))
     // .route("/group/:id/new_users", post(add_users))
     // .route("/group/:id/delete_users", post(delete_users))
     // .route("/group/:id/name", post(change_name))
@@ -23,18 +25,25 @@ pub fn router() -> Router {
 //create and read functions
 #[derive(Serialize)]
 pub struct GroupInfo {
-    uuid: String,
-    name: String,
-    created: String,
+    pub uuid: String,
+    pub name: String,
+    pub created: String,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct GroupName {
+    pub name: String,
+}
 //Respond with JSON: id, name, created_date
 
-async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupInfo> {
+async fn create(
+    db: Extension<DbPool>,
+    Json(payload): Json<GroupName>,
+) -> (StatusCode, Json<GroupInfo>) {
     let mut group: Group = Group {
         id: 0,
         uuid: Uuid::new_v4(),
-        group_name: name,
+        group_name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
         members: vec![],
     };
@@ -45,7 +54,7 @@ async fn create(db: Extension<DbPool>, Path(name): Path<String>) -> Json<GroupIn
         name: group.group_name,
         created: group.created.to_string(),
     };
-    Json(new_group)
+    (StatusCode::CREATED, Json(new_group))
 }
 
 // respond with JSON: id, name, created_date
@@ -66,23 +75,18 @@ async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo
     };
     Json(new_group)
 }
-//
-// #[derive(Deserialize)]
-// pub struct UsersIDs {
-//     users: Vec<i32>,
-// }
-//
-// //request JSON: vec<user_ids>
-// async fn add_users(
-//     db: Extension<DbPool>,
-//     Path(id): Path<String>,
-//     extract::Json(payload): extract::Json<UsersIDs>,
-// ) {
-//     let group_id = id.get("uuid").to_string();
+
+#[derive(Deserialize, Serialize)]
+pub struct UsersIDs {
+    pub users: Vec<i32>,
+}
+
+//request JSON: vec<user_ids>
+// async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UsersIDs>) {
 //     let user_ids: &[i32] = &*payload.users;
-//     Group::add_users(&db.0, group_id, user_ids);
+//     Group::add_users(&db.0, uuid, user_ids);
 // }
-//
+
 // //request JSON: vec<user_ids>
 // async fn delete_users(
 //     db: Extension<DbPool>,
