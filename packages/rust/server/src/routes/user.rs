@@ -15,7 +15,7 @@ pub fn router() -> Router {
         .route("/signup", post(signup))
         .route("/signup-confirm", post(signup_confirm))
         .route("/signin", post(signin))
-        .route("/signout/:token", post(signout))
+        .route("/signout", post(signout))
         .route("/forgot", post(forgot))
     /*.route("/forgot-confirm", post(forgot_confirm))
     .route("/change-email", post(change_email))
@@ -176,14 +176,30 @@ async fn forgot(db: Extension<DbPool>, Json(payload): Json<Email>) -> StatusCode
     println!("Sending email with {:?} to {:?}", forgot, user.email);
     StatusCode::CREATED
 }
-/*
-async fn forgot_confirm(Path(params): &str) {
-    let email = params.get("email");
-    let password = params.get("password");
 
-    todo!();
+#[derive(Deserialize)]
+struct ForgotConfirm {
+    email: String,
+    password: String,
+    forgot_id: String,
 }
-
+pub struct ForgotRow {
+    pub id: i32,
+    pub user_id: i32,
+    pub forgot_id: Uuid,
+    pub created: NaiveDateTime,
+}
+async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm>) -> StatusCode {
+    let row = User::get_forgot(&db.0, &payload.forgot_id).await.unwrap();
+    let mut user = User::get_by_email(&db.0, &payload.email).await.unwrap();
+    User::delete_forgot(&db.0, &payload.forgot_id)
+        .await
+        .unwrap();
+    user.password = payload.password;
+    user.update(&db.0).await.unwrap();
+    StatusCode::CREATED
+}
+/*
 async fn change_email(Path(params): &str) {
     let new_email = params.get("email");
 
