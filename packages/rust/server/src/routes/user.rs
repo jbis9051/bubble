@@ -17,8 +17,8 @@ pub fn router() -> Router {
         .route("/signin", post(signin))
         .route("/signout", post(signout))
         .route("/forgot", post(forgot))
-    /*.route("/forgot-confirm", post(forgot_confirm))
-    .route("/change-email", post(change_email))
+        .route("/forgot-confirm", post(forgot_confirm))
+    /*.route("/change-email", post(change_email))
     .route("/delete", delete(delete_user))*/
 }
 
@@ -64,12 +64,10 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 pub struct Confirm {
     pub link_id: String,
 }
-
 #[derive(Serialize, Deserialize)]
 struct SessionToken {
     pub token: String,
 }
-
 pub struct Confirmation {
     pub id: i32,
     pub user_id: i32,
@@ -199,13 +197,19 @@ async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm
     user.update(&db.0).await.unwrap();
     StatusCode::CREATED
 }
-/*
-async fn change_email(Path(params): &str) {
-    let new_email = params.get("email");
 
-    todo!();
+async fn change_email(db: Extension<DbPool>, Json(payload): Json<Email>) -> StatusCode {
+    let user = User::get_by_email(&db.0, &payload.email).await.unwrap();
+    let link_id = User::create_confirmation(&db.0, &user, &payload.email)
+        .await
+        .unwrap();
+
+    println!("Sending {:?} to {:?}", link_id, &payload.email);
+    StatusCode::CREATED
 }
+/*
 
+async fn change_email_confirm() {}
 async fn delete_user(Path(params): &str) {
     let password = params.get("password");
 
