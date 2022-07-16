@@ -1,15 +1,21 @@
-import React, { Component } from 'react';
-import {TextInput, Text, View, StyleSheet, ImageBackground, TouchableOpacity} from 'react-native';
-import {NativeStackScreenProps} from "@react-navigation/native-stack";
+import React from 'react';
+import {
+    Text,
+    View,
+    StyleSheet,
+    ImageBackground,
+    TouchableOpacity,
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
-import TextInputBox from "../../components/TextInputBox";
+import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
 
 type RootStackParamList = {
-    Login: undefined,
-    Signup1: undefined,
-    Signup2: undefined,
-    Splash: undefined,
+    Login: undefined;
+    Signup1: undefined;
+    Signup2: undefined;
+    Splash: undefined;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup2'>;
@@ -21,20 +27,23 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    backgroundImage:{
+    backgroundImage: {
         width: '100%',
         height: '100%',
         alignItems: 'center',
-    },titleContainer:{
+    },
+    titleContainer: {
         borderWidth: 1,
         top: '12%',
         flex: 1.75,
         justifyContent: 'center',
-    }, signupContainer:{
+    },
+    signupContainer: {
         borderWidth: 1,
         flex: 2.5,
         justifyContent: 'center',
-    },signupButtonContainer:{
+    },
+    signupButtonContainer: {
         borderWidth: 1,
         flex: 1.5,
     },
@@ -43,46 +52,37 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         color: colors.primary,
     },
-    signupButton:{
+    signupButton: {
         height: 40,
         width: 150,
         margin: 7,
         borderWidth: 1,
         borderRadius: 15,
         padding: 10,
-        alignItems:'center',
+        alignItems: 'center',
     },
-})
+});
 
-function Signup({route, navigation}: Props) {
+function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
                 source={require('../../assets/SignUp2.png')}
                 style={styles.backgroundImage}
             >
-                <Header page={'Signup1'}/>
+                <Header page={'Signup1'} />
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign Up</Text>
                 </View>
                 <View style={styles.signupContainer}>
-                    <TextInputBox
-                        descriptor="Username"
-                        secure={true}
-                    />
-                    <TextInputBox
-                        descriptor="Password"
-                        secure={true}
-                    />
-                    <TextInputBox
-                        descriptor="Confirm Password"
-                        secure={true}
-                    />
+                    <TextInputBox descriptor="Username" params={''} />
+                    <TextInputBox descriptor="Password" params={''} />
+                    <TextInputBox descriptor="Confirm Password" params={''} />
                 </View>
                 <View style={styles.signupButtonContainer}>
-                   <TouchableOpacity style={styles.signupButton}>
-                       <Text>Sign Up</Text>
-                   </TouchableOpacity>
+                    <TouchableOpacity style={styles.signupButton}>
+                        <Text>Sign Up</Text>
+                    </TouchableOpacity>
                 </View>
             </ImageBackground>
         </View>

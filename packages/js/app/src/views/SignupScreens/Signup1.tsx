@@ -1,15 +1,20 @@
-import React, { Component } from 'react';
-import {TextInput, Text, View, StyleSheet, TouchableOpacity, ImageBackground} from 'react-native';
-import {NativeStackScreenProps} from "@react-navigation/native-stack";
-import Header from '../../components/Header';
-import TextInputBox from "../../components/TextInputBox";
+import React from 'react';
+import {
+    Text,
+    View,
+    StyleSheet,
+    TouchableOpacity,
+    ImageBackground,
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
 
 type RootStackParamList = {
-    Login: undefined,
-    Signup1: undefined,
-    Signup2: undefined,
-    Splash: undefined,
+    Login: undefined;
+    Signup1: undefined;
+    Signup2: undefined;
+    Splash: undefined;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup1'>;
@@ -21,18 +26,22 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    backgroundImage:{
+    backgroundImage: {
         alignItems: 'center',
-    },titleContainer:{
+    },
+    titleContainer: {
         top: '12%',
         flex: 3,
         justifyContent: 'center',
-    }, signupContainer:{
+    },
+    signupContainer: {
         flex: 4,
         justifyContent: 'center',
-    }, signupButtonContainer:{
+    },
+    signupButtonContainer: {
         flex: 2,
-    },accountExistContainer:{
+    },
+    accountExistContainer: {
         flex: 1,
         alignItems: 'center',
         bottom: '2.6%',
@@ -42,35 +51,38 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         color: colors.primary,
     },
-    signupButton:{
+    signupButton: {
         height: 50,
         width: 300,
         margin: 7,
         borderRadius: 15,
         padding: 10,
-        alignItems:'center',
-        justifyContent:'center',
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: colors.primary,
-    },buttonText:{
+    },
+    buttonText: {
         color: colors.white,
         fontWeight: '600',
-    },noAccountText:{
+    },
+    noAccountText: {
         color: colors.primary,
         fontSize: 16,
         fontWeight: '300',
-    },accountExistTextLink:{
+    },
+    accountExistTextLink: {
         color: colors.primary,
         fontSize: 16,
         fontWeight: '300',
-    }
-})
+    },
+});
 
-function Signup({route, navigation}: Props) {
+function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
             <ImageBackground
                 source={require('../../assets/SignUpBackground.png')}
-                style={{height: '100%', width: '100%', alignItems: 'center',}}
+                style={{ height: '100%', width: '100%', alignItems: 'center' }}
             >
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign Up</Text>
@@ -78,19 +90,10 @@ function Signup({route, navigation}: Props) {
                 <View style={styles.signupContainer}>
                     <TextInputBox
                         descriptor="Phone Number"
-                        secure={false}
-                        input={"telephoneNumber"}
+                        params={'telephoneNumber'}
                     />
-                    <TextInputBox
-                        descriptor="Username"
-                        secure={true}
-                        input={""}
-                    />
-                    <TextInputBox
-                        descriptor="Password"
-                        secure={true}
-                        input={""}
-                    />
+                    <TextInputBox descriptor="Username" params={''} />
+                    <TextInputBox descriptor="Password" params={'password'} />
                 </View>
                 <View style={styles.signupButtonContainer}>
                     <TouchableOpacity
@@ -101,13 +104,13 @@ function Signup({route, navigation}: Props) {
                     </TouchableOpacity>
                 </View>
                 <View style={styles.accountExistContainer}>
-                    <Text style={styles.noAccountText}>Already have an account?</Text>
+                    <Text style={styles.noAccountText}>
+                        Already have an account?
+                    </Text>
                     <TouchableOpacity
                         onPress={() => navigation.navigate('Login')}
                     >
-                        <Text style={styles.accountExistTextLink}>
-                            Sign In
-                        </Text>
+                        <Text style={styles.accountExistTextLink}>Sign In</Text>
                     </TouchableOpacity>
                 </View>
             </ImageBackground>
