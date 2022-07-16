@@ -12,11 +12,11 @@ use sqlx::types::Uuid;
 pub fn router() -> Router {
     Router::new()
         .route("/create", post(create))
-        .route("/info/:id", get(read))
-    // .route("/group/:id/new_users", post(add_users))
-    // .route("/group/:id/delete_users", post(delete_users))
-    // .route("/group/:id/name", post(change_name))
-    // .route("/group/:id", delete(delete_group))
+        .route("/:id", get(read))
+        .route("/:id/new_users", post(add_users))
+    // .route("/:id/delete_users", post(delete_users))
+    // .route("/:id/name", post(change_name))
+    // .route("/:id", delete(delete_group))
 }
 
 // Accept data -> deserialiable
@@ -60,6 +60,7 @@ async fn create(
 // respond with JSON: id, name, created_date
 async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo> {
     // let uuid: = params.get("uuid");
+    let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     let mut group: Group = Group {
         id: 0,
         uuid: Uuid::new_v4(),
@@ -67,7 +68,7 @@ async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo
         created: NaiveDateTime::from_timestamp(0, 0),
         members: vec![],
     };
-    Group::read(&db.0, &mut group, uuid);
+    Group::read(&db.0, &mut group, uuid_converted);
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
@@ -83,8 +84,9 @@ pub struct UsersIDs {
 
 //request JSON: vec<user_ids>
 async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UsersIDs>) {
+    let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     let user_ids: &[i32] = &*payload.users;
-    Group::add_users(&db.0, &uuid, user_ids);
+    Group::add_users(&db.0, uuid_converted, user_ids);
 }
 
 // //request JSON: vec<user_ids>
