@@ -107,7 +107,7 @@ impl Group {
     }
 }
 
-// pub fn delete_users(db: &DbPool, uuid: &str, users_to_delete: &[i32]) {
+// pub fn delete_users(db: &DbPool, uuid: &str, users_to_delete: &[i32]) -> Result<(), sqlx::Error>{
 //     for i in users_to_delete {
 //         let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
 //             .bind(i)
@@ -119,6 +119,7 @@ impl Group {
 //             .execute(db)
 //             .await?;
 //     }
+//     Ok(())
 // }
 //
 // pub fn change_name(db: &DbPool, uuid: &str, name: String) {
