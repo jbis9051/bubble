@@ -64,7 +64,7 @@ impl Group {
     }
 
     //     //TENTATIVE, PoolConnection<Postgres> is not used
-    pub async fn read(db: &DbPool, _group: &mut Group, uuid: String) -> Result<(), sqlx::Error> {
+    pub async fn read(db: &DbPool, _group: &mut Group, uuid: Uuid) -> Result<(), sqlx::Error> {
         let row = sqlx::query("SELECT * FROM group WHERE uuid = $1")
             .bind(uuid)
             .fetch_one(db)
@@ -81,7 +81,7 @@ impl Group {
     }
 
     //Roles: Owner, User
-    pub async fn add_users(db: &DbPool, uuid: &str, new_users: &[i32]) -> Result<(), sqlx::Error> {
+    pub async fn add_users(db: &DbPool, uuid: Uuid, new_users: &[i32]) -> Result<(), sqlx::Error> {
         for i in new_users {
             let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
                 .bind(i)
