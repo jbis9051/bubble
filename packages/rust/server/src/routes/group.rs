@@ -82,10 +82,10 @@ pub struct UsersIDs {
 }
 
 //request JSON: vec<user_ids>
-// async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UsersIDs>) {
-//     let user_ids: &[i32] = &*payload.users;
-//     Group::add_users(&db.0, uuid, user_ids);
-// }
+async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UsersIDs>) {
+    let user_ids: &[i32] = &*payload.users;
+    Group::add_users(&db.0, &uuid, user_ids);
+}
 
 // //request JSON: vec<user_ids>
 // async fn delete_users(

@@ -81,19 +81,14 @@ impl Group {
     }
 
     //Roles: Owner, User
-    pub async fn add_users(
-        db: &DbPool,
-        uuid: String,
-        mut new_users: &[i32],
-    ) -> Result<(), sqlx::Error> {
-        let uuid_ref = &uuid;
+    pub async fn add_users(db: &DbPool, uuid: &str, new_users: &[i32]) -> Result<(), sqlx::Error> {
         for i in new_users {
-            let mut user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
+            let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
                 .bind(i)
                 .fetch_one(db)
                 .await?;
-            let mut groupID: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
-                .bind(uuid_ref)
+            let groupID: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
+                .bind(uuid)
                 .fetch_one(db)
                 .await?;
             sqlx::query(
