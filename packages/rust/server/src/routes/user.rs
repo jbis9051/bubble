@@ -188,7 +188,7 @@ pub struct ForgotRow {
     pub created: NaiveDateTime,
 }
 async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm>) -> StatusCode {
-    let row = User::get_forgot(&db.0, &payload.forgot_id).await.unwrap();
+    let _row = User::get_forgot(&db.0, &payload.forgot_id).await.unwrap();
     let mut user = User::get_by_email(&db.0, &payload.email).await.unwrap();
     User::delete_forgot(&db.0, &payload.forgot_id)
         .await
