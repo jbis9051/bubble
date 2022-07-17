@@ -10,6 +10,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
 import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
+import Signup2Background from '../../assets/SignUp2.svg'
+import SignupBackground from "../../assets/SignUpBackground1.svg";
 
 type RootStackParamList = {
     Login: undefined;
@@ -33,19 +35,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleContainer: {
-        borderWidth: 1,
-        top: '12%',
-        flex: 1.75,
+        top: '7.5%',
+        flex: 2,
         justifyContent: 'center',
     },
     signupContainer: {
-        borderWidth: 1,
-        flex: 2.5,
+        flex: 4,
         justifyContent: 'center',
     },
     signupButtonContainer: {
-        borderWidth: 1,
-        flex: 1.5,
+        flex: 2,
     },
     title: {
         fontSize: 45,
@@ -53,38 +52,42 @@ const styles = StyleSheet.create({
         color: colors.primary,
     },
     signupButton: {
-        height: 40,
-        width: 150,
+        height: 50,
+        width: 300,
         margin: 7,
-        borderWidth: 1,
         borderRadius: 15,
         padding: 10,
         alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.primary,
+    },buttonText:{
+       color: colors.white,
+       fontWeight: '600',
     },
 });
+
+const onSignUp = async() => {
+    return null;
+}
 
 function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <ImageBackground
-                source={require('../../assets/SignUp2.png')}
-                style={styles.backgroundImage}
-            >
-                <Header page={'Signup1'} />
+            <Signup2Background height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
+                <Header page={'Signup1'}/>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign Up</Text>
                 </View>
                 <View style={styles.signupContainer}>
                     <TextInputBox descriptor="Username" params={''} />
-                    <TextInputBox descriptor="Password" params={''} />
-                    <TextInputBox descriptor="Confirm Password" params={''} />
+                    <TextInputBox descriptor="Password" params={'password'} />
+                    <TextInputBox descriptor="Confirm Password" params={'password'} />
                 </View>
                 <View style={styles.signupButtonContainer}>
-                    <TouchableOpacity style={styles.signupButton}>
-                        <Text>Sign Up</Text>
+                    <TouchableOpacity style={styles.signupButton} onPress={onSignUp()}>
+                        <Text style={styles.buttonText}>Sign Up</Text>
                     </TouchableOpacity>
                 </View>
-            </ImageBackground>
         </View>
     );
 }

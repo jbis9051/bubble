@@ -5,10 +5,12 @@ import {
     StyleSheet,
     TouchableOpacity,
     ImageBackground,
+    Dimensions,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
+import SignupBackground from '../../assets/SignUpBackground1.svg'
 
 type RootStackParamList = {
     Login: undefined;
@@ -77,13 +79,14 @@ const styles = StyleSheet.create({
     },
 });
 
+const {height} = Dimensions.get("window");
+console.log(height);
+const ratio = height * 815/667;
+console.log(ratio);
 function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <ImageBackground
-                source={require('../../assets/SignUpBackground.png')}
-                style={{ height: '100%', width: '100%', alignItems: 'center' }}
-            >
+            <SignupBackground height={ratio} width={ratio} style={{position: 'absolute'}}/>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign Up</Text>
                 </View>
@@ -92,15 +95,15 @@ function Signup({ route, navigation }: Props) {
                         descriptor="Phone Number"
                         params={'telephoneNumber'}
                     />
-                    <TextInputBox descriptor="Username" params={''} />
-                    <TextInputBox descriptor="Password" params={'password'} />
+                    <TextInputBox descriptor="Email" params={''} />
+                    <TextInputBox descriptor="Name" params={''} />
                 </View>
                 <View style={styles.signupButtonContainer}>
                     <TouchableOpacity
                         style={styles.signupButton}
                         onPress={() => navigation.navigate('Signup2')}
                     >
-                        <Text style={styles.buttonText}>Create Account</Text>
+                        <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={styles.accountExistContainer}>
@@ -113,7 +116,6 @@ function Signup({ route, navigation }: Props) {
                         <Text style={styles.accountExistTextLink}>Sign In</Text>
                     </TouchableOpacity>
                 </View>
-            </ImageBackground>
         </View>
     );
 }

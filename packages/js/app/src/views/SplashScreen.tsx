@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, View, StyleSheet, ImageBackground } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import colors from '../constants/Colors';
+import SplashBackground from "../assets/background.svg";
 
 type RootStackParamList = {
     Login: undefined;
@@ -42,14 +43,10 @@ function Splash({ route, navigation }: Props) {
     }, 2000);
     return (
         <View style={styles.container}>
-            <ImageBackground
-                source={require('../assets/background.png')}
-                style={styles.backgroundImage}
-            >
+            <SplashBackground height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Bubble</Text>
                 </View>
-            </ImageBackground>
         </View>
     );
 }

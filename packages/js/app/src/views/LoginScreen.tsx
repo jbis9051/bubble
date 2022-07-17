@@ -9,6 +9,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
 import colors from '../constants/Colors';
+import LoginBackground from '../assets/LoginBackground.svg';
 
 type RootStackParamList = {
     Login: undefined;
@@ -28,9 +29,10 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     imageBackground: {
-        height: '100%',
-        width: '100%',
+        width: 200,
+        height: 200,
         alignItems: 'center',
+        position: 'absolute',
     },
     titleContainer: {
         top: '12%',
@@ -112,14 +114,13 @@ const fetchLogin = async() => {
 }
 
 function Login({ route, navigation }: Props) {
-    const res = fetchLogin();
-    console.log(res);
     return (
         <View style={styles.container}>
-            <ImageBackground
+            <LoginBackground height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
+                {/*<ImageBackground
                 source={require('../assets/LoginBackground.png')}
                 style={styles.imageBackground}
-            >
+            > */}
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign In</Text>
                 </View>
@@ -142,7 +143,7 @@ function Login({ route, navigation }: Props) {
                         <Text style={styles.noAccountTextLink}>Sign up</Text>
                     </TouchableOpacity>
                 </View>
-            </ImageBackground>
+                {/* </ImageBackground> */}
         </View>
     );
 }
