@@ -4,18 +4,23 @@ import colors from '../constants/Colors';
 
 const styles = StyleSheet.create({
     container: {
-        padding: 10,
+        borderWidth: 1,
+        padding: '2%',
+        alignItems: 'center',
+        width: '100%',
     },
     descriptors: {
+        borderWidth: 1,
+        width: '100%',
         flexDirection: 'row',
     },
     textInput: {
-        borderLeftWidth: 0,
-        borderRightWidth: 0,
-        borderTopWidth: 0,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
         height: 45,
-        width: 300,
-        borderWidth: 1,
+        width: '100%',
         padding: 0,
     },
     textInputDescriptors: {

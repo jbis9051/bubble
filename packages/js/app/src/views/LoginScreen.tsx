@@ -27,12 +27,18 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
+    imageBackground: {
+        height: '100%',
+        width: '100%',
+        alignItems: 'center',
+    },
     titleContainer: {
         top: '12%',
         flex: 3,
         justifyContent: 'center',
     },
     textContainer: {
+
         flex: 1.25,
         justifyContent: 'center',
     },
@@ -94,7 +100,7 @@ const styles = StyleSheet.create({
 
 const fetchLogin = async() => {
     try{
-        const res = await fetch('../../user/signup',{
+        const res = await fetch('/user/signup',{
             method: 'POST',
         });
         const json = await res.json();
@@ -112,7 +118,7 @@ function Login({ route, navigation }: Props) {
         <View style={styles.container}>
             <ImageBackground
                 source={require('../assets/LoginBackground.png')}
-                style={{ height: '100%', width: '100%', alignItems: 'center' }}
+                style={styles.imageBackground}
             >
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign In</Text>
