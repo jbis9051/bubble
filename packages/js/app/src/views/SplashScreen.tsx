@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, StyleSheet, ImageBackground } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import colors from '../constants/Colors';
-import SplashBackground from "../assets/background.svg";
+import SplashBackground from "../assets/SplashBackground.svg";
 
 type RootStackParamList = {
     Login: undefined;

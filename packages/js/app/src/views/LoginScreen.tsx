@@ -1,10 +1,9 @@
 import React from 'react';
 import {
-    ImageBackground,
     Text,
     View,
     StyleSheet,
-    TouchableOpacity,
+    TouchableOpacity, Dimensions,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
@@ -117,10 +116,6 @@ function Login({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
             <LoginBackground height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
-                {/*<ImageBackground
-                source={require('../assets/LoginBackground.png')}
-                style={styles.imageBackground}
-            > */}
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign In</Text>
                 </View>
@@ -143,7 +138,6 @@ function Login({ route, navigation }: Props) {
                         <Text style={styles.noAccountTextLink}>Sign up</Text>
                     </TouchableOpacity>
                 </View>
-                {/* </ImageBackground> */}
         </View>
     );
 }

@@ -4,14 +4,15 @@ import {
     View,
     StyleSheet,
     ImageBackground,
-    TouchableOpacity,
+    TouchableOpacity, Dimensions,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
 import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
-import Signup2Background from '../../assets/SignUp2.svg'
-import SignupBackground from "../../assets/SignUpBackground1.svg";
+import Signup2Background from '../../assets/SignUp2Background.svg'
+import SignupBackground from "../../assets/SignUp1Background.svg";
+import SplashBackground from "../../assets/SplashBackground.svg";
 
 type RootStackParamList = {
     Login: undefined;
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
 const onSignUp = async() => {
     return null;
 }
+
 
 function Signup({ route, navigation }: Props) {
     return (

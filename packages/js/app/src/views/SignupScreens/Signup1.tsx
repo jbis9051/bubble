@@ -10,7 +10,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
-import SignupBackground from '../../assets/SignUpBackground1.svg'
+import Signup1Background from '../../assets/SignUp1Background.svg'
 
 type RootStackParamList = {
     Login: undefined;
@@ -79,14 +79,11 @@ const styles = StyleSheet.create({
     },
 });
 
-const {height} = Dimensions.get("window");
-console.log(height);
-const ratio = height * 815/667;
-console.log(ratio);
+
 function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <SignupBackground height={ratio} width={ratio} style={{position: 'absolute'}}/>
+            <Signup1Background height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Sign Up</Text>
                 </View>
