@@ -17,6 +17,11 @@ pub struct Group {
     pub members: Vec<i32>,
 }
 
+pub enum Role {
+    Parent = 0,
+    Child = 1,
+}
+
 #[derive(sqlx::FromRow)]
 pub struct UserID {
     id: i32,
