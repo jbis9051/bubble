@@ -2,6 +2,7 @@ use crate::models::group::Group;
 use crate::types::DbPool;
 use axum::extract::Path;
 use axum::http::StatusCode;
+use axum::routing::delete;
 use axum::routing::{get, post};
 use axum::Extension;
 use axum::{Json, Router};
@@ -14,9 +15,9 @@ pub fn router() -> Router {
         .route("/create", post(create))
         .route("/:id", get(read))
         .route("/:id/new_users", post(add_users))
-    // .route("/:id/delete_users", post(delete_users))
-    // .route("/:id/name", post(change_name))
-    // .route("/:id", delete(delete_group))
+        .route("/:id/delete_users", post(delete_users))
+        .route("/:id/name", post(change_name))
+        .route("/:id", delete(delete_group))
 }
 
 // Accept data -> deserialiable
@@ -90,35 +91,38 @@ async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload
 }
 
 // //request JSON: vec<user_ids>
-// async fn delete_users(
-//     db: Extension<DbPool>,
-//     Path(params): Path<String>,
-//     extract::Json(payload): extract::Json<UsersIDs>,
-// ) {
-//     let group_id = params.get("uuid").to_string();
-//     let users_to_delete = payload.users;
-//     Group::delete_users(&db.0, group_id, users_to_delete);
-// }
+async fn delete_users(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    Json(payload): Json<UsersIDs>,
+) {
+    let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
+    let users_to_delete: &[i32] = &*payload.users;
+    Group::delete_users(&db.0, group_id, users_to_delete);
+}
+
 //
-// #[derive(Serialize)]
-// pub struct NameChange {
-//     name: String,
-// }
+#[derive(Deserialize, Serialize)]
+pub struct NameChange {
+    name: String,
+}
+
 //
 // //request json: name
-// async fn change_name(
-//     db: Extension<DbPool>,
-//     Path(params): Path<String>,
-//     extract::Json(payload): extract::Json<NameChange>,
-// ) {
-//     let group_id = params.get("uuid").to_string();
-//     //must resolve where normal rust or json is how requests replies sent
-//     let name_to_change = payload.name;
-//     Group::change_name(&db.0, group_id, name_to_change);
-// }
+async fn change_name(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    Json(payload): Json<NameChange>,
+) {
+    let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
+    //must resolve where normal rust or json is how requests replies sent
+    let name_to_change: &str = &payload.name;
+    Group::change_name(&db.0, group_id, name_to_change);
+}
+
 //
 // //none, just id passed from path
-// async fn delete_group(db: Extension<DbPool>, Path(params): Path<String>) {
-//     let group_id = params.get("uuid").to_string();
-//     Group::delete_group(&db.0, group_id);
-// }
+async fn delete_group(db: Extension<DbPool>, Path(uuid): Path<String>) {
+    let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
+    Group::delete_group(&db.0, group_id);
+}
