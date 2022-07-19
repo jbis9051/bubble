@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
+import scaleComponent from '../components/scaleComponent';
 import colors from '../constants/Colors';
 import LoginBackground from '../assets/LoginBackground.svg';
 
@@ -19,6 +20,10 @@ type RootStackParamList = {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
+const scaledLoginButtonWidth = scaleComponent(300, false);
+const scaledTitleFont = scaleComponent(45, true);
+console.log(`${scaledLoginButtonWidth} scaledLoginButtonWidth`);
+
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
@@ -27,19 +32,12 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    imageBackground: {
-        width: 200,
-        height: 200,
-        alignItems: 'center',
-        position: 'absolute',
-    },
     titleContainer: {
         top: '12%',
         flex: 3,
         justifyContent: 'center',
     },
     textContainer: {
-
         flex: 1.25,
         justifyContent: 'center',
     },
@@ -48,12 +46,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     noAccountContainer: {
-        flex: 1.5,
+        flex: 1.25,
         alignItems: 'center',
         justifyContent: 'center',
     },
     title: {
-        fontSize: 45,
+        fontSize: scaledTitleFont,
         fontWeight: '400',
         color: colors.primary,
     },
@@ -61,8 +59,8 @@ const styles = StyleSheet.create({
         color: colors.darkGrey,
     },
     login: {
+        width: scaledLoginButtonWidth,
         height: 50,
-        width: 300,
         margin: 7,
         borderRadius: 25,
         padding: 10,
@@ -84,6 +82,7 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     buttonText: {
+        fontSize: 14,
         color: colors.white,
         fontWeight: '600',
     },

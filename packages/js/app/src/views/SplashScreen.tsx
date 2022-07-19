@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, ImageBackground } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import colors from '../constants/Colors';
 import SplashBackground from "../assets/SplashBackground.svg";
+import Logo from '../assets/logo@0.5x.svg';
 
 type RootStackParamList = {
     Login: undefined;
@@ -17,6 +18,7 @@ const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         justifyContent: 'center',
+        flexDirection: 'row',
         backgroundColor: colors.white,
         width: '100%',
         height: '100%',
@@ -24,16 +26,17 @@ const styles = StyleSheet.create({
     backgroundImage: {
         height: '100%',
         width: '100%',
+    },logoContainer:{
+        alignItems: 'center',
+        flex: 1,
+    }, titleContainer: {
+        flex: 2,
+        justifyContent: 'center',
     },
     title: {
         fontSize: 80,
         fontWeight: '300',
-        justifyContent: 'center',
-    },
-    titleContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        color: colors.black,
     },
 });
 
@@ -44,9 +47,12 @@ function Splash({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
             <SplashBackground height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>Bubble</Text>
-                </View>
+            <View style={styles.logoContainer}>
+                <Logo height={100} width={100}/>
+            </View>
+            <View style={styles.titleContainer}>
+                <Text style={styles.title}>Bubble</Text>
+            </View>
         </View>
     );
 }

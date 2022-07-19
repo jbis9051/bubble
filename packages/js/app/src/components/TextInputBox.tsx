@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, Text } from 'react-native';
+import { View, StyleSheet, TextInput, Text, Dimensions} from 'react-native';
+import scaleComponent from './scaleComponent';
 import colors from '../constants/Colors';
+
+let scaledWidth = scaleComponent(300, false)
+scaledWidth += Dimensions.get('window').width*0.025; // account for 2.5% padding so lines up with button
+const scaleDescriptor = scaleComponent(15, false)
 
 const styles = StyleSheet.create({
     container: {
-        padding: '2%',
+        width: scaledWidth,
+        padding: '2.5%',
         alignItems: 'center',
-        width: '100%',
     },
     descriptors: {
-        width: 300, //100% works for this
         flexDirection: 'row',
     },
     textInput: {
@@ -18,14 +22,14 @@ const styles = StyleSheet.create({
         borderTopWidth: 0,
         borderBottomWidth: 1,
         height: 45,
-        width: 300,
+        width: '100%',
         padding: 0,
     },
     textInputDescriptors: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'flex-start',
-        fontSize: 15,
+        fontSize: scaleDescriptor,
         fontWeight: '300',
     },
     asterisk: {
