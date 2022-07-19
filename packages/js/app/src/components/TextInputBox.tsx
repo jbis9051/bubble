@@ -1,10 +1,20 @@
-import React, {useState,} from 'react';
-import {View, StyleSheet,TextInput, Text} from 'react-native';
-import colors from '../constants/colors';
+import React, { useState } from 'react';
+import { View, StyleSheet, TextInput, Text, Dimensions} from 'react-native';
+import scaleComponent from './scaleComponent';
+import colors from '../constants/Colors';
+
+let scaledWidth = scaleComponent(300, false)
+scaledWidth += Dimensions.get('window').width*0.025; // account for 2.5% padding so lines up with button
+const scaleDescriptor = scaleComponent(15, false)
 
 const styles = StyleSheet.create({
-    container:{
-        padding: 10,
+    container: {
+        width: scaledWidth,
+        padding: '2.5%',
+        alignItems: 'center',
+    },
+    descriptors: {
+        flexDirection: 'row',
     },
     textInput: {
         borderLeftWidth: 0,
@@ -16,69 +26,100 @@ const styles = StyleSheet.create({
         padding: 10,
     },descriptors:{
         flexDirection: 'row',
+        borderBottomWidth: 1,
+        height: 45,
+        width: '100%',
     },
-    textInputDescriptors:{
+    textInputDescriptors: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: "flex-start",
         color: colors.black,
-        fontWeight: '200',
+        alignItems: 'flex-start',
+        fontSize: scaleDescriptor,
+        fontWeight: '300',
     },
-})
+});
+
 
 const phoneText = (inputNum: string) => {
     const phoneNumber = inputNum.replace(/[^\d]/g, '');
     const len = phoneNumber.length;
-    if (len>6){
-        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3,6)}-${phoneNumber.slice(6,10)}` // add - in btween 6 and 7
+    if (len > 6) {
+        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(
+            3,
+            6
+        )}-${phoneNumber.slice(6, 10)}`;
     }
-    if (len<=3){
+    if (len <= 3) {
         return phoneNumber;
-    }if (len <= 6){
-        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3,6)}`; // add () into first 3
+    }
+    if (len <= 6) {
+        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}`;
     }
     return null;
 }
 
-const TextInputBox: React.FC<{descriptor: string, params: string}> =
-    ({descriptor, params}) => {
+const TextInputBox: React.FC<{ descriptor: string; params: string}> = ({
+    descriptor,
+    params,
+}) => {
     const [isFocused, setFocus] = useState(false);
     const [input, setInput] = useState('');
-    const isPhone = params.includes("phoneNumber");
-    const isSecure = params.includes("password");
+    const isPhone = params.includes('phoneNumber');
+    const isSecure = params.includes('password');
     return (
         <View style={styles.container}>
             <View style={styles.descriptors}>
-                <Text style={[styles.textInputDescriptors,
-                    {color: isFocused ? colors.primary : colors.black}]}
-                >{descriptor}</Text>
+                <Text
+                    style={[
+                        styles.textInputDescriptors,
+                        { color: isFocused ? colors.primary : colors.black },
+                    ]}
+                >
+                    {descriptor}
+                </Text>
             </View>
-            {isPhone &&
+            {isPhone && (
                 <TextInput
-                    style={[styles.textInput,
-                        {borderBottomColor: isFocused ? colors.primary : colors.black}]} // dont know how to do it without inline
-                    onFocus = {() => setFocus(true)}
-                    onBlur = {() => setFocus(false)}
-                    secureTextEntry={isSecure ? true : false}
+                    style={[
+                        styles.textInput,
+                        {
+                            borderBottomColor: isFocused
+                                ? colors.primary
+                                : colors.black,
+                        },
+                    ]}
+                    onFocus={() => setFocus(true)}
+                    onBlur={() => setFocus(false)}
+                    secureTextEntry={isSecure}
                     textContentType={isPhone ? 'telephoneNumber' : undefined}
                     keyboardType="default"
-                    onChangeText={(e: string) => {setInput(phoneText(e))}}
                     value={input}
+                    onChangeText={(e) => {
+                        setInput(phoneText(e));
+                        }
+                    }
+
                 />
-            }
-            {!isPhone &&
+            )}
+            {!isPhone && (
                 <TextInput
-                    style={[styles.textInput,
-                        {borderBottomColor: isFocused ? colors.primary : colors.black}]} // dont know how to do it without inline
-                    onFocus = {() => setFocus(true)}
-                    onBlur = {() => setFocus(false)}
-                    secureTextEntry={isSecure ? true : false}
+                    style={[
+                        styles.textInput,
+                        {
+                            borderBottomColor: isFocused
+                                ? colors.primary
+                                : colors.black,
+                        },
+                    ]}
+                    onFocus={() => setFocus(true)}
+                    onBlur={() => setFocus(false)}
+                    secureTextEntry={isSecure}
                     textContentType={isPhone ? 'telephoneNumber' : undefined}
                     keyboardType="default"
                 />
-            }
+            )}
         </View>
-    )
-}
-
+    );
+};
 export default TextInputBox;

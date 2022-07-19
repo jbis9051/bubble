@@ -1,17 +1,27 @@
 import React from 'react';
-import {ImageBackground, Text, View, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+    Text,
+    View,
+    StyleSheet,
+    TouchableOpacity, Dimensions,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import Header from '../components/Header';
-import TextInputBox from "../components/TextInputBox";
+import TextInputBox from '../components/TextInputBox';
+import scaleComponent from '../components/scaleComponent';
 import colors from '../constants/Colors';
+import LoginBackground from '../assets/LoginBackground.svg';
 
 type RootStackParamList = {
-    Login: undefined,
-    Signup1: undefined,
-    Signup2: undefined,
-    Splash: undefined,
+    Login: undefined;
+    Signup1: undefined;
+    Signup2: undefined;
+    Splash: undefined;
 };
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
+
+const scaledLoginButtonWidth = scaleComponent(300, false);
+const scaledTitleFont = scaleComponent(45, true);
+console.log(`${scaledLoginButtonWidth} scaledLoginButtonWidth`);
 
 const styles = StyleSheet.create({
     container: {
@@ -20,79 +30,104 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    backgroundImage:{
-        alignItems: 'center',
-    },
-    title: {
-        flex: 0.7,
-        alignItems: 'center',
-        fontSize: 45,
-        fontWeight: '100',
-    },
-    textContainer:{
+    titleContainer: {
+        top: '12%',
         flex: 3,
         justifyContent: 'center',
     },
-    textInput: {
-        borderTopColor: colors.white,
-        borderRightColor: colors.white,
-        borderLeftColor: colors.white,
-        height: 50,
-        width: 300,
-        margin: 7,
-        borderWidth: 1,
-    },textInputDescriptors:{
+    textContainer: {
+        flex: 1.6,
+        justifyContent: 'center',
+    },
+    loginContainer: {
+        flex: 1.5,
+        justifyContent: 'center',
+    },
+    noAccountContainer: {
+        flex: 1.25,
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: scaledTitleFont,
+        fontWeight: '400',
+        color: colors.primary,
+    },
+    textInputDescriptors: {
         color: colors.darkGrey,
-    },loginContainer: {
-        flex: 5,
     },
     login:{
-        height: 40,
-        width: 200,
+        height: 50,
+        width: scaledLoginButtonWidth,
         margin: 7,
         borderWidth: 1,
         borderRadius: 15,
         padding: 10,
-        alignItems:'center',
-        justifyContent:'center',
-    },forgot:{
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.primary,
+    },
+    forgot: {
         fontWeight: '200',
         fontSize: 13,
         textAlign: 'center',
-    }
-})
+    },
+    buttonText: {
+        fontSize: 14,
+        color: colors.white,
+        fontWeight: '600',
+    },
+    noAccountText: {
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '300',
+    },
+    noAccountTextLink: {
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '300',
+    },
+});
 
-function Login({route, navigation}: Props) {
+const fetchLogin = async() => {
+    try{
+        const res = await fetch('/user/signup',{
+            method: 'POST',
+        });
+        const json = await res.json();
+        return json;
+    }catch(error){
+        console.error(error);
+    }
+    return null;
+}
+
+function Login({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <ImageBackground
-                source={require('../assets/background.png')}
-                style={styles.backgroundImage}
-            >
-                <Header page={'Splash'}/>
-                <Text style={styles.title}>Welcome back</Text>
+            <LoginBackground height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
+                <View style={styles.titleContainer}>
+                    <Text style={styles.title}>Sign In</Text>
+                </View>
                 <View style={styles.textContainer}>
-                    <TextInputBox
-                        descriptor='Username'
-                        required={false}
-                    />
-                    <TextInputBox
-                        descriptor='Password'
-                        required={false}
-                        params={""}
-                    />
-                    <TextInputBox
-                        descriptor='Password'
-                        params={"password"}
-                    />
+                    <TextInputBox descriptor="Username" params={''} />
+                    <TextInputBox descriptor="Password" params={'password'} />
                 </View>
                 <View style={styles.loginContainer}>
                     <TouchableOpacity style={styles.login}>
-                        <Text>Log In</Text>
+                        <Text style={styles.buttonText}>Sign In</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.noAccountContainer}>
+                    <Text style={styles.noAccountText}>
+                        Don't have an account?
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('Signup1')}
+                    >
+                        <Text style={styles.noAccountTextLink}>Sign up</Text>
                     </TouchableOpacity>
                     <Text style={styles.forgot} onPress={() => {navigation.navigate('')}}>Forgot password?</Text>
                 </View>
-            </ImageBackground>
         </View>
     );
 }
