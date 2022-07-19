@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabBar from './src/components/TabBar';
 import Login from './src/views/LoginScreen';
 import Signup1 from './src/views/SignupScreens/Signup1';
@@ -45,7 +44,6 @@ const App = () => {
         </NavigationContainer>
     );
 };
-
 
 export default () => (
     <NavigationContainer>
