@@ -97,6 +97,9 @@ impl User {
 
         Ok(token)
     }
+    pub async fn user_from_session(db: &DbPool, session: &str) -> Result<User, sqlx::Error> {
+        todo!()
+    }
 
     pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
