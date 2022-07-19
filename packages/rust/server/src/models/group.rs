@@ -3,7 +3,7 @@ use crate::types::DbPool;
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono;
 
-use sqlx::types::chrono::NaiveDateTime;
+//use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
@@ -23,13 +23,14 @@ pub struct UserID {
 }
 
 //Retarded issues with future
-// pub fn get_group_id(db: &DbPool, uuid: &str) -> i32{
+// pub async fn get_group_id(db: &DbPool, uuid: &str) -> i32{
 //     let mut groupID: (i32, ) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
 //         .bind(uuid)
-//         .fetch_one(db);
-//
+//         .fetch_one(db)
+//         .await;
 //     groupID.0
 // }
+
 pub fn get_group_by_row(row: &PgRow) -> Group {
     Group {
         id: row.get("id"),
@@ -87,52 +88,69 @@ impl Group {
                 .bind(i)
                 .fetch_one(db)
                 .await?;
-            let groupID: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
+            let group_id: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
                 .bind(uuid)
                 .fetch_one(db)
                 .await?;
             sqlx::query(
-                "INSERT INTO user_group (user_id, group_id, role_id, created)
-                    VALUES ($1, $2, $3, $4);",
+                "INSERT INTO user_group (user_id, group_id, role_id)
+                    VALUES ($1, $2, $3);",
             )
             .bind(user_id.0)
-            .bind(groupID.0)
-            .bind("User")
-            .bind(NaiveDateTime::from_timestamp(0, 0))
+            .bind(group_id.0)
+            //TODO! Enum is not working
+            .bind(1)
             .execute(db)
             .await?;
         }
         //must perform inner join with user_group afterwards
         Ok(())
     }
-}
 
-// pub fn delete_users(db: &DbPool, uuid: &str, users_to_delete: &[i32]) -> Result<(), sqlx::Error>{
-//     for i in users_to_delete {
-//         let userID = sqlx::query("SELECT id FROM user WHERE uuid = $1")
-//             .bind(i)
-//             .execute(db)
-//             .await?;
-//         sqlx::query("DELETE FROM user_group WHERE user_id = $1 && group_id = $2")
-//             .bind(userID)
-//             .bind(get_group_id(uuid))
-//             .execute(db)
-//             .await?;
-//     }
-//     Ok(())
-// }
-//
-// pub fn change_name(db: &DbPool, uuid: &str, name: String) {
-//     sqlx::query("UPDATE group SET group_name = $1 WHERE id = $2")
-//         .bind(name)
-//         .bind(get_group_id(uuid))
-//         .execute(db)
-//         .await?;
-// }
-//
-// pub fn delete_group(db: &DbPool, uuid: &str) {
-//     sqlx::query("DELETE FROM group WHERE uuid = $1")
-//         .bind(uuid)
-//         .execute(db)
-//         .await?;
-// }
+    pub async fn delete_users(
+        db: &DbPool,
+        uuid: Uuid,
+        users_to_delete: &[i32],
+    ) -> Result<(), sqlx::Error> {
+        let group_id: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
+            .bind(uuid)
+            .fetch_one(db)
+            .await?;
+
+        for i in users_to_delete {
+            let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
+                .bind(i)
+                .fetch_one(db)
+                .await?;
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 && group_id = $2")
+                .bind(user_id.0)
+                .bind(group_id.0)
+                .execute(db)
+                .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn change_name(db: &DbPool, uuid: Uuid, name: &str) -> Result<(), sqlx::Error> {
+        let group_id: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
+            .bind(uuid)
+            .fetch_one(db)
+            .await?;
+
+        sqlx::query("UPDATE group SET group_name = $1 WHERE id = $2")
+            .bind(name)
+            .bind(group_id.0)
+            .execute(db)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_group(db: &DbPool, uuid: Uuid) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM group WHERE uuid = $1")
+            .bind(uuid)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+}
