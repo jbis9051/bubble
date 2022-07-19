@@ -1,3 +1,4 @@
+use crate::extractor::AuthenticatedUser::AuthenticatedUser;
 use crate::models::group::Group;
 use crate::types::DbPool;
 use axum::extract::Path;
@@ -40,6 +41,7 @@ pub struct GroupName {
 async fn create(
     db: Extension<DbPool>,
     Json(payload): Json<GroupName>,
+    user: AuthenticatedUser,
 ) -> (StatusCode, Json<GroupInfo>) {
     let mut group: Group = Group {
         id: 0,
