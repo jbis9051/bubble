@@ -1,8 +1,12 @@
 import React from 'react';
 import { Image } from 'react-native';
-import ProfileImageProps from '../Interfaces/ProfileImageProps';
 
 import Styles from './Styles';
+
+interface ProfileImageProps {
+    source: string;
+    size: number;
+}
 
 const ProfileImageTemplate: React.FunctionComponent<ProfileImageProps> = ({
     size,

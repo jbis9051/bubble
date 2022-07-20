@@ -1,11 +1,16 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import InfoCardTemplate from '../InfoCardTemplate';
-import InfoProps from '../../Interfaces/InfoProps';
 
 import Colors from '../../constants/Colors';
+
+interface InfoProps {
+    title: string;
+    detail: string;
+    icon: IconProp;
+}
 
 const ChildrenComponent: React.FunctionComponent<InfoProps> = ({
     title,
