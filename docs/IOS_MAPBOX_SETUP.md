@@ -29,14 +29,7 @@ Replace `YOUR_SECRET_MAPBOX_ACCESS_TOKEN` with the secret token.
 
 In order to set the access token for MapboxGL, a public token must be created. Go to https://account.mapbox.com to create the public token. Activate all of the public scopes and create the token. 
 
-Under the `packages/js/app` directory, create a `configs.ts` and paste the following code:
-
-```js
-export default {
-    mapboxAccessToken: PUBLIC_ACCESS_TOKEN
-};
-```
-Replace `PUBLIC_ACCESS_TOKEN` with the public token created.
+Create an environment variable called `REACT_APP_MAPBOX_ACCESS_TOKEN` and set it equal to the public token created.
 
 ---
 ## Building and Running
