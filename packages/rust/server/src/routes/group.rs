@@ -51,7 +51,7 @@ async fn create(
         members: vec![],
     };
 
-    Group::create(&db.0, &mut group).await.unwrap();
+    Group::create(&db.0, &mut group, &user).await.unwrap();
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
@@ -85,22 +85,27 @@ pub struct UsersIDs {
     pub users: Vec<i32>,
 }
 
+//wait its easier to just convert string to uuid
 //request JSON: vec<user_ids>
-async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UsersIDs>) {
+async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UserID>) {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let user_ids: &[i32] = &*payload.users;
-    Group::add_users(&db.0, uuid_converted, user_ids);
+    for i in &payload.users {
+        let user_id: Uuid = Uuid::parse_str(i).unwrap();
+        Group::add_user(&db.0, uuid_converted, user_id);
+    }
 }
 
 // //request JSON: vec<user_ids>
 async fn delete_users(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
-    Json(payload): Json<UsersIDs>,
+    Json(payload): Json<UserID>,
 ) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let users_to_delete: &[i32] = &*payload.users;
-    Group::delete_users(&db.0, group_id, users_to_delete);
+    for i in &payload.users {
+        let user_id: Uuid = Uuid::parse_str(i).unwrap();
+        Group::delete_user(&db.0, group_id, user_id);
+    }
 }
 
 //
@@ -122,7 +127,6 @@ async fn change_name(
     Group::change_name(&db.0, group_id, name_to_change);
 }
 
-//
 // //none, just id passed from path
 async fn delete_group(db: Extension<DbPool>, Path(uuid): Path<String>) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();

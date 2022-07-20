@@ -4,6 +4,7 @@ use sqlx::postgres::PgRow;
 use sqlx::types::chrono;
 
 //use sqlx::types::chrono::NaiveDateTime;
+use crate::extractor::AuthenticatedUser::AuthenticatedUser;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
@@ -14,9 +15,10 @@ pub struct Group {
     pub uuid: Uuid,
     pub group_name: String,
     pub created: chrono::NaiveDateTime,
-    pub members: Vec<i32>,
+    pub members: Vec<Uuid>,
 }
 
+#[repr(u8)]
 pub enum Role {
     Parent = 0,
     Child = 1,
@@ -46,18 +48,22 @@ pub fn get_group_by_row(row: &PgRow) -> Group {
     }
 }
 
+pub async fn from_id(db: &DbPool, uuid: Uuid) -> Result<Group, sqlx::Error> {
+    let row = sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
+        .bind(uuid)
+        .fetch_one(db)
+        .await?;
+    let group = get_group_by_row(&row);
+    Ok(group)
+}
+
 // CRUD functions
 impl Group {
-    pub async fn get_group_by_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"group\" WHERE id = $1")
-            .bind(id)
-            .fetch_one(db)
-            .await?;
-        let group = get_group_by_row(&row);
-        Ok(group)
-    }
-
-    pub async fn create(db: &DbPool, group: &mut Group) -> Result<(), sqlx::Error> {
+    pub async fn create(
+        db: &DbPool,
+        group: &mut Group,
+        user: &AuthenticatedUser,
+    ) -> Result<(), sqlx::Error> {
         let row =
             sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2) RETURNING *;")
                 .bind(&group.uuid)
@@ -66,11 +72,22 @@ impl Group {
                 .await?;
         let group_db = get_group_by_row(&row);
         group.created = group_db.created;
+        sqlx::query(
+            "INSERT INTO user_group (user_id, group_id, role_id)
+                    VALUES ($1, $2, $3);",
+        )
+        .bind(user.0.id)
+        .bind(group.id)
+        //TODO! Enum is not working
+        .bind(Role::Child as i32)
+        .execute(db)
+        .await?;
         Ok(())
     }
 
     //     //TENTATIVE, PoolConnection<Postgres> is not used
     pub async fn read(db: &DbPool, _group: &mut Group, uuid: Uuid) -> Result<(), sqlx::Error> {
+        // changes reference to group, does not use from_id
         let row = sqlx::query("SELECT * FROM group WHERE uuid = $1")
             .bind(uuid)
             .fetch_one(db)
@@ -87,52 +104,43 @@ impl Group {
     }
 
     //Roles: Owner, User
-    pub async fn add_users(db: &DbPool, uuid: Uuid, new_users: &[i32]) -> Result<(), sqlx::Error> {
-        for i in new_users {
-            let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
-                .bind(i)
-                .fetch_one(db)
-                .await?;
-            let group_id: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
-                .bind(uuid)
-                .fetch_one(db)
-                .await?;
-            sqlx::query(
-                "INSERT INTO user_group (user_id, group_id, role_id)
-                    VALUES ($1, $2, $3);",
-            )
-            .bind(user_id.0)
-            .bind(group_id.0)
-            //TODO! Enum is not working
-            .bind(1)
-            .execute(db)
+    pub async fn add_user(db: &DbPool, uuid: Uuid, new_users: Uuid) -> Result<(), sqlx::Error> {
+        let _group = from_id(db, uuid).await?;
+        let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
+            .bind(new_users)
+            .fetch_one(db)
             .await?;
-        }
+        sqlx::query(
+            "INSERT INTO user_group (user_id, group_id, role_id)
+                    VALUES ($1, $2, $3);",
+        )
+        .bind(user_id.0)
+        .bind(_group.id)
+        .bind(Role::Parent as i32)
+        .execute(db)
+        .await?;
+
         //must perform inner join with user_group afterwards
         Ok(())
     }
 
-    pub async fn delete_users(
+    pub async fn delete_user(
         db: &DbPool,
         uuid: Uuid,
-        users_to_delete: &[i32],
+        user_to_delete: Uuid,
     ) -> Result<(), sqlx::Error> {
-        let group_id: (i32,) = sqlx::query_as("SELECT id FROM group WHERE uuid = $1")
-            .bind(uuid)
+        let group = from_id(db, uuid).await?;
+
+        let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
+            .bind(user_to_delete)
             .fetch_one(db)
             .await?;
+        sqlx::query("DELETE FROM user_group WHERE user_id = $1 && group_id = $2")
+            .bind(user_id.0)
+            .bind(group.id)
+            .execute(db)
+            .await?;
 
-        for i in users_to_delete {
-            let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
-                .bind(i)
-                .fetch_one(db)
-                .await?;
-            sqlx::query("DELETE FROM user_group WHERE user_id = $1 && group_id = $2")
-                .bind(user_id.0)
-                .bind(group_id.0)
-                .execute(db)
-                .await?;
-        }
         Ok(())
     }
 
