@@ -9,7 +9,7 @@ use axum::{
 use crate::models::user::User;
 use crate::types::DbPool;
 
-pub struct AuthenticatedUser(User);
+pub struct AuthenticatedUser(pub(crate) User);
 
 #[async_trait]
 impl<B> FromRequest<B> for AuthenticatedUser
