@@ -81,9 +81,14 @@ async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct UsersIDs {
-    pub users: Vec<i32>,
+pub struct UserID {
+    pub users: Vec<String>,
 }
+// #[derive(Deserialize, Serialize)]
+// pub struct users_id {
+//     pub users: Vec<Uuid>,
+//}
+//Hi, so the issue is t ihe uuid now, where on line 96, we gotta make the data type uuid
 
 //wait its easier to just convert string to uuid
 //request JSON: vec<user_ids>
