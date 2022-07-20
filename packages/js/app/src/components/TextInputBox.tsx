@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, Text, Dimensions } from 'react-native';
+import { View, StyleSheet, TextInput, Text, Dimensions} from 'react-native';
 import scaleComponent from './scaleComponent';
-import colors from '../constants/colors';
+import colors from '../constants/Colors';
 
-let scaledWidth = scaleComponent(300, false);
-scaledWidth += Dimensions.get('window').width * 0.025; // account for 2.5% padding so lines up with button
-const scaleDescriptor = scaleComponent(15, false);
+let scaledWidth = scaleComponent(300, false)
+scaledWidth += Dimensions.get('window').width*0.025; // account for 2.5% padding so lines up with button
+const scaleDescriptor = scaleComponent(15, false)
 
 const styles = StyleSheet.create({
     container: {
@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
     },
 });
 
+
 const phoneText = (inputNum: string) => {
     const phoneNumber = inputNum.replace(/[^\d]/g, '');
     const len = phoneNumber.length;
@@ -58,7 +59,7 @@ const phoneText = (inputNum: string) => {
     return null;
 }
 
-const TextInputBox: React.FC<{ descriptor: string; params: string }> = ({
+const TextInputBox: React.FC<{ descriptor: string; params: string}> = ({
     descriptor,
     params,
 }) => {
@@ -96,7 +97,9 @@ const TextInputBox: React.FC<{ descriptor: string; params: string }> = ({
                     value={input}
                     onChangeText={(e) => {
                         setInput(phoneText(e));
-                    }}
+                        }
+                    }
+
                 />
             )}
             {!isPhone && (
