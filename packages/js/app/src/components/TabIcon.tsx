@@ -4,7 +4,7 @@ import { View, Text } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
-import colors from '../constants/colors';
+import Colors from '../constants/Colors';
 
 interface TabIconProps {
     name: string;
@@ -17,7 +17,7 @@ const TabIcon: React.FunctionComponent<TabIconProps> = ({
     icon,
     focused,
 }) => {
-    const color = focused ? colors.primary : colors.unselected;
+    const color = focused ? Colors.primary : Colors.unselected;
     return (
         <View
             style={{ alignItems: 'center', justifyContent: 'center', top: 10 }}
