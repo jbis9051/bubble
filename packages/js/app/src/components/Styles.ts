@@ -34,6 +34,11 @@ const Styles = StyleSheet.create({
         borderWidth: 2.5,
         borderColor: '#d3d3d3',
     },
+    background: {
+        position: 'absolute',
+        zIndex: 0,
+        elevation: 0
+    }
 });
 
 export default Styles;

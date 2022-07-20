@@ -1,9 +1,9 @@
 import React from 'react';
-import { ImageBackground } from 'react-native';
-import source from '../constants/BackgroundImage';
+import { StyleSheet } from 'react-native';
+import BackgroundSVG from '../../assets/background.svg';
 
-const Background: React.FunctionComponent<{ children: Element }> = ({
-    children,
-}) => <ImageBackground source={source}>{children}</ImageBackground>;
+import Styles from './Styles';
+
+const Background = () => <BackgroundSVG style={Styles.background}></BackgroundSVG>;
 
 export default Background;

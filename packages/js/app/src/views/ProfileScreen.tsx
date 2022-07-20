@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,7 +9,8 @@ import ProfileHeader from '../components/Profile/ProfileHeader';
 import SlideCardComponent from '../components/Profile/SlideCard';
 
 const ProfileScreen = () => (
-    <Background>
+    <View>
+        <Background />
         <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
             <Navigation />
             <ProfileHeader />
@@ -17,7 +18,7 @@ const ProfileScreen = () => (
         <ScrollView style={{ flex: 0 }} showsVerticalScrollIndicator={false}>
             <SlideCardComponent />
         </ScrollView>
-    </Background>
+    </View>
 );
 
 export default ProfileScreen;
