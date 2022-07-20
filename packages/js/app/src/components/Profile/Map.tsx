@@ -2,6 +2,9 @@ import React from 'react';
 import { View, Platform } from 'react-native';
 import MapView from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
+import configs from '../../../configs';
+
+MapboxGL.setAccessToken(configs.mapboxAccessToken);
 
 const Map = () =>
     Platform.OS === 'ios' ? (
