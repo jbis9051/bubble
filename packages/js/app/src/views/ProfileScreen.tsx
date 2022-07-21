@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Background from '../components/Background';
 import Navigation from '../components/Profile/Navigation';
 import ProfileHeader from '../components/Profile/ProfileHeader';
-import SlideCardComponent from '../components/Profile/SlideCard';
+import SlideCard from '../components/Profile/SlideCard';
 
 const ProfileScreen = () => (
     <View>
@@ -16,7 +16,7 @@ const ProfileScreen = () => (
             <ProfileHeader />
         </SafeAreaView>
         <ScrollView style={{ flex: 0 }} showsVerticalScrollIndicator={false}>
-            <SlideCardComponent />
+            <SlideCard />
         </ScrollView>
     </View>
 );
