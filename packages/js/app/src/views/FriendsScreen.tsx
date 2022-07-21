@@ -1,9 +1,19 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import Map from '../components/Groups/Map';
+import SlideCard from '../components/Groups/SlideCard';
 
 const FriendsScreen = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Friends</Text>
+    <View>
+        <Map />
+        <ScrollView style={{ 
+            width:'100%', 
+            position: 'absolute',
+            top: 0,
+            bottom: 0
+        }} showsVerticalScrollIndicator={false}>
+            <SlideCard />
+        </ScrollView>
     </View>
 );
 
