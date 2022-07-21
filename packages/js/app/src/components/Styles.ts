@@ -38,7 +38,7 @@ const Styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 0,
         elevation: 0,
-    },
+    }
 });
 
 export default Styles;
