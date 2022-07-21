@@ -3,10 +3,14 @@ import { View } from 'react-native';
 
 import Styles from './Styles';
 
-const SlideCardTemplate: React.FunctionComponent<{ children: JSX.Element }> = ({
+const SlideCardTemplate: React.FunctionComponent<{ children: JSX.Element, style: {} }> = ({
     children,
+    style
 }) => (
-    <View style={Styles.slideCardTemplate}>
+    <View style={{
+        ...Styles.slideCardTemplate, 
+        ...style
+    }}>
         <View
             style={{
                 width: '100%',
