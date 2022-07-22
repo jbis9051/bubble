@@ -1,0 +1,12 @@
+<svg version="1.2" width="400" height="900" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="Gradient2" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#ff6339"/>
+            <stop offset="100%" stop-color="#ff3a66"/>
+        </linearGradient>
+        <style type="text/css"><![CDATA[
+        #rect1 { fill: url(#Gradient1); }
+      ]]></style>
+    </defs>
+    <rect x="0" y="0" width="400" height="900" fill="url(#Gradient2)"/>
+</svg>
