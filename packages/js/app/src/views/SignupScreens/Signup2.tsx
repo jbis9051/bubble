@@ -1,18 +1,11 @@
 import React from 'react';
-import {
-    Text,
-    View,
-    StyleSheet,
-    ImageBackground,
-    TouchableOpacity, Dimensions,
-} from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
 import TextInputBox from '../../components/TextInputBox';
-import scaleComponent from "../../components/scaleComponent";
-import colors from '../../constants/Colors';
-import Signup2Background from '../../assets/SignUp2Background.svg'
-
+import scaleComponent from '../../components/scaleComponent';
+import colors from '../../constants/colors';
+import Signup2Background from '../../assets/SignUp2Background.svg';
 
 type RootStackParamList = {
     Login: undefined;
@@ -64,35 +57,43 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: colors.primary,
-    },buttonText:{
-       color: colors.white,
-       fontWeight: '600',
+    },
+    buttonText: {
+        color: colors.white,
+        fontWeight: '600',
     },
 });
 
-const onSignUp = async() => {
-    return null;
-}
-
+const onSignUp = async () => null;
 
 function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <Signup2Background height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
-                <Header page={'Signup1'}/>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>Sign Up</Text>
-                </View>
-                <View style={styles.signupContainer}>
-                    <TextInputBox descriptor="Username" params={''} />
-                    <TextInputBox descriptor="Password" params={'password'} />
-                    <TextInputBox descriptor="Confirm Password" params={'password'} />
-                </View>
-                <View style={styles.signupButtonContainer}>
-                    <TouchableOpacity style={styles.signupButton} onPress={onSignUp()}>
-                        <Text style={styles.buttonText}>Sign Up</Text>
-                    </TouchableOpacity>
-                </View>
+            <Signup2Background
+                height={'100%'}
+                width={'100%'}
+                style={{ position: 'absolute' }}
+            />
+            <Header page={'Signup1'} />
+            <View style={styles.titleContainer}>
+                <Text style={styles.title}>Sign Up</Text>
+            </View>
+            <View style={styles.signupContainer}>
+                <TextInputBox descriptor="Username" params={''} />
+                <TextInputBox descriptor="Password" params={'password'} />
+                <TextInputBox
+                    descriptor="Confirm Password"
+                    params={'password'}
+                />
+            </View>
+            <View style={styles.signupButtonContainer}>
+                <TouchableOpacity
+                    style={styles.signupButton}
+                    onPress={onSignUp()}
+                >
+                    <Text style={styles.buttonText}>Sign Up</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }

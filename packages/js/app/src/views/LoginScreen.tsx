@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-    Text,
-    View,
-    StyleSheet,
-    TouchableOpacity, Dimensions,
-} from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
 import scaleComponent from '../components/scaleComponent';
@@ -22,7 +17,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const scaledLoginButtonWidth = scaleComponent(300, false);
 const scaledTitleFont = scaleComponent(45, true);
-console.log(`${scaledLoginButtonWidth} scaledLoginButtonWidth`);
 
 const styles = StyleSheet.create({
     container: {
@@ -98,45 +92,49 @@ const styles = StyleSheet.create({
     },
 });
 
-const fetchLogin = async() => {
-    try{
-        const res = await fetch('/user/signup',{
+const fetchLogin = async () => {
+    try {
+        const res = await fetch('/user/signup', {
             method: 'POST',
         });
         const json = await res.json();
         return json;
-    }catch(error){
+    } catch (error) {
         console.error(error);
     }
     return null;
-}
+};
 
 function Login({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <LoginBackground height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>Sign In</Text>
-                </View>
-                <View style={styles.textContainer}>
-                    <TextInputBox descriptor="Username" params={''} />
-                    <TextInputBox descriptor="Password" params={'password'} />
-                </View>
-                <View style={styles.loginContainer}>
-                    <TouchableOpacity style={styles.login}>
-                        <Text style={styles.buttonText}>Sign In</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.noAccountContainer}>
-                    <Text style={styles.noAccountText}>
-                        Don't have an account?
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate('Signup1')}
-                    >
-                        <Text style={styles.noAccountTextLink}>Sign up</Text>
-                    </TouchableOpacity>
-                </View>
+            <LoginBackground
+                height={'100%'}
+                width={'100%'}
+                style={{ position: 'absolute' }}
+            />
+            <View style={styles.titleContainer}>
+                <Text style={styles.title}>Sign In</Text>
+            </View>
+            <View style={styles.textContainer}>
+                <TextInputBox descriptor="Username" params={''} />
+                <TextInputBox descriptor="Password" params={'password'} />
+            </View>
+            <View style={styles.loginContainer}>
+                <TouchableOpacity style={styles.login}>
+                    <Text style={styles.buttonText}>Sign In</Text>
+                </TouchableOpacity>
+            </View>
+            <View style={styles.noAccountContainer}>
+                <Text style={styles.noAccountText}>Don't have an account?</Text>
+                <TouchableOpacity
+                    onPress={() => {
+                        navigation.navigate('Signup1');
+                    }}
+                >
+                    <Text style={styles.noAccountTextLink}>Sign up</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
