@@ -24,7 +24,8 @@ const styles = StyleSheet.create({
         width: 300,
         borderWidth: 1,
         padding: 10,
-    },descriptors:{
+    },
+    descriptors: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         height: 45,
@@ -56,7 +57,7 @@ const phoneText = (inputNum: string) => {
         return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}`;
     }
     return null;
-}
+};
 
 const TextInputBox: React.FC<{ descriptor: string; params: string }> = ({
     descriptor,

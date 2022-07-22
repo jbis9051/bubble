@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     textInputDescriptors: {
         color: colors.darkGrey,
     },
-    login:{
+    login: {
         height: 50,
         width: scaledLoginButtonWidth,
         margin: 7,

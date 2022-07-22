@@ -11,7 +11,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../../components/TextInputBox';
 import scaleComponent from '../../components/scaleComponent';
 import colors from '../../constants/Colors';
-import Signup1Background from '../../assets/SignUp1Background.svg'
+import Signup1Background from '../../assets/SignUp1Background.svg';
 
 type RootStackParamList = {
     Login: undefined;
@@ -83,48 +83,52 @@ const styles = StyleSheet.create({
     },
 });
 
-const info = [{
-    "username": "",
-    "password": "",
-    "email": "",
-    "phone": "",
-    "name": "",
-}];
+const info = [
+    {
+        username: '',
+        password: '',
+        email: '',
+        phone: '',
+        name: '',
+    },
+];
 
 function Signup({ route, navigation }: Props) {
     return (
         <View style={styles.container}>
-            <Signup1Background height={'100%'} width={'100%'} style={{position: 'absolute'}}/>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>Sign Up</Text>
-                </View>
-                <View style={styles.signupContainer}>
-                    <TextInputBox
-                        descriptor="Phone Number"
-                        params={'telephoneNumber'}
-                        value={info}
-                    />
-                    <TextInputBox descriptor="Email" params={''} />
-                    <TextInputBox descriptor="Name" params={''} />
-                </View>
-                <View style={styles.signupButtonContainer}>
-                    <TouchableOpacity
-                        style={styles.signupButton}
-                        onPress={() => navigation.navigate('Signup2')}
-                    >
-                        <Text style={styles.buttonText}>Next</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.accountExistContainer}>
-                    <Text style={styles.noAccountText}>
-                        Already have an account?
-                    </Text>
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate('Login')}
-                    >
-                        <Text style={styles.accountExistTextLink}>Sign In</Text>
-                    </TouchableOpacity>
-                </View>
+            <Signup1Background
+                height={'100%'}
+                width={'100%'}
+                style={{ position: 'absolute' }}
+            />
+            <View style={styles.titleContainer}>
+                <Text style={styles.title}>Sign Up</Text>
+            </View>
+            <View style={styles.signupContainer}>
+                <TextInputBox
+                    descriptor="Phone Number"
+                    params={'telephoneNumber'}
+                    value={info}
+                />
+                <TextInputBox descriptor="Email" params={''} />
+                <TextInputBox descriptor="Name" params={''} />
+            </View>
+            <View style={styles.signupButtonContainer}>
+                <TouchableOpacity
+                    style={styles.signupButton}
+                    onPress={() => navigation.navigate('Signup2')}
+                >
+                    <Text style={styles.buttonText}>Next</Text>
+                </TouchableOpacity>
+            </View>
+            <View style={styles.accountExistContainer}>
+                <Text style={styles.noAccountText}>
+                    Already have an account?
+                </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.accountExistTextLink}>Sign In</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }

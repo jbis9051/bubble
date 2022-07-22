@@ -74,6 +74,15 @@ PODS:
   - fmt (6.2.1)
   - glog (0.3.5)
   - libevent (2.1.12)
+  - MapboxCommon (22.0.0)
+  - MapboxCoreMaps (10.6.0):
+    - MapboxCommon (~> 22.0)
+  - MapboxMaps (10.6.0):
+    - MapboxCommon (= 22.0.0)
+    - MapboxCoreMaps (= 10.6.0)
+    - MapboxMobileEvents (= 1.0.8)
+    - Turf (~> 2.0)
+  - MapboxMobileEvents (1.0.8)
   - OpenSSL-Universal (1.1.1100)
   - RCT-Folly (2021.06.28.00-v2):
     - boost
@@ -282,6 +291,8 @@ PODS:
   - React-jsinspector (0.68.2)
   - React-logger (0.68.2):
     - glog
+  - react-native-maps (1.0.0):
+    - React-Core
   - react-native-safe-area-context (3.3.2):
     - React-Core
   - React-perflogger (0.68.2)
@@ -351,12 +362,24 @@ PODS:
     - React-perflogger (= 0.68.2)
   - RNCMaskedView (0.1.11):
     - React
+  - rnmapbox-maps (10.0.0-beta.18):
+    - MapboxMaps (~> 10.6.0)
+    - React
+    - React-Core
+    - rnmapbox-maps/DynamicLibrary (= 10.0.0-beta.18)
+    - Turf
+  - rnmapbox-maps/DynamicLibrary (10.0.0-beta.18):
+    - MapboxMaps (~> 10.6.0)
+    - React
+    - React-Core
+    - Turf
   - RNScreens (3.10.2):
     - React-Core
     - React-RCTImage
   - RNSVG (12.3.0):
     - React-Core
   - SocketRocket (0.6.0)
+  - Turf (2.4.0)
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
     - Yoga (~> 1.14)
@@ -404,6 +427,7 @@ DEPENDENCIES:
   - React-jsiexecutor (from `../node_modules/react-native/ReactCommon/jsiexecutor`)
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
+  - react-native-maps (from `../node_modules/react-native-maps`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
   - React-RCTActionSheet (from `../node_modules/react-native/Libraries/ActionSheetIOS`)
@@ -418,6 +442,7 @@ DEPENDENCIES:
   - React-runtimeexecutor (from `../node_modules/react-native/ReactCommon/runtimeexecutor`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
+  - "rnmapbox-maps (from `../node_modules/@rnmapbox/maps`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -436,8 +461,13 @@ SPEC REPOS:
     - FlipperKit
     - fmt
     - libevent
+    - MapboxCommon
+    - MapboxCoreMaps
+    - MapboxMaps
+    - MapboxMobileEvents
     - OpenSSL-Universal
     - SocketRocket
+    - Turf
     - YogaKit
 
 EXTERNAL SOURCES:
@@ -477,6 +507,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/jsinspector"
   React-logger:
     :path: "../node_modules/react-native/ReactCommon/logger"
+  react-native-maps:
+    :path: "../node_modules/react-native-maps"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   React-perflogger:
@@ -505,6 +537,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCMaskedView:
     :path: "../node_modules/@react-native-community/masked-view"
+  rnmapbox-maps:
+    :path: "../node_modules/@rnmapbox/maps"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -530,6 +564,10 @@ SPEC CHECKSUMS:
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   glog: 476ee3e89abb49e07f822b48323c51c57124b572
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
+  MapboxCommon: 8b10731406d2e4472d52ae6ec3679e6e5c4bd55e
+  MapboxCoreMaps: 2019935caed7e56be1417ff70d3ad0c0cbf0264e
+  MapboxMaps: e078cc1343a0513174869a5e16ae9a18d3977252
+  MapboxMobileEvents: febdd92835daa258ca1c1faad0821c0b3394ef40
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   RCT-Folly: 4d8508a426467c48885f1151029bc15fa5d7b3b8
   RCTRequired: 3e917ea5377751094f38145fdece525aa90545a0
@@ -544,6 +582,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: b7b553412f2ec768fe6c8f27cd6bafdb9d8719e6
   React-jsinspector: c5989c77cb89ae6a69561095a61cce56a44ae8e8
   React-logger: a0833912d93b36b791b7a521672d8ee89107aff1
+  react-native-maps: 16bcde48c1f8038cf6643de92683048c62832279
   react-native-safe-area-context: 584dc04881deb49474363f3be89e4ca0e854c057
   React-perflogger: a18b4f0bd933b8b24ecf9f3c54f9bf65180f3fe6
   React-RCTActionSheet: 547fe42fdb4b6089598d79f8e1d855d7c23e2162
@@ -558,12 +597,14 @@ SPEC CHECKSUMS:
   React-runtimeexecutor: b960b687d2dfef0d3761fbb187e01812ebab8b23
   ReactCommon: 095366164a276d91ea704ce53cb03825c487a3f2
   RNCMaskedView: 0e1bc4bfa8365eba5fbbb71e07fbdc0555249489
+  rnmapbox-maps: 040f6ed339ce922034cda697ad9c7126c810940d
   RNScreens: d6da2b9e29cf523832c2542f47bf1287318b1868
   RNSVG: 302bfc9905bd8122f08966dc2ce2d07b7b52b9f8
   SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
+  Turf: 60b93cfdc62758526bc7bf1ef191a829aeb9694d
   Yoga: 99652481fcd320aefa4a7ef90095b95acd181952
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: e7829ab2918d1c9b033dd087443b49c3a19ca424
+PODFILE CHECKSUM: c8be36a2a7281aae98419e5e873b57c048cb1452
 
 COCOAPODS: 1.11.3

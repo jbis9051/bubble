@@ -1,9 +1,23 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Background from '../components/Background';
+import Navigation from '../components/Profile/Navigation';
+import ProfileHeader from '../components/Profile/ProfileHeader';
+import SlideCardComponent from '../components/Profile/SlideCard';
 
 const ProfileScreen = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Profile</Text>
+    <View>
+        <Background />
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+            <Navigation />
+            <ProfileHeader />
+        </SafeAreaView>
+        <ScrollView style={{ flex: 0 }} showsVerticalScrollIndicator={false}>
+            <SlideCardComponent />
+        </ScrollView>
     </View>
 );
 
