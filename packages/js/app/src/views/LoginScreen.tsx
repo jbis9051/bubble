@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
 import scaleComponent from '../components/scaleComponent';
-import colors from '../constants/colors';
+import colors from '../constants/Colors';
 import LoginBackground from '../assets/LoginBackground.svg';
 
 type RootStackParamList = {

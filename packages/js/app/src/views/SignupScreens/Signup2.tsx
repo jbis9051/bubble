@@ -3,9 +3,7 @@ import {
     Text,
     View,
     StyleSheet,
-    ImageBackground,
     TouchableOpacity,
-    Dimensions,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
@@ -71,9 +69,7 @@ const styles = StyleSheet.create({
     },
 });
 
-const onSignUp = async () => {
-    return null;
-};
+const onSignUp = async () => null;
 
 function Signup({ route, navigation }: Props) {
     return (

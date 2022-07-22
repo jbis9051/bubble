@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, Text, Dimensions } from 'react-native';
 import scaleComponent from './scaleComponent';
-import colors from '../constants/colors';
+import colors from '../constants/Colors';
 
 let scaledWidth = scaleComponent(300, false);
 scaledWidth += Dimensions.get('window').width * 0.025; // account for 2.5% padding so lines up with button
