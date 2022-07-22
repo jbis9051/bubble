@@ -2845,6 +2845,13 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.5.tgz#5f19d2b85a98e9558036f6a3cacc8819420f05cf"
   integrity sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==
 
+"@types/react-dom@^18.0.5":
+  version "18.0.6"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.0.6.tgz#36652900024842b74607a17786b6662dd1e103a1"
+  integrity sha512-/5OFZgfIPSwy+YuIBP/FgJnQnsxhZhjjrnxudMddeblOouIodEQ75X14Rr4wGSG/bknL+Omy9iWlLo1u/9GzAA==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-native@^0.67.3":
   version "0.67.7"
   resolved "https://registry.yarnpkg.com/@types/react-native/-/react-native-0.67.7.tgz#903b7d56fb6a95ca0de897f2925c04ee0d4adee3"
@@ -2859,7 +2866,7 @@
   dependencies:
     "@types/react" "^17"
 
-"@types/react@*", "@types/react@^17":
+"@types/react@*", "@types/react@^17", "@types/react@~17.0.21":
   version "17.0.45"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.45.tgz#9b3d5b661fd26365fefef0e766a1c6c30ccf7b3f"
   integrity sha512-YfhQ22Lah2e3CHPsb93tRwIGNiSwkuz1/blk4e6QrWS0jQzCSNbGLtOEYhPg02W0yGTTmpajp7dCTbBAMN3qsg==
@@ -2970,16 +2977,6 @@
     "@typescript-eslint/types" "5.23.0"
     "@typescript-eslint/typescript-estree" "5.23.0"
     debug "^4.3.2"
-
-"@typescript-eslint/parser@^5.17.0":
-  version "5.25.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-5.25.0.tgz#fb533487147b4b9efd999a4d2da0b6c263b64f7f"
-  integrity sha512-r3hwrOWYbNKP1nTcIw/aZoH+8bBnh/Lh1iDHoFpyG4DnCpvEdctrSl6LOo19fZbzypjQMHdajolxs6VpYoChgA==
-  dependencies:
-    "@typescript-eslint/scope-manager" "5.25.0"
-    "@typescript-eslint/types" "5.25.0"
-    "@typescript-eslint/typescript-estree" "5.25.0"
-    debug "^4.3.4"
 
 "@typescript-eslint/scope-manager@5.23.0":
   version "5.23.0"

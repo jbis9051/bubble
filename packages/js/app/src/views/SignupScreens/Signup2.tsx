@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-    Text,
-    View,
-    StyleSheet,
-    TouchableOpacity,
-} from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
 import TextInputBox from '../../components/TextInputBox';
