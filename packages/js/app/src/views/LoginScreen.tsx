@@ -2,7 +2,6 @@ import React from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
-import scaleComponent from '../components/scaleComponent';
 import colors from '../constants/colors';
 import LoginBackground from '../assets/LoginBackground.svg';
 
@@ -14,9 +13,6 @@ type RootStackParamList = {
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
-
-const scaledLoginButtonWidth = scaleComponent(300, false);
-const scaledTitleFont = scaleComponent(45, true);
 
 const styles = StyleSheet.create({
     container: {
@@ -33,9 +29,11 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         flex: 1.6,
+        width: '80%',
         justifyContent: 'center',
     },
     loginContainer: {
+        width: '80%',
         flex: 1.5,
         justifyContent: 'center',
     },
@@ -45,7 +43,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: scaledTitleFont,
+        fontSize: 45,
         fontWeight: '400',
         color: colors.primary,
     },
@@ -53,7 +51,6 @@ const styles = StyleSheet.create({
         color: colors.darkGrey,
     },
     login: {
-        width: scaledLoginButtonWidth,
         height: 50,
         margin: 7,
         borderRadius: 25,
@@ -128,9 +125,7 @@ function Login({ route, navigation }: Props) {
             <View style={styles.noAccountContainer}>
                 <Text style={styles.noAccountText}>Don't have an account?</Text>
                 <TouchableOpacity
-                    onPress={() => {
-                        navigation.navigate('Signup1');
-                    }}
+                    onPress={() => navigation.navigate('Signup1')}
                 >
                     <Text style={styles.noAccountTextLink}>Sign up</Text>
                 </TouchableOpacity>

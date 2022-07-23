@@ -3,7 +3,6 @@ import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from '../../components/Header';
 import TextInputBox from '../../components/TextInputBox';
-import scaleComponent from '../../components/scaleComponent';
 import colors from '../../constants/colors';
 import Signup2Background from '../../assets/SignUp2Background.svg';
 
@@ -15,9 +14,6 @@ type RootStackParamList = {
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup2'>;
-
-const scaledSignupButtonWidth = scaleComponent(300, false);
-const scaledTitleFont = scaleComponent(45, true);
 
 const styles = StyleSheet.create({
     container: {
@@ -38,19 +34,20 @@ const styles = StyleSheet.create({
     },
     signupContainer: {
         flex: 4,
+        width: '80%',
         justifyContent: 'center',
     },
     signupButtonContainer: {
         flex: 2,
+        width: '80%',
     },
     title: {
-        fontSize: scaledTitleFont,
+        fontSize: 45,
         fontWeight: '400',
         color: colors.primary,
     },
     signupButton: {
         height: 50,
-        width: scaledSignupButtonWidth,
         margin: 7,
         borderRadius: 25,
         padding: 10,
