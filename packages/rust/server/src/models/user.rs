@@ -97,7 +97,7 @@ impl User {
 
         Ok(token)
     }
-    pub async fn user_from_session(db: &DbPool, session: &str) -> Result<User, sqlx::Error> {
+    pub async fn user_from_session(_db: &DbPool, _session: &str) -> Result<User, sqlx::Error> {
         todo!()
     }
 

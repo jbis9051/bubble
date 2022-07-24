@@ -61,7 +61,11 @@ async fn create(
 }
 
 // respond with JSON: id, name, created_date
-async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo> {
+async fn read(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    user: AuthenticatedUser,
+) -> Json<GroupInfo> {
     // let uuid: = params.get("uuid");
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     let mut group: Group = Group {
@@ -71,7 +75,7 @@ async fn read(db: Extension<DbPool>, Path(uuid): Path<String>) -> Json<GroupInfo
         created: NaiveDateTime::from_timestamp(0, 0),
         members: vec![],
     };
-    Group::read(&db.0, &mut group, uuid_converted);
+    Group::read(&db.0, &mut group, uuid_converted, &user);
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
@@ -92,11 +96,16 @@ pub struct UserID {
 
 //wait its easier to just convert string to uuid
 //request JSON: vec<user_ids>
-async fn add_users(db: Extension<DbPool>, Path(uuid): Path<String>, Json(payload): Json<UserID>) {
+async fn add_users(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    Json(payload): Json<UserID>,
+    user: AuthenticatedUser,
+) {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).unwrap();
-        Group::add_user(&db.0, uuid_converted, user_id);
+        Group::add_user(&db.0, uuid_converted, user_id, &user);
     }
 }
 
@@ -105,11 +114,12 @@ async fn delete_users(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
     Json(payload): Json<UserID>,
+    user: AuthenticatedUser,
 ) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).unwrap();
-        Group::delete_user(&db.0, group_id, user_id);
+        Group::delete_user(&db.0, group_id, user_id, &user);
     }
 }
 
@@ -125,15 +135,16 @@ async fn change_name(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
     Json(payload): Json<NameChange>,
+    user: AuthenticatedUser,
 ) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change: &str = &payload.name;
-    Group::change_name(&db.0, group_id, name_to_change);
+    Group::change_name(&db.0, group_id, name_to_change, &user);
 }
 
 // //none, just id passed from path
-async fn delete_group(db: Extension<DbPool>, Path(uuid): Path<String>) {
+async fn delete_group(db: Extension<DbPool>, Path(uuid): Path<String>, user: AuthenticatedUser) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
-    Group::delete_group(&db.0, group_id);
+    Group::delete_group(&db.0, group_id, &user);
 }
