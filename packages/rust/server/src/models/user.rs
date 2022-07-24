@@ -29,7 +29,7 @@ impl User {
         .bind(&user.username)
         .bind(&user.password)
         .bind(&user.profile_picture)
-        .bind(Option::<String>::None)
+        .bind(&user.email)
         .bind(&user.phone)
         .bind(&user.name)
         .fetch_one(db)
