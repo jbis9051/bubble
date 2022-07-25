@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { createStackNavigator } from '@react-navigation/stack';
 import colors from '../constants/colors';
 import SplashBackground from '../assets/SplashBackground.svg';
 import Logo from '../assets/LogoNoBackground.svg';
@@ -12,7 +12,7 @@ type RootStackParamList = {
     Splash: undefined;
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
+type Props = createStackNavigator<RootStackParamList, 'Splash'>;
 
 const styles = StyleSheet.create({
     container: {
