@@ -28,10 +28,38 @@ target 'app' do
   #
   # Note that if you have use_frameworks! enabled, Flipper will not work and
   # you should disable the next line.
-  use_flipper!
+  #use_flipper!
+  use_frameworks!
+
+  $static_framework = ['FlipperKit', 'Flipper', 'Flipper-Folly',
+       'CocoaAsyncSocket', 'ComponentKit', 'DoubleConversion',
+       'glog', 'Flipper-PeerTalk', 'Flipper-RSocket', 'Yoga', 'YogaKit',
+       'CocoaLibEvent', 'OpenSSL-Universal', 'boost-for-react-native',
+        'React-logger', 'RCT-Folly', 'React-jsi', 'React-cxxreact',
+        'React-jsiexecutor', 'React-Core', 'RNSVG', 'RCTTypeSafety',
+        'react-native-safe-area-context', 'ReactCommon', 'React-RCTText',
+        'React-Codegen','React-RCTLinking', 'React-RCTSettings',
+        'React-RCTVibration','React-RCTAnimation','React-RCTNetwork',
+        'React-RCTBlob', 'React-RCTImage','RNCMaskedView', 'RNScreens',
+        'React-CoreModules', 'RNGestureHandler', 'react-native-mapbox-gl']
+
+  pre_install do |installer|
+       Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
+       installer.pod_targets.each do |pod|
+           if $static_framework.include?(pod.name)
+             def pod.build_type;
+               Pod::BuildType.static_library
+             end
+           end
+         end
+  end
+
 
   post_install do |installer|
     react_native_post_install(installer)
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    installer.pods_project.build_configurations.each do |config|
+        config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+      end
   end
 end
