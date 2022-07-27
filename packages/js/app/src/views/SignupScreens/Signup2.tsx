@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import type { createStackNavigator } from '@react-navigation/stack';
 import Header from '../../components/Header';
 import TextInputBox from '../../components/TextInputBox';
-import colors from '../../constants/colors';
+import colors from '../../constants/Colors';
 import Signup2Background from '../../assets/SignUp2Background.svg';
 
 type RootStackParamList = {

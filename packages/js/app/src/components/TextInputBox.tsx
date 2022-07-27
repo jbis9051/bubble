@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, Text } from 'react-native';
-import colors from '../constants/colors';
+import colors from '../constants/Colors';
 
 const styles = StyleSheet.create({
     container: {

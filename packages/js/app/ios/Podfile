@@ -1,7 +1,13 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
+<<<<<<< HEAD
 platform :ios, '15.5'
+=======
+$RNMapboxMapsImpl = 'mapbox'
+
+platform :ios, '11.0'
+>>>>>>> 378c96f2f3f3fdc9be56786c4440ca6b9d55e688
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'app' do
@@ -22,6 +28,10 @@ target 'app' do
   target 'appTests' do
     inherit! :complete
     # Pods for testing
+  end
+
+  pre_install do |installer|
+    $RNMapboxMaps.pre_install(installer)
   end
 
   # Enables Flipper.
@@ -58,8 +68,12 @@ target 'app' do
   post_install do |installer|
     react_native_post_install(installer)
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+<<<<<<< HEAD
     installer.pods_project.build_configurations.each do |config|
         config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
       end
+=======
+    $RNMapboxMaps.post_install(installer)
+>>>>>>> 378c96f2f3f3fdc9be56786c4440ca6b9d55e688
   end
 end

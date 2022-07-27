@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import type { createStackNavigator } from '@react-navigation/stack';
-import colors from '../constants/colors';
+import colors from '../constants/Colors';
 import SplashBackground from '../assets/SplashBackground.svg';
 import Logo from '../assets/LogoNoBackground.svg';
 
