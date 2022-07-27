@@ -1,12 +1,14 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Modal } from 'react-native';
 import SlideCardTemplate from '../SlideCardTemplate';
 import UserIcon from './UserIcon';
 
 import styles from './styles';
 
 const SlideCard = () => (
-    <SlideCardTemplate style={{marginTop: 600}}>
+    <Modal
+        transparent
+    >
         <View style={styles.userView}>
             <UserIcon name='John' />
             <UserIcon name='Santhosh' />
@@ -15,7 +17,10 @@ const SlideCard = () => (
             <UserIcon name='Sidney' />
             <UserIcon name='Lia' />
         </View>
-    </SlideCardTemplate>
+    </Modal>
+    // <SlideCardTemplate style={{marginTop: 600 }}>
+        
+    // </SlideCardTemplate>
 );
 
 export default SlideCard;
