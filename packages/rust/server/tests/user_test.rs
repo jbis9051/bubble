@@ -35,9 +35,12 @@ async fn create_user() {
 
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let user = User::get_by_id(&db, 1).await.expect("user doesn't exist");
+    //TEMP
+    let user_uuid = User::get_uuid_by_username(&db, "test").await.unwrap();
+    let user = User::get_by_uuid(&db, user_uuid)
+        .await
+        .expect("user doesn't exist");
 
-    assert_eq!(user.id, 1);
     assert_eq!(user.username, "test");
     assert_eq!(user.password, "password");
     assert_eq!(user.profile_picture, None);
@@ -58,8 +61,7 @@ async fn create_user() {
         created: row.get("created"),
     };
 
-    assert_eq!(conf.id, 1);
-    assert_eq!(conf.user_id, 1);
+    assert_eq!(conf.user_id, user.id);
     assert_eq!(conf.email, "test@gmail.com");
 
     let confirm_res = client
@@ -76,9 +78,8 @@ async fn create_user() {
 
     assert_eq!(confirm_res.status(), StatusCode::CREATED);
 
-    let user = User::get_by_id(&db, 1).await.unwrap();
+    let user = User::get_by_uuid(&db, user_uuid).await.unwrap();
 
-    assert_eq!(user.id, 1);
     assert_eq!(user.username, "test");
     assert_eq!(user.password, "password");
     assert_eq!(user.profile_picture, None);
@@ -125,9 +126,13 @@ async fn create_multiple_user() {
 
     assert_eq!(res1.status(), StatusCode::CREATED);
     assert_eq!(res2.status(), StatusCode::CREATED);
-
-    let brian = User::get_by_id(&db, 1).await.expect("user doesn't exist");
-    let brian_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = 1;")
+    //TEMP
+    let brian_uuid = User::get_uuid_by_username(&db, "machine_learning_man")
+        .await
+        .unwrap();
+    let brian = User::get_by_uuid(&db, brian_uuid).await.unwrap();
+    let brian_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
+        .bind(brian.id)
         .fetch_one(&db)
         .await
         .unwrap();
@@ -139,8 +144,15 @@ async fn create_multiple_user() {
         created: brian_row.get("created"),
     };
 
-    let timmy = User::get_by_id(&db, 2).await.expect("user doesn't exist");
-    let timmy_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = 2;")
+    //TEMP
+    let timmy_uuid = User::get_uuid_by_username(&db, "web_development_dude")
+        .await
+        .unwrap();
+    let timmy = User::get_by_uuid(&db, timmy_uuid)
+        .await
+        .expect("user doesn't exist");
+    let timmy_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
+        .bind(timmy.id)
         .fetch_one(&db)
         .await
         .unwrap();
@@ -152,26 +164,22 @@ async fn create_multiple_user() {
         created: timmy_row.get("created"),
     };
 
-    assert_eq!(brian.id, 1);
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.password, "lots_of_abstraction");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, None);
     assert_eq!(brian.phone, None);
     assert_eq!(brian.name, "Brian");
-    assert_eq!(brian_conf.id, 1);
-    assert_eq!(brian_conf.user_id, 1);
+    assert_eq!(brian_conf.user_id, brian.id);
     assert_eq!(brian_conf.email, "python@gmail.com");
 
-    assert_eq!(timmy.id, 2);
     assert_eq!(timmy.username, "web_development_dude");
     assert_eq!(timmy.password, "html_rocks");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, None);
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
     assert_eq!(timmy.name, "Little Timmy III");
-    assert_eq!(timmy_conf.id, 2);
-    assert_eq!(timmy_conf.user_id, 2);
+    assert_eq!(timmy_conf.user_id, timmy.id);
     assert_eq!(timmy_conf.email, "javascript@gmail.com");
 
     let brian_confirm_res = client
@@ -188,9 +196,8 @@ async fn create_multiple_user() {
 
     assert_eq!(brian_confirm_res.status(), StatusCode::CREATED);
 
-    let brian = User::get_by_id(&db, 1).await.unwrap();
+    let brian = User::get_by_uuid(&db, brian_uuid).await.unwrap();
 
-    assert_eq!(brian.id, 1);
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.password, "lots_of_abstraction");
     assert_eq!(brian.profile_picture, None);
@@ -216,8 +223,15 @@ async fn create_multiple_user() {
 
     assert_eq!(res3.status(), StatusCode::CREATED);
 
-    let bill = User::get_by_id(&db, 3).await.expect("user doesn't exist");
-    let bill_row = sqlx::query("SELECT * FROM confirmation WHERE id = 3;")
+    //TEMP
+    let bill_uuid = User::get_uuid_by_username(&db, "big_programmer_pro")
+        .await
+        .unwrap();
+    let bill = User::get_by_uuid(&db, bill_uuid)
+        .await
+        .expect("user doesn't exist");
+    let bill_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
+        .bind(bill.id)
         .fetch_one(&db)
         .await
         .unwrap();
@@ -229,15 +243,13 @@ async fn create_multiple_user() {
         created: bill_row.get("created"),
     };
 
-    assert_eq!(bill.id, 3);
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.password, "cool_crustacean");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, None);
     assert_eq!(bill.phone, Some("18004321234".to_string()));
     assert_eq!(bill.name, "Bill Gates");
-    assert_eq!(bill_conf.id, 3);
-    assert_eq!(bill_conf.user_id, 3);
+    assert_eq!(bill_conf.user_id, bill.id);
     assert_eq!(bill_conf.email, "rust@gmail.com");
 
     let bill_confirm_res = client
@@ -254,9 +266,8 @@ async fn create_multiple_user() {
 
     assert_eq!(bill_confirm_res.status(), StatusCode::CREATED);
 
-    let bill = User::get_by_id(&db, 3).await.unwrap();
+    let bill = User::get_by_uuid(&db, bill_uuid).await.unwrap();
 
-    assert_eq!(bill.id, 3);
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.password, "cool_crustacean");
     assert_eq!(bill.profile_picture, None);
@@ -278,9 +289,8 @@ async fn create_multiple_user() {
 
     assert_eq!(timmy_confirm_res.status(), StatusCode::CREATED);
 
-    let timmy = User::get_by_id(&db, 2).await.unwrap();
+    let timmy = User::get_by_uuid(&db, timmy_uuid).await.unwrap();
 
-    assert_eq!(timmy.id, 2);
     assert_eq!(timmy.username, "web_development_dude");
     assert_eq!(timmy.password, "html_rocks");
     assert_eq!(timmy.profile_picture, None);

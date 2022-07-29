@@ -2,7 +2,7 @@ use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
-use crate::routes::user::{Confirmation, ForgotRow};
+use crate::routes::user::Confirmation;
 use crate::types::DbPool;
 use rand_core::{OsRng, RngCore};
 use sqlx::types::chrono::NaiveDateTime;
@@ -123,41 +123,16 @@ impl User {
         Ok(user)
     }
 
-    pub async fn create_forgot(db: &DbPool, user: &User) -> Result<Uuid, sqlx::Error> {
-        let forgot_id = Uuid::new_v4();
-        sqlx::query("INSERT INTO forgot_password (user_id, forgot_id) VALUES ($1, $2);")
-            .bind(&user.id)
-            .bind(forgot_id)
-            .execute(db)
-            .await
-            .unwrap();
-
-        Ok(forgot_id)
-    }
-
-    pub async fn get_forgot(db: &DbPool, forgot_id: &str) -> Result<ForgotRow, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
-            .bind(forgot_id)
+    pub async fn get_by_uuid(db: &DbPool, uuid: Uuid) -> Result<User, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
+            .bind(uuid)
             .fetch_one(db)
             .await
             .unwrap();
 
-        Ok(ForgotRow {
-            id: row.get("id"),
-            user_id: row.get("user_id"),
-            forgot_id: row.get("forgot_id"),
-            created: row.get("created"),
-        })
-    }
-
-    pub async fn delete_forgot(db: &DbPool, forgot_id: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM forgot_password WHERE forgot_id = $1")
-            .bind(forgot_id)
-            .execute(db)
-            .await
-            .unwrap();
-
-        Ok(())
+        let mut user = User::empty_user().await;
+        user.user_from_row(&row).await.unwrap();
+        Ok(user)
     }
 
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
@@ -189,6 +164,17 @@ impl User {
             .execute(db)
             .await?;
         Ok(())
+    }
+
+    //FOR TESTING
+    pub async fn get_uuid_by_username(db: &DbPool, username: &str) -> Result<Uuid, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM \"user\" WHERE username = $1;")
+            .bind(username)
+            .fetch_one(db)
+            .await
+            .unwrap();
+        let uuid = row.get("uuid");
+        Ok(uuid)
     }
 
     async fn user_from_row(&mut self, row: &PgRow) -> Result<(), sqlx::Error> {

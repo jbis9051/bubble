@@ -6,6 +6,7 @@ use axum::{Extension, Json};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
+use crate::models::forgot;
 use crate::models::user::User;
 use crate::types::DbPool;
 use serde::{Deserialize, Serialize};
@@ -64,10 +65,12 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
 pub struct Confirm {
     pub link_id: String,
 }
+
 #[derive(Serialize, Deserialize)]
 struct SessionToken {
     pub token: String,
 }
+
 pub struct Confirmation {
     pub id: i32,
     pub user_id: i32,
@@ -167,9 +170,10 @@ async fn signout(db: Extension<DbPool>, Json(payload): Json<SessionToken>) -> St
 struct Email {
     email: String,
 }
+
 async fn forgot(db: Extension<DbPool>, Json(payload): Json<Email>) -> StatusCode {
     let user = User::get_by_email(&db.0, &payload.email).await.unwrap();
-    let forgot = User::create_forgot(&db.0, &user).await.unwrap();
+    let forgot = forgot::create_forgot(&db.0, &user).await.unwrap();
 
     println!("Sending email with {:?} to {:?}", forgot, user.email);
     StatusCode::CREATED
@@ -181,16 +185,11 @@ struct ForgotConfirm {
     password: String,
     forgot_id: String,
 }
-pub struct ForgotRow {
-    pub id: i32,
-    pub user_id: i32,
-    pub forgot_id: Uuid,
-    pub created: NaiveDateTime,
-}
+
 async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm>) -> StatusCode {
-    let _row = User::get_forgot(&db.0, &payload.forgot_id).await.unwrap();
+    let _row = forgot::get_forgot(&db.0, &payload.forgot_id).await.unwrap();
     let mut user = User::get_by_email(&db.0, &payload.email).await.unwrap();
-    User::delete_forgot(&db.0, &payload.forgot_id)
+    forgot::delete_forgot(&db.0, &payload.forgot_id)
         .await
         .unwrap();
     user.password = payload.password;
