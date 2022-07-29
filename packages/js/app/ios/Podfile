@@ -1,13 +1,7 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-<<<<<<< HEAD
 platform :ios, '15.5'
-=======
-$RNMapboxMapsImpl = 'mapbox'
-
-platform :ios, '11.0'
->>>>>>> 378c96f2f3f3fdc9be56786c4440ca6b9d55e688
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'app' do
@@ -30,50 +24,18 @@ target 'app' do
     # Pods for testing
   end
 
-  pre_install do |installer|
-    $RNMapboxMaps.pre_install(installer)
-  end
-
   # Enables Flipper.
   #
   # Note that if you have use_frameworks! enabled, Flipper will not work and
   # you should disable the next line.
-  #use_flipper!
-  use_frameworks!
-
-  $static_framework = ['FlipperKit', 'Flipper', 'Flipper-Folly',
-       'CocoaAsyncSocket', 'ComponentKit', 'DoubleConversion',
-       'glog', 'Flipper-PeerTalk', 'Flipper-RSocket', 'Yoga', 'YogaKit',
-       'CocoaLibEvent', 'OpenSSL-Universal', 'boost-for-react-native',
-        'React-logger', 'RCT-Folly', 'React-jsi', 'React-cxxreact',
-        'React-jsiexecutor', 'React-Core', 'RNSVG', 'RCTTypeSafety',
-        'react-native-safe-area-context', 'ReactCommon', 'React-RCTText',
-        'React-Codegen','React-RCTLinking', 'React-RCTSettings',
-        'React-RCTVibration','React-RCTAnimation','React-RCTNetwork',
-        'React-RCTBlob', 'React-RCTImage','RNCMaskedView', 'RNScreens',
-        'React-CoreModules', 'RNGestureHandler', 'react-native-mapbox-gl']
-
-  pre_install do |installer|
-       Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
-       installer.pod_targets.each do |pod|
-           if $static_framework.include?(pod.name)
-             def pod.build_type;
-               Pod::BuildType.static_library
-             end
-           end
-         end
-  end
-
+  use_flipper!
 
   post_install do |installer|
-    react_native_post_install(installer)
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
-<<<<<<< HEAD
     installer.pods_project.build_configurations.each do |config|
         config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
-      end
-=======
-    $RNMapboxMaps.post_install(installer)
->>>>>>> 378c96f2f3f3fdc9be56786c4440ca6b9d55e688
+    end
+
+    react_native_post_install(installer)
+    __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
 end
