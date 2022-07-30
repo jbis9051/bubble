@@ -5,14 +5,14 @@ import Styles from './Styles';
 const SlideCardTemplate: React.FunctionComponent<{
     children: JSX.Element;
     style?: ViewStyle;
-    panResponder: PanResponderInstance;
+    panResponder?: PanResponderInstance;
 }> = ({ children, style, panResponder }) => (
     <View
         style={{
             ...Styles.slideCardTemplate,
             ...style,
         }}
-        {...panResponder.panHandlers}
+        {...(panResponder && { ...panResponder.panHandlers })}
     >
         <View
             style={{
