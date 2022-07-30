@@ -52,6 +52,7 @@ const SlideCard: React.FunctionComponent<{
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const prevHeight = useRef(startingHeight);
     const deviceHeight = Dimensions.get('window').height;
+    let prevDeviceHeight = startingHeight;
 
     useEffect(() => {
         setBottomHeight(startingHeight);
