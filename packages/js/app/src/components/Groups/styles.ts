@@ -14,6 +14,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         margin: 15,
     },
+    peopleHeading: {
+        fontSize: 30,
+        fontWeight: '800',
+    },
 });
 
 export default styles;

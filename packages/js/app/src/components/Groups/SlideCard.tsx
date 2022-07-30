@@ -1,11 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { Animated, View, PanResponder, Dimensions } from 'react-native';
+import { View, PanResponder, Dimensions, Text } from 'react-native';
 import SlideCardTemplate from '../SlideCardTemplate';
 import UserIcon from './UserIcon';
+import DividerLine from '../Misc/DividerLine';
 
 import styles from './styles';
 
-const SlideCard = () => {
+const SlideCard: React.FunctionComponent<{
+    minHeight: number;
+    marginTopHeight: number;
+}> = ({ minHeight, marginTopHeight }) => {
     const [bottomHeight, setBottomHeight] = useState(150);
     const deviceHeight = Dimensions.get('window').height;
 
@@ -14,10 +18,10 @@ const SlideCard = () => {
             onMoveShouldSetPanResponder: () => true,
             onPanResponderMove: (e, gestureState) => {
                 let newDeviceHeight;
-                if (gestureState.moveY > deviceHeight - 150) {
-                    newDeviceHeight = 150;
-                } else if (gestureState.moveY < 300) {
-                    newDeviceHeight = deviceHeight - 300;
+                if (gestureState.moveY > deviceHeight - minHeight) {
+                    newDeviceHeight = minHeight;
+                } else if (gestureState.moveY < marginTopHeight) {
+                    newDeviceHeight = deviceHeight - marginTopHeight;
                 } else {
                     newDeviceHeight = deviceHeight - gestureState.moveY;
                 }
@@ -28,7 +32,6 @@ const SlideCard = () => {
 
     return (
         <View>
-            <Animated.View></Animated.View>
             <SlideCardTemplate
                 style={{
                     height: bottomHeight,
@@ -38,13 +41,17 @@ const SlideCard = () => {
                 }}
                 panResponder={panResponder}
             >
-                <View style={styles.userView}>
-                    <UserIcon name="John" />
-                    <UserIcon name="Santhosh" />
-                    <UserIcon name="Kevin" />
-                    <UserIcon name="Kyle" />
-                    <UserIcon name="Sidney" />
-                    <UserIcon name="Lia" />
+                <View>
+                    <Text style={styles.peopleHeading}>People</Text>
+                    <DividerLine />
+                    <View style={styles.userView}>
+                        <UserIcon name="John" />
+                        <UserIcon name="Santhosh" />
+                        <UserIcon name="Kevin" />
+                        <UserIcon name="Kyle" />
+                        <UserIcon name="Sidney" />
+                        <UserIcon name="Lia" />
+                    </View>
                 </View>
             </SlideCardTemplate>
         </View>
