@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
     userView: {
@@ -6,14 +6,14 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
     },
     userIcon: {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         margin: 15,
-    }
+    },
 });
 
 export default styles;

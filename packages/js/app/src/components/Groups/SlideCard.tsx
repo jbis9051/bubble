@@ -25,26 +25,30 @@ const SlideCard = () => {
             },
         })
     ).current;
-    
+
     return (
         <View>
-            <Animated.View>
-            </Animated.View>
-            <SlideCardTemplate 
-                style={{ height: bottomHeight, position: 'absolute', bottom: 0, marginTop: 0 }}
+            <Animated.View></Animated.View>
+            <SlideCardTemplate
+                style={{
+                    height: bottomHeight,
+                    position: 'absolute',
+                    bottom: 0,
+                    marginTop: 0,
+                }}
                 panResponder={panResponder}
             >
                 <View style={styles.userView}>
-                    <UserIcon name='John' />
-                    <UserIcon name='Santhosh' />
-                    <UserIcon name='Kevin' />
-                    <UserIcon name='Kyle' />
-                    <UserIcon name='Sidney' />
-                    <UserIcon name='Lia' />
+                    <UserIcon name="John" />
+                    <UserIcon name="Santhosh" />
+                    <UserIcon name="Kevin" />
+                    <UserIcon name="Kyle" />
+                    <UserIcon name="Sidney" />
+                    <UserIcon name="Lia" />
                 </View>
             </SlideCardTemplate>
         </View>
-    ) 
+    );
 };
 
 export default SlideCard;

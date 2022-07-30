@@ -7,10 +7,10 @@ MapboxGL.setAccessToken(process.env.REACT_APP_MAPBOX_ACCESS_TOKEN as string);
 
 const initialRegion = {
     longitude: -122.4324,
-    latitude: 37.78825
+    latitude: 37.78825,
 };
 
-const MapTemplate = ({ region=initialRegion, style={} }) =>
+const MapTemplate = ({ region = initialRegion, style = {} }) =>
     Platform.OS === 'ios' ? (
         <MapView
             initialRegion={{
@@ -21,10 +21,7 @@ const MapTemplate = ({ region=initialRegion, style={} }) =>
             style={style}
         />
     ) : (
-        <MapboxGL.MapView
-            style={style}
-            styleURL={MapboxGL.StyleURL.Street}
-        >
+        <MapboxGL.MapView style={style} styleURL={MapboxGL.StyleURL.Street}>
             <MapboxGL.Camera
                 zoomLevel={10}
                 centerCoordinate={Object.values(region)}

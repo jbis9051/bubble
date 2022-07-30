@@ -14,7 +14,7 @@ const Styles = StyleSheet.create({
         backgroundColor: '#ffffff',
         borderTopRightRadius: 30,
         borderTopLeftRadius: 30,
-        marginTop: 256
+        marginTop: 256,
     },
     infoCardTemplate: {
         marginBottom: 10,
@@ -38,7 +38,7 @@ const Styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 0,
         elevation: 0,
-    }
+    },
 });
 
 export default Styles;
