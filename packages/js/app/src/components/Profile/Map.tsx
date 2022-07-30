@@ -1,6 +1,4 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
-import MapView from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
 import MapTemplate from '../MapTemplate';
 
