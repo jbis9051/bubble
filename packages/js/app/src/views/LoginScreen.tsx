@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import type { createStackNavigator } from '@react-navigation/stack';
 import TextInputBox from '../components/TextInputBox';
 import colors from '../constants/Colors';
-import LoginBackground from '../assets/LoginBackground.svg';
+import LoginBackground from '../../assets/LoginBackground.svg';
 
 type RootStackParamList = {
     Login: undefined;

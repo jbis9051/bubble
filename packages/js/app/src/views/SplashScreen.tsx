@@ -2,8 +2,8 @@ import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import type { createStackNavigator } from '@react-navigation/stack';
 import colors from '../constants/Colors';
-import SplashBackground from '../assets/SplashBackground.svg';
-import Logo from '../assets/LogoNoBackground.svg';
+import SplashBackground from '../../assets/SplashBackground.svg';
+import Logo from '../../assets/LogoNoBackground.svg';
 
 type RootStackParamList = {
     Login: undefined;
