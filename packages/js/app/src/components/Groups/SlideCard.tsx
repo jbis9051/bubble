@@ -6,17 +6,29 @@ import DividerLine from '../Misc/DividerLine';
 
 import styles from './styles';
 
+interface Location {
+    longitude: number;
+    latitude: number;
+}
+
+const nycCoordinates = {
+    longitude: -74.0134,
+    latitude: 40.7217,
+};
+
 const SlideCard: React.FunctionComponent<{
+    startingHeight: number;
     minHeight: number;
     marginTopHeight: number;
-}> = ({ minHeight, marginTopHeight }) => {
-    const [bottomHeight, setBottomHeight] = useState(150);
+    setLocation: (newLocation: Location) => void;
+}> = ({ startingHeight, minHeight, marginTopHeight, setLocation }) => {
+    const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const deviceHeight = Dimensions.get('window').height;
 
     const panResponder = useRef(
         PanResponder.create({
             onMoveShouldSetPanResponder: () => true,
-            onPanResponderMove: (e, gestureState) => {
+            onPanResponderMove: (_e, gestureState) => {
                 let newDeviceHeight;
                 if (gestureState.moveY > deviceHeight - minHeight) {
                     newDeviceHeight = minHeight;
@@ -45,12 +57,16 @@ const SlideCard: React.FunctionComponent<{
                     <Text style={styles.peopleHeading}>People</Text>
                     <DividerLine />
                     <View style={styles.userView}>
-                        <UserIcon name="John" />
-                        <UserIcon name="Santhosh" />
-                        <UserIcon name="Kevin" />
-                        <UserIcon name="Kyle" />
-                        <UserIcon name="Sidney" />
-                        <UserIcon name="Lia" />
+                        <UserIcon
+                            name="John"
+                            location={nycCoordinates}
+                            setLocation={setLocation}
+                        />
+                        <UserIcon name="Santhosh" setLocation={setLocation} />
+                        <UserIcon name="Kevin" setLocation={setLocation} />
+                        <UserIcon name="Kyle" setLocation={setLocation} />
+                        <UserIcon name="Sidney" setLocation={setLocation} />
+                        <UserIcon name="Lia" setLocation={setLocation} />
                     </View>
                 </View>
             </SlideCardTemplate>
