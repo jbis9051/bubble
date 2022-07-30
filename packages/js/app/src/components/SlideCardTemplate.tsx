@@ -1,18 +1,19 @@
 import React from 'react';
-import { Animated, View, PanResponder, PanResponderInstance } from 'react-native';
+import { View, PanResponderInstance } from 'react-native';
 
 import Styles from './Styles';
 
-const SlideCardTemplate: React.FunctionComponent<{ children: JSX.Element, style?: {}, panResponder: PanResponderInstance }> = ({
-    children,
-    style,
-    panResponder
-}) => (
-    <View style={{
-        ...Styles.slideCardTemplate, 
-        ...style
-    }}
-    {...panResponder.panHandlers}
+const SlideCardTemplate: React.FunctionComponent<{
+    children: JSX.Element;
+    style?: {};
+    panResponder: PanResponderInstance;
+}> = ({ children, style, panResponder }) => (
+    <View
+        style={{
+            ...Styles.slideCardTemplate,
+            ...style,
+        }}
+        {...panResponder.panHandlers}
     >
         <View
             style={{
