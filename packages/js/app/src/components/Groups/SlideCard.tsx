@@ -24,20 +24,21 @@ const SlideCard: React.FunctionComponent<{
 }> = ({ startingHeight, minHeight, marginTopHeight, setLocation }) => {
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const deviceHeight = Dimensions.get('window').height;
+    let prevDeviceHeight = startingHeight;
 
     const panResponder = useRef(
         PanResponder.create({
             onMoveShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponderCapture: () => true,
             onPanResponderMove: (_e, gestureState) => {
-                let newDeviceHeight;
-                if (gestureState.moveY > deviceHeight - minHeight) {
-                    newDeviceHeight = minHeight;
-                } else if (gestureState.moveY < marginTopHeight) {
-                    newDeviceHeight = deviceHeight - marginTopHeight;
-                } else {
-                    newDeviceHeight = deviceHeight - gestureState.moveY;
-                }
+                const newDeviceHeight = Math.min(
+                    deviceHeight - marginTopHeight,
+                    Math.max(prevDeviceHeight - gestureState.dy, minHeight)
+                );
                 setBottomHeight(newDeviceHeight);
+            },
+            onPanResponderRelease(_e, gestureState) {
+                prevDeviceHeight -= gestureState.dy;
             },
         })
     ).current;
