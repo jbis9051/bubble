@@ -4,7 +4,7 @@ import Map from '../components/Groups/Map';
 import SlideCard from '../components/Groups/SlideCard';
 
 const FriendsScreen = () => (
-    <View>
+    <View style={{ flex: 1 }}>
         <Map />
         <SlideCard />
     </View>
