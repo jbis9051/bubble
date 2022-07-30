@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import Map from '../components/Groups/Map';
 import SlideCard from '../components/Groups/SlideCard';
 
