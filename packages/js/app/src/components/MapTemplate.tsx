@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import MapView from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
 
@@ -12,29 +12,25 @@ const initialRegion = {
 
 const MapTemplate = ({ region=initialRegion, style={} }) =>
     Platform.OS === 'ios' ? (
-        <View>
-            <MapView
-                initialRegion={{
-                    ...region,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                }}
-                style={style}
-            />
-        </View>
+        <MapView
+            initialRegion={{
+                ...region,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            }}
+            style={style}
+        />
     ) : (
-        <View>
-            <MapboxGL.MapView
-                style={style}
-                styleURL={MapboxGL.StyleURL.Street}
-            >
-                <MapboxGL.Camera
-                    zoomLevel={10}
-                    centerCoordinate={Object.values(region)}
-                />
-                <MapboxGL.UserLocation />
-            </MapboxGL.MapView>
-        </View>
+        <MapboxGL.MapView
+            style={style}
+            styleURL={MapboxGL.StyleURL.Street}
+        >
+            <MapboxGL.Camera
+                zoomLevel={10}
+                centerCoordinate={Object.values(region)}
+            />
+            <MapboxGL.UserLocation />
+        </MapboxGL.MapView>
     );
 
 export default MapTemplate;
