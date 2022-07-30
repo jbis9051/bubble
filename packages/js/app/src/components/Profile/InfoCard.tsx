@@ -29,6 +29,8 @@ const ChildrenComponent: React.FunctionComponent<InfoProps> = ({
             </View>
         )}
         <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit={true}
             style={{
                 fontSize: 20,
                 fontWeight: '500',
