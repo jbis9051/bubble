@@ -11,9 +11,9 @@ interface Location {
     latitude: number;
 }
 
-const nycCoordinates = {
-    longitude: -74.0134,
-    latitude: 40.7217,
+const coordinate = {
+    longitude: -74.6551,
+    latitude: 40.3431,
 };
 
 const SlideCard: React.FunctionComponent<{
@@ -60,7 +60,7 @@ const SlideCard: React.FunctionComponent<{
                     <View style={styles.userView}>
                         <UserIcon
                             name="John"
-                            location={nycCoordinates}
+                            location={coordinate}
                             setLocation={setLocation}
                         />
                         <UserIcon name="Santhosh" setLocation={setLocation} />
