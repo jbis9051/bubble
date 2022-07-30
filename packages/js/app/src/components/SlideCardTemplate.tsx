@@ -1,16 +1,19 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Animated, View, PanResponder, PanResponderInstance } from 'react-native';
 
 import Styles from './Styles';
 
-const SlideCardTemplate: React.FunctionComponent<{ children: JSX.Element, style: {} }> = ({
+const SlideCardTemplate: React.FunctionComponent<{ children: JSX.Element, style?: {}, panResponder: PanResponderInstance }> = ({
     children,
-    style
+    style,
+    panResponder
 }) => (
     <View style={{
         ...Styles.slideCardTemplate, 
         ...style
-    }}>
+    }}
+    {...panResponder.panHandlers}
+    >
         <View
             style={{
                 width: '100%',
