@@ -18,6 +18,10 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: '800',
     },
+    peopleHeading: {
+        fontSize: 30,
+        fontWeight: '800',
+    },
 });
 
 export default styles;
