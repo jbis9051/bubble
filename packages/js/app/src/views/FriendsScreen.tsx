@@ -6,7 +6,7 @@ import SlideCard from '../components/Groups/SlideCard';
 const FriendsScreen = () => (
     <View style={{ flex: 1 }}>
         <Map />
-        <SlideCard />
+        <SlideCard minHeight={70} maxHeight={200} />
     </View>
 );
 
