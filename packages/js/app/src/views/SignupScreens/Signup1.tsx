@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TextInputBox from '../../components/TextInputBox';
 import colors from '../../constants/Colors';
 import Signup1Background from '../../../assets/SignUp1Background.svg';
@@ -12,7 +12,7 @@ type RootStackParamList = {
     Splash: undefined;
 };
 
-type Props = createStackNavigator<RootStackParamList, 'Signup1'>;
+type Props = createNativeStackNavigator<RootStackParamList, 'Signup1'>;
 
 const styles = StyleSheet.create({
     container: {

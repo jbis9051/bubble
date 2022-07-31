@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import login from './src/views/LoginScreen';
 import signup1 from './src/views/SignupScreens/Signup1';
 import signup2 from './src/views/SignupScreens/Signup2';
