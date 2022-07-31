@@ -69,7 +69,7 @@ pub async fn start_server() -> (DbPool, TestClient) {
     (pool2, TestClient::new(router))
 }
 
-pub async fn initialize_user(db: &DbPool, _client: &TestClient) -> (String, User) {
+pub async fn initialize_user(db: &DbPool, _client: &TestClient) -> (Uuid, User) {
     let test_user: User = User {
         id: 1,
         uuid: Uuid::new_v4(),

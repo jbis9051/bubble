@@ -1,4 +1,3 @@
-use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::Row;

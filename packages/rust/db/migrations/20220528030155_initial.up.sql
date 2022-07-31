@@ -85,7 +85,7 @@ CREATE TABLE session_token
 (
     id      SERIAL PRIMARY KEY,
     user_id INT REFERENCES "user" (id) NOT NULL,
-    token   VARCHAR(32) UNIQUE         NOT NULL,
+    token   UUID UNIQUE         NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 

@@ -4,7 +4,7 @@ use sqlx::Row;
 
 use crate::routes::user::Confirmation;
 use crate::types::DbPool;
-use rand_core::{OsRng, RngCore};
+
 use sqlx::types::chrono::NaiveDateTime;
 
 pub struct User {
@@ -84,10 +84,8 @@ impl User {
         Ok(())
     }
 
-    pub async fn create_session(db: &DbPool, user: &User) -> Result<String, sqlx::Error> {
-        let mut key = [0u8; 32];
-        OsRng.fill_bytes(&mut key);
-        let token = String::from_utf8_lossy(key.as_slice()).to_string();
+    pub async fn create_session(db: &DbPool, user: &User) -> Result<Uuid, sqlx::Error> {
+        let token = Uuid::new_v4();
 
         sqlx::query("INSERT INTO session_token (user_id, token) VALUES ($1, $2);")
             .bind(&user.id)
@@ -158,7 +156,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn delete_session(db: &DbPool, token: &str) -> Result<(), sqlx::Error> {
+    pub async fn delete_session(db: &DbPool, token: &Uuid) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM session_token WHERE token = $1;")
             .bind(token)
             .execute(db)

@@ -138,7 +138,12 @@ async fn signup_confirm(
         }
     };
 
-    Ok((StatusCode::CREATED, Json(SessionToken { token })))
+    Ok((
+        StatusCode::CREATED,
+        Json(SessionToken {
+            token: token.to_string(),
+        }),
+    ))
 }
 
 //get user
@@ -156,13 +161,20 @@ async fn signin(
     let user = User::get_by_email(&db.0, &payload.email).await.unwrap();
     if user.password == payload.password {
         let token = User::create_session(&db.0, &user).await.unwrap();
-        return Ok((StatusCode::CREATED, Json(SessionToken { token })));
+        return Ok((
+            StatusCode::CREATED,
+            Json(SessionToken {
+                token: token.to_string(),
+            }),
+        ));
     }
     Err(StatusCode::NOT_FOUND)
 }
 
 async fn signout(db: Extension<DbPool>, Json(payload): Json<SessionToken>) -> StatusCode {
-    User::delete_session(&db.0, &payload.token).await.unwrap();
+    User::delete_session(&db.0, &Uuid::parse_str(&payload.token).unwrap())
+        .await
+        .unwrap();
     StatusCode::OK
 }
 
