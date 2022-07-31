@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, PanResponder, Dimensions, Text } from 'react-native';
 import SlideCardTemplate from '../SlideCardTemplate';
 import UserIcon from './UserIcon';
@@ -20,11 +20,19 @@ const SlideCard: React.FunctionComponent<{
     startingHeight: number;
     minHeight: number;
     marginTopHeight: number;
-    setLocation: (newLocation: Location) => void;
-}> = ({ startingHeight, minHeight, marginTopHeight, setLocation }) => {
+    marker: Location;
+    setLocation: [
+        (newLocation: Location) => void,
+        (newLocation: Location) => void
+    ];
+}> = ({ startingHeight, minHeight, marginTopHeight, marker, setLocation }) => {
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const deviceHeight = Dimensions.get('window').height;
     let prevDeviceHeight = startingHeight;
+
+    useEffect(() => {
+        setBottomHeight(startingHeight);
+    }, [marker]);
 
     const panResponder = useRef(
         PanResponder.create({
