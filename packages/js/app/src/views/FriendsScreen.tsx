@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import Map from '../components/Groups/Map';
 import SlideCard from '../components/Groups/SlideCard';
@@ -15,22 +15,28 @@ const initialRegion = {
 
 const FriendsScreen = () => {
     const [location, setLocation] = useState(initialRegion);
+    const [marker, setMarker] = useState(initialRegion);
     const setMapLocation = (newLocation: Location) => {
         setLocation(newLocation);
     };
 
-    useEffect(() => {
-        setLocation(location);
-    }, [location]);
+    const setMarkerLocation = (newLocation: Location) => {
+        setMarker(newLocation);
+    };
 
     return (
         <View style={{ flex: 1 }}>
-            <Map location={location} />
+            <Map
+                location={location}
+                markerLocation={marker}
+                setLocation={setLocation}
+            />
             <SlideCard
                 startingHeight={220}
                 minHeight={70}
                 marginTopHeight={200}
-                setLocation={setMapLocation}
+                setLocation={[setMapLocation, setMarkerLocation]}
+                marker={marker}
             />
         </View>
     );
