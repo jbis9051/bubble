@@ -13,11 +13,17 @@ use uuid::Uuid;
 
 #[macro_export]
 macro_rules! cleanup {
-    (|$dbarg:ident| $code: expr) => {{
+    ($structdef: tt, |$dbarg:ident, $resourcesarg: ident| $code: expr) => {{
+        #[derive(Default)]
+        struct CleanupResources
+            $structdef
+
+        let cleanup_resources = CleanupResources::default();
+
         use sqlx::postgres::PgPoolOptions;
         use std::env;
 
-        async fn cleanup() {
+        async fn cleanup($resourcesarg: CleanupResources) {
             let $dbarg = PgPoolOptions::new()
                 .max_connections(5)
                 .connect(&env::var("DB_URL").unwrap())
@@ -26,27 +32,46 @@ macro_rules! cleanup {
             $code
         }
 
-        Cleanup::new(Box::new(cleanup))
+        Cleanup::new(Box::new(cleanup), cleanup_resources)
     }};
+
+    (|$dbarg:ident| $code: expr) => {{
+        use sqlx::postgres::PgPoolOptions;
+        use std::env;
+
+        async fn cleanup(_: ()) {
+            let $dbarg = PgPoolOptions::new()
+                .max_connections(5)
+                .connect(&env::var("DB_URL").unwrap())
+                .await
+                .unwrap();
+            $code
+        }
+
+        Cleanup::new(Box::new(cleanup), ())
+    }}
 }
 
-type CB<F> = Box<dyn Fn() -> F>;
+type CB<F, Resources> = Box<dyn Fn(Resources) -> F>;
 
-pub struct Cleanup<F: 'static + Future + Send> {
-    cleanup: Option<CB<F>>,
+pub struct Cleanup<F: 'static + Future + Send, Resources: Default> {
+    cleanup: Option<CB<F, Resources>>,
+    pub resources: Resources,
 }
 
-impl<F: 'static + Future + Send> Cleanup<F> {
-    pub fn new(cleanup: CB<F>) -> Self {
+impl<F: 'static + Future + Send, Resources: Default> Cleanup<F, Resources> {
+    pub fn new(cleanup: CB<F, Resources>, resources: Resources) -> Self {
         Self {
             cleanup: Some(cleanup),
+            resources,
         }
     }
 }
-impl<F: 'static + Future + Send> Drop for Cleanup<F> {
+impl<F: 'static + Future + Send, Resources: Default> Drop for Cleanup<F, Resources> {
     fn drop(&mut self) {
         let cleanup = self.cleanup.take().unwrap();
-        let future = cleanup();
+        let resources = std::mem::take(&mut self.resources);
+        let future = cleanup(resources);
         thread::spawn(|| {
             Runtime::new().unwrap().block_on(future);
         })
