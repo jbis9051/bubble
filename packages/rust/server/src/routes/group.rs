@@ -35,6 +35,7 @@ pub struct GroupInfo {
 #[derive(Deserialize, Serialize)]
 pub struct GroupName {
     pub name: String,
+    //token string
 }
 //Respond with JSON: id, name, created_date
 

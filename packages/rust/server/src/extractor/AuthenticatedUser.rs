@@ -22,12 +22,10 @@ where
         let db = Extension::<DbPool>::from_request(req)
             .await
             .map_err(|err| err.into_response())?;
-
         let TypedHeader(Authorization(token)) =
             TypedHeader::<Authorization<Bearer>>::from_request(req)
                 .await
                 .map_err(|err| err.into_response())?;
-
         Ok(AuthenticatedUser(
             User::user_from_session(&db.0, token.token())
                 .await

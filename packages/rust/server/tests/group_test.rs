@@ -1,4 +1,5 @@
 use crate::helper::{start_server, Cleanup};
+use axum::http::StatusCode;
 
 use bubble::routes::group::GroupName;
 
@@ -19,11 +20,11 @@ async fn create_group() {
     });
 
     let (token, _test_user) = helper::initialize_user(&db, &client).await;
-    println!("{}", token);
-    let bearer = format!("Bearer: {}", token);
-    println!("{}", bearer);
+    println!("Session Token: {}", token);
+    let bearer = format!("Bearer {}", token);
+    println!("Bearer {}", bearer);
     let _res_create = client
-        .get("/group/create")
+        .post("/group/create")
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&GroupName {
@@ -36,7 +37,7 @@ async fn create_group() {
         .await;
 
     // //201 is successful http request
-    // assert_eq!(res_create.status(), StatusCode::CREATED);
+    assert_eq!(_res_create.status(), StatusCode::CREATED);
     // println!("Reaches up to asserts");
     // let group = Group::from_id(&db, 1)
     //     .await
