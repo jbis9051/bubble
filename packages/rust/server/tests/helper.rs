@@ -75,8 +75,7 @@ impl<F: 'static + Future + Send, Resources: Default> Drop for Cleanup<F, Resourc
         thread::spawn(|| {
             Runtime::new().unwrap().block_on(future);
         })
-        .join()
-        .unwrap();
+        .join();
     }
 }
 
