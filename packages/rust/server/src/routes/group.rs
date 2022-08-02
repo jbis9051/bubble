@@ -45,7 +45,7 @@ async fn create(
     user: AuthenticatedUser,
 ) -> (StatusCode, Json<GroupInfo>) {
     let mut group: Group = Group {
-        id: 0,
+        id: 1,
         uuid: Uuid::new_v4(),
         group_name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
