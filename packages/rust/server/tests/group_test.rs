@@ -1,5 +1,6 @@
-use crate::helper::start_server;
+use crate::helper::{get_user_group, start_server};
 use axum::http::StatusCode;
+use bubble::models::group::{Group, Role};
 
 use bubble::routes::group::GroupName;
 
@@ -18,9 +19,7 @@ async fn create_group() {
     // });
 
     let (token, _test_user) = helper::initialize_user(&db, &client).await;
-    println!("Session Token: {}", token);
     let bearer = format!("Bearer {}", token);
-    println!("Bearer {}", bearer);
     let _res_create = client
         .post("/group/create")
         .header("Content-Type", "application/json")
@@ -34,21 +33,18 @@ async fn create_group() {
         .send()
         .await;
 
-    // //201 is successful http request
+    // //201 is successful http request, 401 is UNAUTHORIZED
     assert_eq!(_res_create.status(), StatusCode::CREATED);
-    println!("{}", _res_create.status());
-    // println!("Reaches up to asserts");
-    // let group = Group::from_id(&db, 1)
-    //     .await
-    //     .expect("No group exists in database.");
-    // assert_eq!(group.id, 1);
-    // assert_eq!(group.group_name, "test_group");
-    //
-    // let res_read = client
-    //     .post(&*group.uuid.to_string())
-    //     .header("Authorization", &bearer)
-    //     .send()
-    //     .await;
+
+    let group = Group::from_id(&db, 1)
+        .await
+        .expect("No group exists in database.");
+    assert_eq!(group.id, 1);
+    assert_eq!(group.group_name, "test_group");
+
+    let (group_id, role_id) = get_user_group(&db, 1).await.unwrap();
+    assert_eq!(group_id, 1);
+    assert_eq!(role_id, Role::Admin as i32);
 }
 //
 // #[tokio::test]

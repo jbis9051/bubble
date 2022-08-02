@@ -36,15 +36,6 @@ pub fn get_group_by_row(row: &PgRow) -> Group {
     }
 }
 
-pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Group, sqlx::Error> {
-    let row = sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
-        .bind(uuid)
-        .fetch_one(db)
-        .await?;
-    let group = get_group_by_row(&row);
-    Ok(group)
-}
-
 pub async fn authorize_user(db: &DbPool, user_id: i32) -> Result<bool, sqlx::Error> {
     let role_id: (i32,) = sqlx::query_as("SELECT role_id FROM user_group WHERE id = $1")
         .bind(user_id)
@@ -54,8 +45,7 @@ pub async fn authorize_user(db: &DbPool, user_id: i32) -> Result<bool, sqlx::Err
 }
 
 impl Group {
-    //duplication necesssary for testing, must eventually resolve
-    async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Group, sqlx::Error> {
+    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Group, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
             .bind(uuid)
             .fetch_one(db)
@@ -78,9 +68,6 @@ impl Group {
         group: &mut Group,
         AuthenticatedUser(user): &AuthenticatedUser,
     ) -> Result<(), sqlx::Error> {
-        // if !authorize_user(db, user.id).await.unwrap() {
-        //     return Ok(());
-        // };
         let row =
             sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2) RETURNING *;")
                 .bind(&group.uuid)
@@ -137,7 +124,7 @@ impl Group {
         if !authorize_user(db, user.id).await.unwrap() {
             return Ok(());
         };
-        let _group = from_uuid(db, uuid).await?;
+        let _group = Self::from_uuid(db, uuid).await?;
         let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
             .bind(new_users)
             .fetch_one(db)
@@ -165,7 +152,7 @@ impl Group {
         if !authorize_user(db, user.id).await.unwrap() {
             return Ok(());
         };
-        let group = from_uuid(db, uuid).await?;
+        let group = Self::from_uuid(db, uuid).await?;
 
         let user_id: (i32,) = sqlx::query_as("SELECT id FROM user WHERE uuid = $1")
             .bind(user_to_delete)
