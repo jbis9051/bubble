@@ -94,11 +94,12 @@ pub async fn start_server() -> (DbPool, TestClient) {
     (pool2, TestClient::new(router))
 }
 
-pub async fn initialize_user(db: &DbPool, _client: &TestClient) -> (Uuid, User) {
+pub async fn initialize_user(db: &DbPool, _client: &TestClient, username_in: &str) -> (Uuid, User) {
+    let temp_username: String = username_in.parse().unwrap();
     let test_user: User = User {
         id: 1,
         uuid: Uuid::new_v4(),
-        username: "Jason Yu".to_string(),
+        username: temp_username,
         password: "johndoe".to_string(),
         profile_picture: None,
         email: None,
