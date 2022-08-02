@@ -6,6 +6,7 @@ import colors from '../constants/Colors';
 import LoginBackground from '../../assets/LoginBackground.svg';
 
 type RootStackParamList = {
+    TabBar: undefined;
     Login: undefined;
     Signup1: undefined;
     Signup2: undefined;
@@ -118,14 +119,21 @@ function Login({ route, navigation }: Props) {
                 <TextInputBox descriptor="Password" params={'password'} />
             </View>
             <View style={styles.loginContainer}>
-                <TouchableOpacity style={styles.login}>
+                <TouchableOpacity
+                    style={styles.login}
+                    onPress={() => {
+                        navigation.navigate('TabBar');
+                    }}
+                >
                     <Text style={styles.buttonText}>Sign In</Text>
                 </TouchableOpacity>
             </View>
             <View style={styles.noAccountContainer}>
                 <Text style={styles.noAccountText}>Don't have an account?</Text>
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('Signup1')}
+                    onPress={() => {
+                        navigation.navigate('Signup1');
+                    }}
                 >
                     <Text style={styles.noAccountTextLink}>Sign up</Text>
                 </TouchableOpacity>

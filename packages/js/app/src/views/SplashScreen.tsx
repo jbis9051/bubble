@@ -1,11 +1,12 @@
 import React from 'react';
-import { Text, View, StyleSheet, ImageBackground } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import colors from '../constants/Colors';
 import SplashBackground from '../../assets/SplashBackground.svg';
 import Logo from '../../assets/LogoNoBackground.svg';
 
 type RootStackParamList = {
+    TabBar: undefined;
     Login: undefined;
     Signup1: undefined;
     Signup2: undefined;
@@ -46,6 +47,7 @@ function Splash({ route, navigation }: Props) {
     setTimeout(() => {
         navigation.navigate('Login');
     }, 2000);
+
     return (
         <View style={styles.container}>
             <SplashBackground

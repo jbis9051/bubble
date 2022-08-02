@@ -6,6 +6,7 @@ import colors from '../../constants/Colors';
 import Signup1Background from '../../../assets/SignUp1Background.svg';
 
 type RootStackParamList = {
+    TabBar: undefined;
     Login: undefined;
     Signup1: undefined;
     Signup2: undefined;

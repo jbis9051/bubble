@@ -7,6 +7,7 @@ import colors from '../../constants/Colors';
 import Signup2Background from '../../../assets/SignUp2Background.svg';
 
 type RootStackParamList = {
+    TabBar: undefined;
     Login: undefined;
     Signup1: undefined;
     Signup2: undefined;
@@ -86,7 +87,10 @@ function Signup({ route, navigation }: Props) {
             <View style={styles.signupButtonContainer}>
                 <TouchableOpacity
                     style={styles.signupButton}
-                    onPress={onSignUp()}
+                    onPress={() => {
+                        onSignUp();
+                        navigation.navigate('TabBar');
+                    }}
                 >
                     <Text style={styles.buttonText}>Sign Up</Text>
                 </TouchableOpacity>
