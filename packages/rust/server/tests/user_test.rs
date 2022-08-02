@@ -1,4 +1,4 @@
-use crate::helper::{start_server, Cleanup};
+use crate::helper::start_server;
 use axum::http::StatusCode;
 use bubble::models::user::User;
 use bubble::routes::user::{Confirm, Confirmation, CreateUser};

@@ -33,7 +33,7 @@ macro_rules! cleanup {
             $code
         }
 
-        Cleanup::new(Box::new(cleanup), cleanup_resources)
+        $crate::helper::Cleanup::new(Box::new(cleanup), cleanup_resources)
     }};
 
     (|$dbarg:ident| $code: expr) => {{
@@ -49,7 +49,7 @@ macro_rules! cleanup {
             $code
         }
 
-        Cleanup::new(Box::new(cleanup), ())
+        $crate::helper::Cleanup::new(Box::new(cleanup), ())
     }}
 }
 
