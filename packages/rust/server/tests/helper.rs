@@ -98,7 +98,7 @@ pub async fn initialize_user(db: &DbPool, _client: &TestClient) -> (Uuid, User) 
     let test_user: User = User {
         id: 1,
         uuid: Uuid::new_v4(),
-        username: "John Doe".to_string(),
+        username: "Jason Yu".to_string(),
         password: "johndoe".to_string(),
         profile_picture: None,
         email: None,

@@ -95,9 +95,6 @@ impl User {
 
         Ok(token)
     }
-    pub async fn user_from_session(_db: &DbPool, _session: &str) -> Result<User, sqlx::Error> {
-        todo!()
-    }
 
     pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
@@ -107,6 +104,36 @@ impl User {
 
         let mut user = User::empty_user().await;
         user.user_from_row(&row).await.unwrap();
+        Ok(user)
+    }
+
+    pub async fn user_from_session(_db: &DbPool, _session: &str) -> Result<User, sqlx::Error> {
+        let uuid_converted: Uuid = Uuid::parse_str(_session).unwrap();
+        println!("HELLLLLOOOO");
+        let row = sqlx::query(
+            "SELECT *
+                                          FROM session_token
+                                          INNER JOIN \"user\"
+                                            ON session_token.user_id = \"user\".id
+                                          WHERE session_token.token = $1;",
+        )
+        .bind(uuid_converted)
+        .fetch_one(_db)
+        .await?;
+        let mut user = User::empty_user().await;
+        //user = Self::get_by_id(_db, row.0);
+        // let user_row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
+        //     .bind(row.0)
+        //     .fetch_one(_db)
+        //     .await?;
+        let id: i32 = row.get("user_id");
+        println!("User_id: {}", id);
+        user.user_from_row(&row).await.unwrap();
+        // let user_row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
+        //     .bind(row.get("user_id"))
+        //     .fetch_one(_db)
+        //     .await?;
+        // user.user_from_row(&user_row).await.unwrap();
         Ok(user)
     }
 

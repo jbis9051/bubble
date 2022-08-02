@@ -1,9 +1,7 @@
-use crate::helper::{start_server, Cleanup};
+use crate::helper::start_server;
 use axum::http::StatusCode;
 
 use bubble::routes::group::GroupName;
-
-use sqlx::Executor;
 
 mod helper;
 
@@ -11,13 +9,13 @@ mod helper;
 async fn create_group() {
     let (db, client) = start_server().await;
 
-    let _clean = cleanup!(|db| {
-        db.execute("DELETE FROM \"session_token\"").await.unwrap();
-        db.execute("DELETE FROM \"group\"").await.unwrap();
-        db.execute("DELETE FROM \"location_group\"").await.unwrap();
-        db.execute("DELETE FROM \"user\"").await.unwrap();
-        db.execute("DELETE FROM \"user_group\"").await.unwrap();
-    });
+    // let _clean = cleanup!(|db| {
+    //     db.execute("DELETE FROM \"session_token\"").await.unwrap();
+    //     db.execute("DELETE FROM \"user_group\"").await.unwrap();
+    //     db.execute("DELETE FROM \"group\"").await.unwrap();
+    //     db.execute("DELETE FROM \"location_group\"").await.unwrap();
+    //     db.execute("DELETE FROM \"user\"").await.unwrap();
+    // });
 
     let (token, _test_user) = helper::initialize_user(&db, &client).await;
     println!("Session Token: {}", token);
@@ -38,6 +36,7 @@ async fn create_group() {
 
     // //201 is successful http request
     assert_eq!(_res_create.status(), StatusCode::CREATED);
+    println!("{}", _res_create.status());
     // println!("Reaches up to asserts");
     // let group = Group::from_id(&db, 1)
     //     .await

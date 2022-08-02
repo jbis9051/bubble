@@ -78,9 +78,9 @@ impl Group {
         group: &mut Group,
         AuthenticatedUser(user): &AuthenticatedUser,
     ) -> Result<(), sqlx::Error> {
-        if !authorize_user(db, user.id).await.unwrap() {
-            return Ok(());
-        };
+        // if !authorize_user(db, user.id).await.unwrap() {
+        //     return Ok(());
+        // };
         let row =
             sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2) RETURNING *;")
                 .bind(&group.uuid)
@@ -94,7 +94,7 @@ impl Group {
                     VALUES ($1, $2, $3);",
         )
         .bind(user.id)
-        .bind(group.id)
+        .bind(group_db.id)
         .bind(Role::Admin as i32)
         .execute(db)
         .await?;
