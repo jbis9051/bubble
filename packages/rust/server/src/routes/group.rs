@@ -25,7 +25,7 @@ pub fn router() -> Router {
 // Return Data -> Serializable
 
 //create and read functions
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct GroupInfo {
     pub uuid: String,
     pub name: String,
