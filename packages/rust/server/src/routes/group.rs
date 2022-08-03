@@ -4,22 +4,20 @@ use crate::models::user::User;
 use crate::types::DbPool;
 use axum::extract::Path;
 use axum::http::StatusCode;
-use axum::routing::delete;
-use axum::routing::{get, post};
+use axum::routing::{delete, get, patch, post};
 use axum::Extension;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
-use std::process;
 
 pub fn router() -> Router {
     Router::new()
         .route("/create", post(create))
         .route("/:id", get(read))
         .route("/:id/new_users", post(add_users))
-        .route("/:id/delete_users", post(delete_users))
-        .route("/:id/name", post(change_name))
+        .route("/:id/delete_users", delete(delete_users))
+        .route("/:id/name", patch(change_name))
         .route("/:id", delete(delete_group))
 }
 
@@ -45,7 +43,7 @@ async fn create(
     db: Extension<DbPool>,
     Json(payload): Json<GroupName>,
     user: AuthenticatedUser,
-) -> (StatusCode, Json<GroupInfo>) {
+) -> Result<(StatusCode, Json<GroupInfo>), StatusCode> {
     let mut group: Group = Group {
         id: Default::default(),
         uuid: Uuid::new_v4(),
@@ -62,7 +60,7 @@ async fn create(
         created: group.created.to_string(),
     };
 
-    (StatusCode::CREATED, Json(new_group))
+    Ok((StatusCode::CREATED, Json(new_group)))
 }
 
 // respond with JSON: id, name, created_date
@@ -70,23 +68,22 @@ async fn read(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
-) -> Json<GroupInfo> {
+) -> Result<(StatusCode, Json<GroupInfo>), StatusCode> {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     let group: Group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
     let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
-    //might change with a error code returned instead
+
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
-        process::exit(1)
+        return Err(StatusCode::UNAUTHORIZED);
     }
-    //Group::read(&db.0, &mut group, uuid_converted, &user).await.unwrap();
 
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
         created: group.created.to_string(),
     };
-    Json(new_group)
+    Ok((StatusCode::OK, Json(new_group)))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -100,19 +97,20 @@ async fn add_users(
     Path(uuid): Path<String>,
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
-) {
+) -> StatusCode {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     let mut group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
     let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
-        process::exit(1)
+        return StatusCode::UNAUTHORIZED;
     }
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).unwrap();
         let user = User::get_by_uuid(&db.0, user_id).await.unwrap();
         group.add_user(&db.0, user);
     }
+    StatusCode::OK
 }
 
 // //request JSON: vec<user_ids>
@@ -121,19 +119,20 @@ async fn delete_users(
     Path(uuid): Path<String>,
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
-) {
+) -> StatusCode {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
     let mut group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
     let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
-        process::exit(1)
+        return StatusCode::UNAUTHORIZED;
     }
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).unwrap();
         let user = User::get_by_uuid(&db.0, user_id).await.unwrap();
         group.delete_user(&db.0, user);
     }
+    StatusCode::OK
 }
 
 //
@@ -149,29 +148,35 @@ async fn change_name(
     Path(uuid): Path<String>,
     Json(payload): Json<NameChange>,
     user: AuthenticatedUser,
-) {
+) -> StatusCode {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
     let mut group = Group::from_uuid(&db, group_id).await.unwrap();
     let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
-        process::exit(1)
+        return StatusCode::UNAUTHORIZED;
     }
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change: &str = &payload.name;
     group.group_name = name_to_change.parse().unwrap();
     group.update(&db).await.unwrap();
+    StatusCode::OK
 }
 
 // //none, just id passed from path
-async fn delete_group(db: Extension<DbPool>, Path(uuid): Path<String>, user: AuthenticatedUser) {
+async fn delete_group(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    user: AuthenticatedUser,
+) -> StatusCode {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
     let group = Group::from_uuid(&db, group_id).await.unwrap();
     let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
-        process::exit(1)
+        return StatusCode::UNAUTHORIZED;
     }
 
     group.delete(&db).await.unwrap();
+    StatusCode::OK
 }

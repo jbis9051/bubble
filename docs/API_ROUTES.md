@@ -41,7 +41,7 @@ Response:
 ### Update Group Name
 
 ```http request
-POST /group/<id>/name
+PATCH /group/<id>/name
 ```
 
 Request:
@@ -79,7 +79,7 @@ Request Data:
 ### Remove Users From Group
 
 ```http request
-POST /group/<id>/delete_users
+DELETE /group/<id>/delete_users
 ```
 
 Request Data:
@@ -177,7 +177,7 @@ POST /user/signin
 ---
 ## User Sign Out
 ```http request
-POST /user/signout
+DELETE /user/signout
 ```
 #### Request:
 ```json
