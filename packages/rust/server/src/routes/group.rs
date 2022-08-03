@@ -1,5 +1,6 @@
 use crate::extractor::AuthenticatedUser::AuthenticatedUser;
-use crate::models::group::Group;
+use crate::models::group::{Group, Role};
+use crate::models::user::User;
 use crate::types::DbPool;
 use axum::extract::Path;
 use axum::http::StatusCode;
@@ -10,6 +11,7 @@ use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
+use std::process;
 
 pub fn router() -> Router {
     Router::new()
@@ -25,7 +27,7 @@ pub fn router() -> Router {
 // Return Data -> Serializable
 
 //create and read functions
-#[derive(Deserialize, Serialize)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct GroupInfo {
     pub uuid: String,
     pub name: String,
@@ -45,19 +47,21 @@ async fn create(
     user: AuthenticatedUser,
 ) -> (StatusCode, Json<GroupInfo>) {
     let mut group: Group = Group {
-        id: 1,
+        id: Default::default(),
         uuid: Uuid::new_v4(),
         group_name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
-        members: vec![],
+        members: Vec::new(),
     };
+    //authorization
+    group.create(&db.0, user.0.id).await.unwrap();
 
-    Group::create(&db.0, &mut group, &user).await.unwrap();
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
         created: group.created.to_string(),
     };
+
     (StatusCode::CREATED, Json(new_group))
 }
 
@@ -67,16 +71,16 @@ async fn read(
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
 ) -> Json<GroupInfo> {
-    // let uuid: = params.get("uuid");
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let mut group: Group = Group {
-        id: 0,
-        uuid: Uuid::new_v4(),
-        group_name: String::new(),
-        created: NaiveDateTime::from_timestamp(0, 0),
-        members: vec![],
-    };
-    Group::read(&db.0, &mut group, uuid_converted, &user);
+    let group: Group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
+    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    //might change with a error code returned instead
+    if user_role != Role::Admin as i32 {
+        println!("User is not Admin of group");
+        process::exit(1)
+    }
+    //Group::read(&db.0, &mut group, uuid_converted, &user).await.unwrap();
+
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
         name: group.group_name,
@@ -89,13 +93,7 @@ async fn read(
 pub struct UserID {
     pub users: Vec<String>,
 }
-// #[derive(Deserialize, Serialize)]
-// pub struct users_id {
-//     pub users: Vec<Uuid>,
-//}
-//Hi, so the issue is t ihe uuid now, where on line 96, we gotta make the data type uuid
 
-//wait its easier to just convert string to uuid
 //request JSON: vec<user_ids>
 async fn add_users(
     db: Extension<DbPool>,
@@ -104,9 +102,16 @@ async fn add_users(
     user: AuthenticatedUser,
 ) {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
+    let mut group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
+    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    if user_role != Role::Admin as i32 {
+        println!("User is not Admin of group");
+        process::exit(1)
+    }
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).unwrap();
-        Group::add_user(&db.0, uuid_converted, user_id, &user);
+        let user = User::get_by_uuid(&db.0, user_id).await.unwrap();
+        group.add_user(&db.0, user);
     }
 }
 
@@ -117,10 +122,17 @@ async fn delete_users(
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
 ) {
-    let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
+    let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
+    let mut group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
+    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    if user_role != Role::Admin as i32 {
+        println!("User is not Admin of group");
+        process::exit(1)
+    }
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).unwrap();
-        Group::delete_user(&db.0, group_id, user_id, &user);
+        let user = User::get_by_uuid(&db.0, user_id).await.unwrap();
+        group.delete_user(&db.0, user);
     }
 }
 
@@ -139,13 +151,27 @@ async fn change_name(
     user: AuthenticatedUser,
 ) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
+    let mut group = Group::from_uuid(&db, group_id).await.unwrap();
+    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    if user_role != Role::Admin as i32 {
+        println!("User is not Admin of group");
+        process::exit(1)
+    }
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change: &str = &payload.name;
-    Group::change_name(&db.0, group_id, name_to_change, &user);
+    group.group_name = name_to_change.parse().unwrap();
+    group.update(&db).await.unwrap();
 }
 
 // //none, just id passed from path
 async fn delete_group(db: Extension<DbPool>, Path(uuid): Path<String>, user: AuthenticatedUser) {
     let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
-    Group::delete_group(&db.0, group_id, &user);
+    let group = Group::from_uuid(&db, group_id).await.unwrap();
+    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    if user_role != Role::Admin as i32 {
+        println!("User is not Admin of group");
+        process::exit(1)
+    }
+
+    group.delete(&db).await.unwrap();
 }

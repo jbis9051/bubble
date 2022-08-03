@@ -1,8 +1,9 @@
 use crate::helper::{get_user_group, start_server};
 use axum::http::StatusCode;
+use std::borrow::Borrow;
 
 use bubble::models::group::{Group, Role};
-use bubble::routes::group::{GroupInfo, GroupName};
+use bubble::routes::group::GroupInfo;
 use sqlx::Executor;
 
 use uuid::Uuid;
@@ -55,6 +56,7 @@ async fn create_group() {
     //Test: Create Group 2
 
     let second_username: &str = "Joshua Brown";
+    //test_user is not used here. However, it may be used in user_tests AND in future group_tests
     let (token, _test_user) = helper::initialize_user(&db, &client, second_username).await;
     let bearer = format!("Bearer {}", token);
     let res = helper::create_group(&db, &client, "test_group_2", bearer)
@@ -84,31 +86,6 @@ async fn create_group() {
 async fn read_group() {
     let (db, client) = start_server().await;
 
-    let first_username: &str = "Gannon Smith";
-
-    let (token, _test_user) = helper::initialize_user(&db, &client, first_username).await;
-    let bearer = format!("Bearer {}", token);
-    let res = client
-        .post("/group/create")
-        .header("Content-Type", "application/json")
-        .body(
-            serde_json::to_string(&GroupName {
-                name: "read_group_1".to_string(),
-            })
-            .unwrap(),
-        )
-        .header("Authorization", bearer)
-        .send()
-        .await;
-
-    assert_eq!(res.status(), StatusCode::CREATED);
-
-    let group = Group::from_id(&db, 1)
-        .await
-        .expect("No group exists in database.");
-    let group_uuid_1: Uuid = group.uuid;
-    let _read_route = format!("/group/{}", group_uuid_1);
-
     let _clean = cleanup!(|db| {
         db.execute("DELETE FROM \"session_token\"").await.unwrap();
         db.execute("DELETE FROM \"user_group\"").await.unwrap();
@@ -117,12 +94,32 @@ async fn read_group() {
         db.execute("DELETE FROM \"user\"").await.unwrap();
     });
 
-    // let bearer = format!("Bearer {}", token);
-    // let _res_read = client
-    //     .get(&*read_route)
-    //     .header("Authorization", bearer)
-    //     .send()
-    //     .await;
-    //
-    // assert_eq!(_res_read.status(), StatusCode::CREATED);
+    let first_username: &str = "Gannon Smith";
+
+    let (token, _test_user) = helper::initialize_user(&db, &client, first_username).await;
+    let bearer = format!("Bearer {}", token);
+    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+        .await
+        .unwrap();
+
+    let _status = res.status();
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let group_info: GroupInfo = res.json().await;
+    let group_name = group_info.name;
+    let group_uuid = group_info.uuid;
+
+    let read_route = format!("/group/{}", group_uuid);
+
+    //res is now for read api route
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .get(read_route.borrow())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    let read_group: GroupInfo = res.json().await;
+
+    assert_eq!(read_group.name, group_name);
+    assert_eq!(read_group.uuid, group_uuid);
 }
