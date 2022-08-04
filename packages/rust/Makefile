@@ -16,12 +16,13 @@ start_ci:
 	docker compose -f docker-compose-ci.yml up --build -d
 
 test_db_ci: stop_ci start_ci
-	cd db && ./test.sh && cd ..
+	cd db && ./revert_test.sh && cd ..
 
 test_server_ci: stop_ci start_ci
 	docker build db --tag db
 	docker run --rm --network="host" -e DATABASE_URL=postgres://user:pass@localhost:5433/db db migrate
-	cd server && DB_URL=postgres://user:pass@localhost:5433/db cargo test --tests
+	cd server && DB_URL=postgres://user:pass@localhost:5433/db cargo test --tests && cd ..
+	cd db && ./cleanup_test.sh && cd ..
 
 fmt_ci:
 	cargo fmt --all -- --check
