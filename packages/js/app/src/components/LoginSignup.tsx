@@ -16,8 +16,8 @@ type RootStackParamList = {
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
-const LoginSignup: React.FC = () => (
-    <RootStack.Navigator initialRouteName={'Login'}>
+const LoginSignup: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => (
+    <RootStack.Navigator initialRouteName={isLoggedIn ? 'TabBar' : 'Login'}>
         <RootStack.Screen
             name="Splash"
             component={splash}
@@ -45,5 +45,4 @@ const LoginSignup: React.FC = () => (
         />
     </RootStack.Navigator>
 );
-
 export default LoginSignup;
