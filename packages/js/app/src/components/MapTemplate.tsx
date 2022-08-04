@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Platform } from 'react-native';
 import MapView, { Marker as MapViewMarker } from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
@@ -24,12 +24,18 @@ const MapTemplate = ({
 }) => {
     const [location, setLocation] = useState(region);
     const [markerLocation, setMarkerLocation] = useState(markerRegion);
+    // const mapView = useRef<<MapView>>(null).current;
 
     useEffect(() => {
         setLocation(region);
     }, [region]);
 
     useEffect(() => {
+        // mapView?.animateToRegion({
+        //     latitudeDelta: 0.015,
+        //     longitudeDelta: 0.015,
+        //     ...markerRegion,
+        // }, 5000);
         setMarkerLocation(markerRegion);
     }, [markerRegion]);
 
@@ -44,6 +50,7 @@ const MapTemplate = ({
                 updateLocation(newRegion);
             }}
             style={style}
+            // ref={mapView}
         >
             <MapViewMarker
                 coordinate={{
