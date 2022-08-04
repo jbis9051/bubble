@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Platform } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { Platform } from 'react-native';
+import MapView, { Marker as MapViewMarker } from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
+import Marker from './Marker';
 
 MapboxGL.setAccessToken(process.env.REACT_APP_MAPBOX_ACCESS_TOKEN as string);
+
+interface Location {
+    longitude: number;
+    latitude: number;
+}
 
 const initialRegion = {
     longitude: -122.4324,
@@ -14,7 +20,7 @@ const MapTemplate = ({
     region = initialRegion,
     style = {},
     markerRegion = initialRegion,
-    updateLocation = () => null,
+    updateLocation = (_newRegion: Location) => null,
 }) => {
     const [location, setLocation] = useState(region);
     const [markerLocation, setMarkerLocation] = useState(markerRegion);
@@ -39,51 +45,14 @@ const MapTemplate = ({
             }}
             style={style}
         >
-            <Marker
+            <MapViewMarker
                 coordinate={{
                     latitude: markerLocation.latitude,
                     longitude: markerLocation.longitude,
                 }}
             >
-                <View
-                    style={{
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        paddingBottom: 95,
-                    }}
-                >
-                    <View
-                        style={{
-                            height: 75,
-                            width: 75,
-                            backgroundColor: '#ffffff',
-                            borderRadius: 100,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 5,
-                        }}
-                    >
-                        <Text
-                            style={{
-                                fontSize: 48,
-                            }}
-                        >
-                            J
-                        </Text>
-                    </View>
-                    <View
-                        style={{
-                            margin: 0,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            height: 15,
-                            width: 15,
-                            backgroundColor: '#ffffff',
-                            borderRadius: 100,
-                        }}
-                    ></View>
-                </View>
-            </Marker>
+                <Marker />
+            </MapViewMarker>
         </MapView>
     ) : (
         <MapboxGL.MapView style={style} styleURL={MapboxGL.StyleURL.Street}>
