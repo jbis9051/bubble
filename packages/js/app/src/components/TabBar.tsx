@@ -23,7 +23,7 @@ const TabBar = () => (
             headerShown: false,
             tabBarStyle: {
                 backgroundColor: '#ffffff',
-                height: 90,
+                height: 85,
             },
         }}
         initialRouteName="Home"
