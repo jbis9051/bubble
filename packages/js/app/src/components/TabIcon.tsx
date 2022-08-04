@@ -20,9 +20,9 @@ const TabIcon: React.FunctionComponent<TabIconProps> = ({
     const color = focused ? Colors.primary : Colors.unselected;
     return (
         <View
-            style={{ alignItems: 'center', justifyContent: 'center', top: 10 }}
+            style={{ alignItems: 'center', justifyContent: 'center', top: 5 }}
         >
-            <FontAwesomeIcon icon={icon} color={color} size={35} />
+            <FontAwesomeIcon icon={icon} color={color} size={30} />
             <Text
                 style={{
                     color,
