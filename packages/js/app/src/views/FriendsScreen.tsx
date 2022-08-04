@@ -13,13 +13,15 @@ const initialRegion = {
     latitude: 37.78825,
 };
 
-const FriendsScreen = () => {
-    const [location, setLocation] = useState(initialRegion);
-    const [marker, setMarker] = useState(initialRegion);
-    const setMapLocation = (newLocation: Location) => {
-        setLocation(newLocation);
-    };
+const locationProps = {};
 
+const FriendsScreen = () => {
+    const [viewLocation, setViewLocation] = useState(initialRegion);
+    const [marker, setMarker] = useState(initialRegion);
+
+    const setMapLocation = (newLocation: Location) => {
+        setViewLocation(newLocation);
+    };
     const setMarkerLocation = (newLocation: Location) => {
         setMarker(newLocation);
     };
@@ -27,14 +29,11 @@ const FriendsScreen = () => {
     return (
         <View style={{ flex: 1 }}>
             <Map
-                location={location}
+                location={viewLocation}
                 markerLocation={marker}
-                setLocation={setLocation}
+                setLocation={setViewLocation}
             />
             <SlideCard
-                startingHeight={220}
-                minHeight={70}
-                marginTopHeight={200}
                 setLocation={[setMapLocation, setMarkerLocation]}
                 marker={marker}
             />
