@@ -29,7 +29,7 @@ const UserIcon: React.FunctionComponent<{
         }}
     >
         <View style={styles.userIcon}>
-            <ProfileImageTemplate source="" size={80} />
+            <ProfileImageTemplate source="" size={60} />
             <Text style={{ marginTop: 8, fontSize: 18 }}>{name}</Text>
         </View>
     </TouchableWithoutFeedback>

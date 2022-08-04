@@ -17,7 +17,7 @@ const coordinate = {
 };
 
 const heightProps = {
-    startingHeight: 220,
+    startingHeight: 180,
     minHeight: 70,
     marginTopHeight: 200,
 };
