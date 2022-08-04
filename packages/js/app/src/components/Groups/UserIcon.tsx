@@ -30,7 +30,13 @@ const UserIcon: React.FunctionComponent<{
     >
         <View style={styles.userIcon}>
             <ProfileImageTemplate source="" size={60} />
-            <Text style={{ marginTop: 8, fontSize: 18 }}>{name}</Text>
+            <Text
+                style={{ marginTop: 8 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit={true}
+            >
+                {name}
+            </Text>
         </View>
     </TouchableWithoutFeedback>
 );
