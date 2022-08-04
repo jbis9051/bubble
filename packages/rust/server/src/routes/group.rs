@@ -4,6 +4,7 @@ use crate::models::user::User;
 use crate::types::DbPool;
 use axum::extract::Path;
 use axum::http::StatusCode;
+
 use axum::routing::{delete, get, patch, post};
 use axum::Extension;
 use axum::{Json, Router};
@@ -51,8 +52,13 @@ async fn create(
         created: NaiveDateTime::from_timestamp(0, 0),
         members: Vec::new(),
     };
-    //authorization
-    group.create(&db.0, user.0.id).await.unwrap();
+
+    match group.create(&db.0, user.0.id).await {
+        Ok(_) => (),
+        Err(_e) => {
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
 
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
@@ -69,9 +75,33 @@ async fn read(
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<GroupInfo>), StatusCode> {
-    let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let group: Group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
-    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    let uuid_converted: Uuid = match Uuid::parse_str(&uuid) {
+        Ok(uuid_converted) => uuid_converted,
+        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
+    //UNSURE IF COLUMN INDEX OUT OF BOUNDS IS NECESSARY
+    let group: Group = match Group::from_uuid(&db.0, uuid_converted).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return Err(error);
+        }
+    };
+    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return Err(error);
+        }
+    };
 
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
@@ -98,16 +128,45 @@ async fn add_users(
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
 ) -> StatusCode {
-    let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let mut group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
-    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    let uuid_converted: Uuid = match Uuid::parse_str(&uuid) {
+        Ok(uuid_converted) => uuid_converted,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    let mut group = match Group::from_uuid(&db.0, uuid_converted).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
+    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
         return StatusCode::UNAUTHORIZED;
     }
     for i in &payload.users {
-        let user_id: Uuid = Uuid::parse_str(i).unwrap();
-        let user = User::get_by_uuid(&db.0, user_id).await.unwrap();
+        let user_id: Uuid = match Uuid::parse_str(i) {
+            Ok(user_id) => user_id,
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        let user = match User::get_by_uuid(&db.0, user_id).await {
+            Ok(user) => user,
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+        };
         group.add_user(&db.0, user);
     }
     StatusCode::OK
@@ -120,16 +179,45 @@ async fn delete_users(
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
 ) -> StatusCode {
-    let uuid_converted: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let mut group = Group::from_uuid(&db.0, uuid_converted).await.unwrap();
-    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    let uuid_converted: Uuid = match Uuid::parse_str(&uuid) {
+        Ok(uuid_converted) => uuid_converted,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    let mut group = match Group::from_uuid(&db.0, uuid_converted).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
+    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
         return StatusCode::UNAUTHORIZED;
     }
     for i in &payload.users {
-        let user_id: Uuid = Uuid::parse_str(i).unwrap();
-        let user = User::get_by_uuid(&db.0, user_id).await.unwrap();
+        let user_id: Uuid = match Uuid::parse_str(i) {
+            Ok(user_id) => user_id,
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        let user = match User::get_by_uuid(&db.0, user_id).await {
+            Ok(user) => user,
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+        };
         group.delete_user(&db.0, user);
     }
     StatusCode::OK
@@ -149,17 +237,53 @@ async fn change_name(
     Json(payload): Json<NameChange>,
     user: AuthenticatedUser,
 ) -> StatusCode {
-    let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let mut group = Group::from_uuid(&db, group_id).await.unwrap();
-    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    let group_id: Uuid = match Uuid::parse_str(&uuid) {
+        Ok(group_id) => group_id,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    let mut group = match Group::from_uuid(&db, group_id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
+    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
         return StatusCode::UNAUTHORIZED;
     }
     //must resolve where normal rust or json is how requests replies sent
     let name_to_change: &str = &payload.name;
-    group.group_name = name_to_change.parse().unwrap();
-    group.update(&db).await.unwrap();
+    group.group_name = match name_to_change.parse() {
+        Ok(name) => name,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    match group.update(&db).await {
+        Ok(_) => (),
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
     StatusCode::OK
 }
 
@@ -169,14 +293,47 @@ async fn delete_group(
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
 ) -> StatusCode {
-    let group_id: Uuid = Uuid::parse_str(&uuid).unwrap();
-    let group = Group::from_uuid(&db, group_id).await.unwrap();
-    let user_role = group.get_role(&db.0, user.0.id).await.unwrap();
+    let group_id: Uuid = match Uuid::parse_str(&uuid) {
+        Ok(group_id) => group_id,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    let group = match Group::from_uuid(&db, group_id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
+    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
+        Ok(group) => group,
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
     if user_role != Role::Admin as i32 {
         println!("User is not Admin of group");
         return StatusCode::UNAUTHORIZED;
     }
 
-    group.delete(&db).await.unwrap();
+    match group.delete(&db).await {
+        Ok(_) => (),
+        Err(e) => {
+            let error = match e {
+                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
+                sqlx::Error::PoolClosed | sqlx::Error::WorkerCrashed => StatusCode::BAD_GATEWAY,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            return error;
+        }
+    };
     StatusCode::OK
 }
