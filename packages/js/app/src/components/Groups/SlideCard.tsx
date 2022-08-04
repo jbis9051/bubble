@@ -16,16 +16,21 @@ const coordinate = {
     latitude: 40.3431,
 };
 
+const heightProps = {
+    startingHeight: 220,
+    minHeight: 70,
+    marginTopHeight: 200,
+};
+
 const SlideCard: React.FunctionComponent<{
-    startingHeight: number;
-    minHeight: number;
-    marginTopHeight: number;
     marker: Location;
     setLocation: [
         (newLocation: Location) => void,
         (newLocation: Location) => void
     ];
-}> = ({ startingHeight, minHeight, marginTopHeight, marker, setLocation }) => {
+}> = ({ marker, setLocation }) => {
+    const { startingHeight, minHeight, marginTopHeight } = heightProps;
+
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const deviceHeight = Dimensions.get('window').height;
     let prevDeviceHeight = startingHeight;
