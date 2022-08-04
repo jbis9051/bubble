@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        margin: 15,
+        margin: 13,
     },
     peopleHeading: {
         fontSize: 30,
