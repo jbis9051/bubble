@@ -13,8 +13,6 @@ const initialRegion = {
     latitude: 37.78825,
 };
 
-const locationProps = {};
-
 const FriendsScreen = () => {
     const [viewLocation, setViewLocation] = useState(initialRegion);
     const [marker, setMarker] = useState(initialRegion);
