@@ -40,6 +40,12 @@ const heightProps = {
     marginTopHeight: 200,
 };
 
+const heightProps = {
+    startingHeight: 220,
+    minHeight: 70,
+    marginTopHeight: 200,
+};
+
 const SlideCard: React.FunctionComponent<{
     marker: Location;
     setLocation: [
