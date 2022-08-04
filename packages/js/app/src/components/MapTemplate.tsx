@@ -49,6 +49,7 @@ const MapTemplate = ({
                     style={{
                         flexDirection: 'column',
                         alignItems: 'center',
+                        paddingBottom: 95,
                     }}
                 >
                     <View
