@@ -55,7 +55,7 @@ async fn create(
 
     match group.create(&db.0, user.0.id).await {
         Ok(_) => (),
-        Err(_e) => {
+        Err(_) => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     };

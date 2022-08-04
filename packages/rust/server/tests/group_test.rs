@@ -14,13 +14,36 @@ mod helper;
 async fn create_group() {
     let (db, client) = start_server().await;
 
-    let _clean = cleanup!(|db| {
-        db.execute("DELETE FROM \"session_token\"").await.unwrap();
-        db.execute("DELETE FROM \"user_group\"").await.unwrap();
-        db.execute("DELETE FROM \"group\"").await.unwrap();
-        db.execute("DELETE FROM \"location_group\"").await.unwrap();
-        db.execute("DELETE FROM \"user\"").await.unwrap();
+    let mut cleanup = cleanup!({
+        pub user_group_id: Option<i32>,
+        pub location_group_id: Option<i32>,
+        pub group_id: Option<i32>,
+        pub session_token_uuid: Option<Uuid>,
+        pub user_id: Option<i32>
+     }, |db, resources| {
+        if let Some(user_group_id) = resources.user_group_id {
+                sqlx::query("DELETE FROM \"user_group\" WHERE uuid = $1").bind(&user_group_id).execute(&db).await.unwrap();
+        }
+        else if let Some(location_group_id) = resources.location_group_id {
+                sqlx::query("DELETE FROM \"location_group\" WHERE uuid = $1").bind(&location_group_id).execute(&db).await.unwrap();
+        }
+        else if let Some(group_id) = resources.group_id {
+                sqlx::query("DELETE FROM \"group\" WHERE uuid = $1").bind(&group_id).execute(&db).await.unwrap();
+        }
+        else if let Some(session_token_uuid) = resources.session_token_uuid {
+                sqlx::query("DELETE FROM \"session_token\" WHERE uuid = $1").bind(&session_token_uuid).execute(&db).await.unwrap();
+        } else if let Some(user_id) = resources.user_id {
+                sqlx::query("DELETE FROM \"user\" WHERE uuid = $1").bind(&user_id).execute(&db).await.unwrap();
+        }
     });
+
+    // let _clean = cleanup!(|db| {
+    //     db.execute("DELETE FROM \"user_group\"").await.unwrap();
+    //     db.execute("DELETE FROM \"location_group\"").await.unwrap();
+    //     db.execute("DELETE FROM \"group\"").await.unwrap();
+    //     db.execute("DELETE FROM \"session_token\"").await.unwrap();
+    //     db.execute("DELETE FROM \"user\"").await.unwrap();
+    // });
 
     //Test: Creating Group 1
 
@@ -80,6 +103,8 @@ async fn create_group() {
 
     let role_id = get_user_group(&db, group.id).await.unwrap();
     assert_eq!(role_id, Role::Admin as i32);
+
+    cleanup.resources.session_token_uuid = Some(token);
 }
 
 #[tokio::test]
