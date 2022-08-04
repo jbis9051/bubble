@@ -11,10 +11,28 @@ interface Location {
     latitude: number;
 }
 
-const coordinate = {
-    longitude: -74.6551,
-    latitude: 40.3431,
-};
+const coordinates = [
+    {
+        longitude: -74.6551,
+        latitude: 40.3431,
+    },
+    {
+        longitude: -83.7382,
+        latitude: 42.287,
+    },
+    {
+        longitude: -74.0131,
+        latitude: 40.7118,
+    },
+    {
+        longitude: -122.009,
+        latitude: 37.3346,
+    },
+    {
+        longitude: -73.620071,
+        latitude: 41.027054,
+    },
+];
 
 const heightProps = {
     startingHeight: 180,
@@ -73,13 +91,29 @@ const SlideCard: React.FunctionComponent<{
                     <View style={styles.userView}>
                         <UserIcon
                             name="John"
-                            location={coordinate}
+                            location={coordinates[0]}
                             setLocation={setLocation}
                         />
-                        <UserIcon name="Santhosh" setLocation={setLocation} />
-                        <UserIcon name="Kevin" setLocation={setLocation} />
-                        <UserIcon name="Kyle" setLocation={setLocation} />
-                        <UserIcon name="Sidney" setLocation={setLocation} />
+                        <UserIcon
+                            name="Santhosh"
+                            location={coordinates[1]}
+                            setLocation={setLocation}
+                        />
+                        <UserIcon
+                            name="Kevin"
+                            location={coordinates[2]}
+                            setLocation={setLocation}
+                        />
+                        <UserIcon
+                            name="Kyle"
+                            location={coordinates[3]}
+                            setLocation={setLocation}
+                        />
+                        <UserIcon
+                            name="Sidney"
+                            location={coordinates[4]}
+                            setLocation={setLocation}
+                        />
                         <UserIcon name="Lia" setLocation={setLocation} />
                     </View>
                 </View>
