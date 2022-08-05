@@ -84,7 +84,7 @@ const info = [
     },
 ];
 
-function Signup({ route, navigation }: Props) {
+function Signup({ navigation }: Props) {
     return (
         <View style={styles.container}>
             <Signup1Background
