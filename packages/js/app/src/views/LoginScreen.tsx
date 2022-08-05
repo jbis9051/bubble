@@ -1,6 +1,5 @@
 import React from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TextInputBox from '../components/TextInputBox';
 import colors from '../constants/Colors';
 import LoginBackground from '../../assets/LoginBackground.svg';
@@ -98,12 +97,12 @@ const fetchLogin = async () => {
         const json = await res.json();
         return json;
     } catch (error) {
-        console.error(error);
+        console.log(error);
     }
     return null;
 };
 
-function Login({ route, navigation }: Props) {
+function Login({ navigation }: Props) {
     return (
         <View style={styles.container}>
             <LoginBackground

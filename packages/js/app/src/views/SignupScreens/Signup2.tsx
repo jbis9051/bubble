@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
 
 const onSignUp = async () => null;
 
-function Signup({ route, navigation }: Props) {
+function Signup({ navigation }: Props) {
     return (
         <View style={styles.container}>
             <Signup2Background
