@@ -12,7 +12,7 @@ const SlideCardTemplate: React.FunctionComponent<{
             ...Styles.slideCardTemplate,
             ...style,
         }}
-        {...(panResponder && { ...panResponder.panHandlers })}
+        {...(panResponder && panResponder.panHandlers)}
     >
         <View
             style={{
