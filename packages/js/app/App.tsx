@@ -19,9 +19,6 @@ const isLoggedIn = fetchIsLoggedIn();
 const App = () => {
     useEffect(() => {
         SplashScreen.hide();
-        setTimeout(() => {
-            console.log('');
-        }, 5000);
     }, []);
 
     return (
