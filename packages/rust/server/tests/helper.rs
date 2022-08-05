@@ -7,7 +7,7 @@ use bubble::routes::group::GroupName;
 use bubble::types::DbPool;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::Row;
+
 use std::future::Future;
 use std::{env, thread};
 use tokio::runtime::Runtime;
@@ -117,14 +117,6 @@ pub async fn initialize_user(db: &DbPool, _client: &TestClient, username_in: &st
 }
 
 //Return Type: role_id refers to ID of user
-pub async fn get_user_group(db: &DbPool, group_id: i32) -> Result<i32, sqlx::Error> {
-    let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1")
-        .bind(group_id)
-        .fetch_one(db)
-        .await?;
-    let role_id = row.get("role_id");
-    Ok(role_id)
-}
 
 pub async fn create_group(
     _db: &DbPool,

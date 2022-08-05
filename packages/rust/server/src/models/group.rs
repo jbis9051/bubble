@@ -14,11 +14,23 @@ pub struct Group {
     pub created: chrono::NaiveDateTime,
     pub members: Vec<Uuid>,
 }
-
+#[derive(Debug, PartialEq)]
 #[repr(u8)]
 pub enum Role {
     Admin = 0,
     Child = 1,
+}
+
+impl TryFrom<u8> for Role {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Role::Admin),
+            1 => Ok(Role::Child),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(sqlx::FromRow)]
@@ -27,6 +39,17 @@ pub struct UserID {
 }
 
 impl Group {
+    //returns role of user in a group from user_group
+    pub async fn role(&mut self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
+            .bind(self.id)
+            .bind(user_id)
+            .fetch_one(db)
+            .await?;
+        let role_id: i32 = row.get("role_id");
+        Ok((role_id as u8).try_into().unwrap())
+    }
+
     fn from_row(row: &PgRow) -> Group {
         Group {
             id: row.get("id"),

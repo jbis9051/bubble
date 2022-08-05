@@ -1,4 +1,4 @@
-use crate::helper::{get_user_group, start_server};
+use crate::helper::start_server;
 use axum::http::StatusCode;
 
 use bubble::models::group::{Group, Role};
@@ -18,15 +18,15 @@ async fn create_group() {
         pub user_group_id: Option<(i32, i32)>,
         pub location_group_id: Option<i32>,
         pub group_id: Option<i32>,
-        pub session_token_uuid: Option<Uuid>,
+        pub session_token: Option<Uuid>,
         pub user_id: Option<i32>
      }, |db, resources| {
          if let Some((group_id, user_id)) = resources.user_group_id {
-            sqlx::query(r#"
-            DELETE "user_group"
-            FROM "user_group"
-            WHERE "user_id" = $1
-            AND "group_id" = $2"#)
+            sqlx::query("
+            DELETE
+            FROM user_group
+            WHERE user_id = $1
+            AND group_id = $2;")
             .bind(&user_id)
             .bind(&group_id)
             .execute(&db)
@@ -34,13 +34,13 @@ async fn create_group() {
             .unwrap();
         }
         if let Some(location_group_id) = resources.location_group_id {
-                sqlx::query("DELETE FROM \"location_group\" WHERE id = $1").bind(&location_group_id).execute(&db).await.unwrap();
+                sqlx::query("DELETE FROM location_group WHERE id = $1").bind(&location_group_id).execute(&db).await.unwrap();
         }
         if let Some(group_id) = resources.group_id {
                 sqlx::query("DELETE FROM \"group\" WHERE id = $1").bind(&group_id).execute(&db).await.unwrap();
         }
-        if let Some(session_token_uuid) = resources.session_token_uuid {
-                sqlx::query("DELETE FROM \"session_token\" WHERE uuid = $1").bind(&session_token_uuid).execute(&db).await.unwrap();
+        if let Some(session_token) = resources.session_token {
+                sqlx::query("DELETE FROM session_token WHERE token = $1").bind(&session_token).execute(&db).await.unwrap();
         }
         if let Some(user_id) = resources.user_id {
                 sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(&user_id).execute(&db).await.unwrap();
@@ -64,19 +64,19 @@ async fn create_group() {
 
     assert_eq!(group_name, "test_group_1");
 
-    let group = Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap())
+    let mut group = Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap())
         .await
         .expect("No group exists in database.");
     assert_eq!(group.group_name, "test_group_1");
 
-    let role_id = get_user_group(&db, group.id).await.unwrap();
-    assert_eq!(role_id, Role::Admin as i32);
+    let role_id = group.role(&db, test_user.id).await.unwrap();
+    assert_eq!(role_id, Role::Admin);
 
-    let user_group: (i32, i32) = (group.id, test_user.id);
+    let user_group: (i32, i32) = (test_user.id, group.id);
 
     cleanup.resources.user_group_id = Some(user_group);
     cleanup.resources.group_id = Some(group.id);
-    cleanup.resources.session_token_uuid = Some(token);
+    cleanup.resources.session_token = Some(token);
     cleanup.resources.user_id = Some(test_user.id);
 }
 
