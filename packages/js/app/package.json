@@ -20,12 +20,15 @@
         "@react-native-community/masked-view": "*",
         "@react-navigation/bottom-tabs": "6.3.1",
         "@react-navigation/native": "6.0.10",
+        "@react-navigation/native-stack": "^6.7.0",
         "@rnmapbox/maps": "rnmapbox/maps#main",
         "react": "17.0.2",
         "react-native": "0.68.2",
+        "react-native-gesture-handler": "^2.5.0",
         "react-native-maps": "^1.0.0",
         "react-native-safe-area-context": "3.3.2",
         "react-native-screens": "~3.10.1",
+        "react-native-splash-screen": "^3.3.0",
         "react-native-svg": "^12.3.0"
     },
     "devDependencies": {

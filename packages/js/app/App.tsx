@@ -1,10 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import SplashScreen from 'react-native-splash-screen';
+import LoginSignup from './src/components/LoginSignup';
 
-import TabBar from './src/components/TabBar';
+const TEMP_IS_LOGGED_IN = false;
 
-export default () => (
-    <NavigationContainer>
-        <TabBar />
-    </NavigationContainer>
-);
+const fetchIsLoggedIn = () => {
+    try {
+        return TEMP_IS_LOGGED_IN;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+};
+
+const isLoggedIn = fetchIsLoggedIn();
+
+const App = () => {
+    useEffect(() => {
+        SplashScreen.hide();
+        setTimeout(() => {
+            console.log('');
+        }, 5000);
+    }, []);
+
+    return (
+        <NavigationContainer>
+            <LoginSignup isLoggedIn={isLoggedIn} />
+        </NavigationContainer>
+    );
+};
+
+export default App;
