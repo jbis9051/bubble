@@ -1,13 +1,9 @@
 import React from 'react';
+import { Region } from 'react-native-maps';
 import MapTemplate from '../MapTemplate';
 
-interface Location {
-    longitude: number;
-    latitude: number;
-}
-
 const Map: React.FunctionComponent<{
-    location: Location;
+    location: Region;
 }> = ({ location }) => <MapTemplate region={location} style={{ flex: 1 }} />;
 
 export default Map;
