@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use std::borrow::Borrow;
 
 use bubble::models::group::{Group, Role};
-use bubble::routes::group::GroupInfo;
+use bubble::routes::group::{GroupInfo, UserID};
 use sqlx::Executor;
 
 use uuid::Uuid;
@@ -65,7 +65,7 @@ async fn create_group() {
 
     assert_eq!(group_name, "test_group_1");
 
-    let mut group = Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap())
+    let group = Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap())
         .await
         .expect("No group exists in database.");
     assert_eq!(group.group_name, "test_group_1");
@@ -127,7 +127,6 @@ async fn read_group() {
         .await
         .unwrap();
 
-    let _status = res.status();
     assert_eq!(res.status(), StatusCode::CREATED);
 
     let group_info: GroupInfo = res.json().await;
@@ -155,4 +154,81 @@ async fn read_group() {
     cleanup.resources.group_id = Some(temp_group.id);
     cleanup.resources.user_id = Some(test_user.id);
     cleanup.resources.user_group_id = Some(user_group);
+}
+
+#[tokio::test]
+async fn add_user() {
+    let (db, client) = start_server().await;
+
+    let mut cleanup = cleanup!({
+        //user_group_id accepts the group_id of entry to be deleted
+        pub user_group_id: Option<(i32, i32)>,
+        pub location_group_id: Option<i32>,
+        pub group_id: Option<i32>,
+        pub session_token: Option<Uuid>,
+        pub user_id: Option<i32>
+     }, |db, resources| {
+         if let Some((group_id, user_id)) = resources.user_group_id {
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2;")
+            .bind(&user_id)
+            .bind(&group_id)
+            .execute(&db)
+            .await
+            .unwrap();
+        }
+        if let Some(location_group_id) = resources.location_group_id {
+                sqlx::query("DELETE FROM location_group WHERE id = $1").bind(&location_group_id).execute(&db).await.unwrap();
+        }
+        if let Some(group_id) = resources.group_id {
+                sqlx::query("DELETE FROM \"group\" WHERE id = $1").bind(&group_id).execute(&db).await.unwrap();
+        }
+        if let Some(session_token) = resources.session_token {
+                sqlx::query("DELETE FROM session_token WHERE token = $1").bind(&session_token).execute(&db).await.unwrap();
+        }
+        if let Some(user_id) = resources.user_id {
+                sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(&user_id).execute(&db).await.unwrap();
+        }
+    });
+
+    let first_username: &str = "Porter Robinson";
+    let (token_admin, test_user) = helper::initialize_user(&db, &client, first_username).await;
+    let bearer = format!("Bearer {}", token_admin);
+    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let group_info: GroupInfo = res.json().await;
+    let group_uuid = group_info.uuid;
+
+    let first_username: &str = "Billy Joel";
+    let (token_user_1, billy_joel) = helper::initialize_user(&db, &client, first_username).await;
+
+    let first_username: &str = "Kanye West";
+    let (token_user_2, kanye_west) = helper::initialize_user(&db, &client, first_username).await;
+
+    let mut user_ids: Vec<String> = Vec::new();
+    user_ids.push(billy_joel.uuid.to_string());
+    user_ids.push(kanye_west.uuid.to_string());
+
+    let read_route = format!("/group/{}/new_users", group_uuid);
+
+    let bearer = format!("Bearer {}", token_admin);
+    println!("HELLLO: {}", bearer);
+    let res = client
+        .post(read_route.borrow())
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    cleanup.resources.session_token = Some(token_admin);
+    cleanup.resources.session_token = Some(token_user_1);
+    cleanup.resources.session_token = Some(token_user_2);
+    cleanup.resources.user_id = Some(test_user.id);
+    cleanup.resources.user_id = Some(billy_joel.id);
+    cleanup.resources.user_id = Some(kanye_west.id);
 }

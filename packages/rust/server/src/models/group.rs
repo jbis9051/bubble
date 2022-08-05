@@ -40,7 +40,7 @@ pub struct UserID {
 
 impl Group {
     //returns role of user in a group from user_group
-    pub async fn role(&mut self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
+    pub async fn role(&self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
             .bind(self.id)
             .bind(user_id)
@@ -127,28 +127,19 @@ impl Group {
         .bind(Role::Child as i32)
         .execute(db)
         .await?;
-
+        println!("AFTER QUERY");
         self.members.push(user.uuid);
+        println!("PUSHES TO MEMBER VECTOR");
         Ok(())
     }
 
     pub async fn delete_user(&mut self, db: &DbPool, user: User) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM user_group WHERE user_id = $1 && group_id = $2")
+        sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2")
             .bind(user.id)
             .bind(self.id)
             .execute(db)
             .await?;
         self.members.retain(|uuid| uuid != &user.uuid);
         Ok(())
-    }
-
-    pub async fn get_role(&self, db: &DbPool, user_id: i32) -> Result<i32, sqlx::Error> {
-        let role_id: (i32,) =
-            sqlx::query_as("SELECT role_id FROM user_group WHERE user_id = $1 AND group_id = $2")
-                .bind(user_id)
-                .bind(self.id)
-                .fetch_one(db)
-                .await?;
-        Ok(role_id.0)
     }
 }

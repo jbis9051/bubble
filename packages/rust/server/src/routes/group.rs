@@ -91,8 +91,8 @@ async fn read(
             return Err(error);
         }
     };
-    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
-        Ok(group) => group,
+    let user_role: i32 = match group.role(&db.0, user.0.id).await {
+        Ok(group) => group as i32,
         Err(e) => {
             let error = match e {
                 sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
@@ -143,8 +143,8 @@ async fn add_users(
             return error;
         }
     };
-    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
-        Ok(group) => group,
+    let user_role: i32 = match group.role(&db.0, user.0.id).await {
+        Ok(group) => group as i32,
         Err(e) => {
             let error = match e {
                 sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
@@ -167,7 +167,12 @@ async fn add_users(
             Ok(user) => user,
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         };
-        group.add_user(&db.0, user);
+        println!("WE HIT BEFORE THE MODEL CALL");
+        group
+            .add_user(&db.0, user)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
+        println!("WE HIT AFTER THE MODEL CALL");
     }
     StatusCode::OK
 }
@@ -194,8 +199,8 @@ async fn delete_users(
             return error;
         }
     };
-    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
-        Ok(group) => group,
+    let user_role: i32 = match group.role(&db.0, user.0.id).await {
+        Ok(group) => group as i32,
         Err(e) => {
             let error = match e {
                 sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
@@ -252,8 +257,8 @@ async fn change_name(
             return error;
         }
     };
-    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
-        Ok(group) => group,
+    let user_role: i32 = match group.role(&db.0, user.0.id).await {
+        Ok(group) => group as i32,
         Err(e) => {
             let error = match e {
                 sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
@@ -308,8 +313,8 @@ async fn delete_group(
             return error;
         }
     };
-    let user_role: i32 = match group.get_role(&db.0, user.0.id).await {
-        Ok(group) => group,
+    let user_role: i32 = match group.role(&db.0, user.0.id).await {
+        Ok(group) => group as i32,
         Err(e) => {
             let error = match e {
                 sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
