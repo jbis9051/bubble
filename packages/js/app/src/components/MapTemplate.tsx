@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import MapView, { Marker as MapViewMarker } from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
@@ -32,14 +32,12 @@ const MapTemplate = ({ region = initialRegion, style = {} }) => {
             }}
             style={style}
         >
-            <MapViewMarker
+            <Marker
                 coordinate={{
                     latitude: location.latitude,
                     longitude: location.longitude,
                 }}
-            >
-                <Marker />
-            </MapViewMarker>
+            />
         </MapView>
     ) : (
         <MapboxGL.MapView style={style} styleURL={MapboxGL.StyleURL.Street}>
