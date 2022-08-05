@@ -1,7 +1,8 @@
 use crate::helper::start_server;
 use axum::http::StatusCode;
+use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
-use bubble::routes::user::{Confirm, Confirmation, CreateUser};
+use bubble::routes::user::{Confirm, CreateUser};
 
 use sqlx::{Executor, Row};
 
@@ -36,8 +37,8 @@ async fn create_user() {
     assert_eq!(res.status(), StatusCode::CREATED);
 
     //TEMP
-    let user_uuid = User::get_uuid_by_username(&db, "test").await.unwrap();
-    let user = User::get_by_uuid(&db, user_uuid)
+    let user_uuid = User::uuid_from_username(&db, "test").await.unwrap();
+    let user = User::from_uuid(&db, user_uuid)
         .await
         .expect("user doesn't exist");
 
@@ -78,7 +79,7 @@ async fn create_user() {
 
     assert_eq!(confirm_res.status(), StatusCode::CREATED);
 
-    let user = User::get_by_uuid(&db, user_uuid).await.unwrap();
+    let user = User::from_uuid(&db, user_uuid).await.unwrap();
 
     assert_eq!(user.username, "test");
     assert_eq!(user.password, "password");
@@ -127,10 +128,10 @@ async fn create_multiple_user() {
     assert_eq!(res1.status(), StatusCode::CREATED);
     assert_eq!(res2.status(), StatusCode::CREATED);
     //TEMP
-    let brian_uuid = User::get_uuid_by_username(&db, "machine_learning_man")
+    let brian_uuid = User::uuid_from_username(&db, "machine_learning_man")
         .await
         .unwrap();
-    let brian = User::get_by_uuid(&db, brian_uuid).await.unwrap();
+    let brian = User::from_uuid(&db, brian_uuid).await.unwrap();
     let brian_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
         .bind(brian.id)
         .fetch_one(&db)
@@ -145,10 +146,10 @@ async fn create_multiple_user() {
     };
 
     //TEMP
-    let timmy_uuid = User::get_uuid_by_username(&db, "web_development_dude")
+    let timmy_uuid = User::uuid_from_username(&db, "web_development_dude")
         .await
         .unwrap();
-    let timmy = User::get_by_uuid(&db, timmy_uuid)
+    let timmy = User::from_uuid(&db, timmy_uuid)
         .await
         .expect("user doesn't exist");
     let timmy_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
@@ -196,7 +197,7 @@ async fn create_multiple_user() {
 
     assert_eq!(brian_confirm_res.status(), StatusCode::CREATED);
 
-    let brian = User::get_by_uuid(&db, brian_uuid).await.unwrap();
+    let brian = User::from_uuid(&db, brian_uuid).await.unwrap();
 
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.password, "lots_of_abstraction");
@@ -224,10 +225,10 @@ async fn create_multiple_user() {
     assert_eq!(res3.status(), StatusCode::CREATED);
 
     //TEMP
-    let bill_uuid = User::get_uuid_by_username(&db, "big_programmer_pro")
+    let bill_uuid = User::uuid_from_username(&db, "big_programmer_pro")
         .await
         .unwrap();
-    let bill = User::get_by_uuid(&db, bill_uuid)
+    let bill = User::from_uuid(&db, bill_uuid)
         .await
         .expect("user doesn't exist");
     let bill_row = sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
@@ -266,7 +267,7 @@ async fn create_multiple_user() {
 
     assert_eq!(bill_confirm_res.status(), StatusCode::CREATED);
 
-    let bill = User::get_by_uuid(&db, bill_uuid).await.unwrap();
+    let bill = User::from_uuid(&db, bill_uuid).await.unwrap();
 
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.password, "cool_crustacean");
@@ -289,7 +290,7 @@ async fn create_multiple_user() {
 
     assert_eq!(timmy_confirm_res.status(), StatusCode::CREATED);
 
-    let timmy = User::get_by_uuid(&db, timmy_uuid).await.unwrap();
+    let timmy = User::from_uuid(&db, timmy_uuid).await.unwrap();
 
     assert_eq!(timmy.username, "web_development_dude");
     assert_eq!(timmy.password, "html_rocks");

@@ -81,6 +81,7 @@ CREATE TABLE forgot_password
     created   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+--rename table to 'session'--
 CREATE TABLE session_token
 (
     id      SERIAL PRIMARY KEY,

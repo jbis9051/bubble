@@ -8,6 +8,7 @@ use bubble::types::DbPool;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::chrono::NaiveDateTime;
 
+use bubble::models::session::Session;
 use std::future::Future;
 use std::{env, thread};
 use tokio::runtime::Runtime;
@@ -109,9 +110,16 @@ pub async fn initialize_user(db: &DbPool, _client: &TestClient, username_in: &st
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
-    let test_user = User::create(db, test_user).await.unwrap();
+    let test_user = test_user.create(db).await.unwrap();
 
-    let token = User::create_session(db, &test_user).await.unwrap();
+    let session = Session {
+        id: 0,
+        user_id: test_user.id,
+        token: Uuid::new_v4(),
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
+    let session = session.create(db).await.unwrap();
+    let token = session.token;
 
     (token, test_user)
 }

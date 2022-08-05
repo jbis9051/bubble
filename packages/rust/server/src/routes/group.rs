@@ -163,7 +163,7 @@ async fn add_users(
             Ok(user_id) => user_id,
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         };
-        let user = match User::get_by_uuid(&db.0, user_id).await {
+        let user = match User::from_uuid(&db.0, user_id).await {
             Ok(user) => user,
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         };
@@ -214,7 +214,7 @@ async fn delete_users(
             Ok(user_id) => user_id,
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         };
-        let user = match User::get_by_uuid(&db.0, user_id).await {
+        let user = match User::from_uuid(&db.0, user_id).await {
             Ok(user) => user,
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         };

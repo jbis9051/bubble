@@ -2,7 +2,6 @@ use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
-use crate::routes::user::Confirmation;
 use crate::types::DbPool;
 
 use sqlx::types::chrono::NaiveDateTime;
@@ -20,94 +19,36 @@ pub struct User {
 }
 
 impl User {
-    pub async fn create(db: &DbPool, mut user: User) -> Result<User, sqlx::Error> {
+    pub async fn create(&self, db: &DbPool) -> Result<User, sqlx::Error> {
         let row = sqlx::query(
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
                              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;",
         )
-        .bind(&user.uuid)
-        .bind(&user.username)
-        .bind(&user.password)
-        .bind(&user.profile_picture)
-        .bind(&user.email)
-        .bind(&user.phone)
-        .bind(&user.name)
+        .bind(&self.uuid)
+        .bind(&self.username)
+        .bind(&self.password)
+        .bind(&self.profile_picture)
+        .bind(&self.email)
+        .bind(&self.phone)
+        .bind(&self.name)
         .fetch_one(db)
         .await
         .unwrap();
-
-        user.user_from_row(&row).await.unwrap();
+        let user = User::from_row(&row);
         Ok(user)
     }
 
-    pub async fn create_confirmation(
-        db: &DbPool,
-        user: &User,
-        email: &str,
-    ) -> Result<Uuid, sqlx::Error> {
-        let link_id = Uuid::new_v4();
-
-        sqlx::query(
-            "INSERT INTO confirmation (user_id, link_id, email)
-                             VALUES ($1, $2, $3);",
-        )
-        .bind(&user.id)
-        .bind(&link_id)
-        .bind(&email)
-        .execute(db)
-        .await?;
-
-        Ok(link_id)
-    }
-
-    pub async fn get_by_link_id(db: &DbPool, link_id: Uuid) -> Result<Confirmation, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
-            .bind(link_id)
-            .fetch_one(db)
-            .await?;
-
-        let confirmation = Confirmation {
-            id: row.get("id"),
-            user_id: row.get("user_id"),
-            link_id: row.get("link_id"),
-            email: row.get("email"),
-            created: row.get("created"),
-        };
-        Ok(confirmation)
-    }
-
-    pub async fn delete_confirmation(db: &DbPool, conf_id: i32) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM confirmation WHERE id = $1")
-            .bind(conf_id)
-            .execute(db)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn create_session(db: &DbPool, user: &User) -> Result<Uuid, sqlx::Error> {
-        let token = Uuid::new_v4();
-
-        sqlx::query("INSERT INTO session_token (user_id, token) VALUES ($1, $2);")
-            .bind(&user.id)
-            .bind(&token)
-            .execute(db)
-            .await?;
-
-        Ok(token)
-    }
-
-    pub async fn get_by_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
+    pub async fn from_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
             .bind(id)
             .fetch_one(db)
             .await?;
 
-        let mut user = User::empty_user().await;
-        user.user_from_row(&row).await.unwrap();
+        let user = User::from_row(&row);
         Ok(user)
     }
 
-    pub async fn user_from_session(db: &DbPool, session_token: &str) -> Result<User, sqlx::Error> {
+    pub async fn from_session(db: &DbPool, session_token: &str) -> Result<User, sqlx::Error> {
         let token = Uuid::parse_str(session_token).unwrap();
         let row = sqlx::query(
             "SELECT *
@@ -120,31 +61,28 @@ impl User {
         .fetch_one(db)
         .await?;
 
-        let mut user = User::empty_user().await;
-        user.user_from_row(&row).await.unwrap();
+        let user = User::from_row(&row);
         Ok(user)
     }
 
-    pub async fn get_by_email(db: &DbPool, email: &str) -> Result<User, sqlx::Error> {
+    pub async fn from_email(db: &DbPool, email: &str) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"user\" WHERE email = $1")
             .bind(email)
             .fetch_one(db)
             .await?;
 
-        let mut user = User::empty_user().await;
-        user.user_from_row(&row).await.unwrap();
+        let user = User::from_row(&row);
         Ok(user)
     }
 
-    pub async fn get_by_uuid(db: &DbPool, uuid: Uuid) -> Result<User, sqlx::Error> {
+    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<User, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)
             .await
             .unwrap();
 
-        let mut user = User::empty_user().await;
-        user.user_from_row(&row).await.unwrap();
+        let user = User::from_row(&row);
         Ok(user)
     }
 
@@ -171,16 +109,8 @@ impl User {
         Ok(())
     }
 
-    pub async fn delete_session(db: &DbPool, token: &Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM session_token WHERE token = $1;")
-            .bind(token)
-            .execute(db)
-            .await?;
-        Ok(())
-    }
-
     //FOR TESTING
-    pub async fn get_uuid_by_username(db: &DbPool, username: &str) -> Result<Uuid, sqlx::Error> {
+    pub async fn uuid_from_username(db: &DbPool, username: &str) -> Result<Uuid, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM \"user\" WHERE username = $1;")
             .bind(username)
             .fetch_one(db)
@@ -190,32 +120,17 @@ impl User {
         Ok(uuid)
     }
 
-    async fn user_from_row(&mut self, row: &PgRow) -> Result<(), sqlx::Error> {
-        self.id = row.get("id");
-        self.uuid = row.get("uuid");
-        self.username = row.get("username");
-        self.password = row.get("password");
-        self.profile_picture = row.get("profile_picture");
-        self.email = row.get("email");
-        self.phone = row.get("phone");
-        self.name = row.get("name");
-        self.created = row.get("created");
-
-        Ok(())
-    }
-
-    pub async fn empty_user() -> User {
-        let user: User = User {
-            id: Default::default(),
-            uuid: Default::default(),
-            username: "".to_string(),
-            password: "".to_string(),
-            profile_picture: None,
-            email: None,
-            phone: None,
-            name: "".to_string(),
-            created: NaiveDateTime::from_timestamp(0, 0),
-        };
-        user
+    pub fn from_row(row: &PgRow) -> User {
+        User {
+            id: row.get("id"),
+            uuid: row.get("uuid"),
+            username: row.get("username"),
+            password: row.get("password"),
+            profile_picture: row.get("profile_picture"),
+            email: row.get("email"),
+            phone: row.get("phone"),
+            name: row.get("name"),
+            created: row.get("created"),
+        }
     }
 }

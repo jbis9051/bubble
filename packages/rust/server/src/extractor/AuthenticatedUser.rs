@@ -27,7 +27,7 @@ where
                 .await
                 .map_err(|err| err.into_response())?;
         Ok(AuthenticatedUser(
-            User::user_from_session(&db.0, token.token())
+            User::from_session(&db.0, token.token())
                 .await
                 .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?,
         ))
