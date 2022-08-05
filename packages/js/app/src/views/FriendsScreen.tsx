@@ -14,23 +14,12 @@ const initialRegion = {
 };
 
 const FriendsScreen = () => {
-    const [viewLocation, setViewLocation] = useState(initialRegion);
-    const [marker, setMarker] = useState(initialRegion);
-
-    const setMapLocation = (newLocation: Location) => {
-        setViewLocation(newLocation);
-    };
-    const setMarkerLocation = (newLocation: Location) => {
-        setMarker(newLocation);
-    };
+    const [location, setLocation] = useState(initialRegion);
 
     return (
         <View style={{ flex: 1 }}>
-            <Map location={viewLocation} markerLocation={marker} />
-            <SlideCard
-                setLocation={[setMapLocation, setMarkerLocation]}
-                marker={marker}
-            />
+            <Map location={location} />
+            <SlideCard location={location} setLocation={setLocation} />
         </View>
     );
 };

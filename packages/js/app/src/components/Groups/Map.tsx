@@ -8,13 +8,6 @@ interface Location {
 
 const Map: React.FunctionComponent<{
     location: Location;
-    markerLocation: Location;
-}> = ({ location, markerLocation }) => (
-    <MapTemplate
-        region={location}
-        markerRegion={markerLocation}
-        style={{ flex: 1 }}
-    />
-);
+}> = ({ location }) => <MapTemplate region={location} style={{ flex: 1 }} />;
 
 export default Map;
