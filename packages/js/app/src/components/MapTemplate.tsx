@@ -1,22 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
-import MapView, { Marker as MapViewMarker } from 'react-native-maps';
+import React, { useEffect, useState, CSSProperties } from 'react';
+import { Platform, ViewStyle, StyleProp } from 'react-native';
+import MapView, { Region } from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
 import Marker from './Marker';
 
 MapboxGL.setAccessToken(process.env.REACT_APP_MAPBOX_ACCESS_TOKEN as string);
-
-interface Location {
-    longitude: number;
-    latitude: number;
-}
 
 const initialRegion = {
     longitude: -122.4324,
     latitude: 37.78825,
 };
 
-const MapTemplate = ({ region = initialRegion, style = {} }) => {
+const MapTemplate: React.FunctionComponent<{
+    region?: Region;
+    style?: StyleProp<ViewStyle>;
+}> = ({ region = initialRegion, style }) => {
     const [location, setLocation] = useState(region);
 
     useEffect(() => {
