@@ -57,10 +57,14 @@
 			files = (
 				7699B88040F8A987B510C191 /* libPods-app-appTests.a in Frameworks */,
 <<<<<<< HEAD
+<<<<<<< HEAD
 				01C334EA289AEB70003247F6 /* Mapbox in Frameworks */,
 =======
 				2C672358289585B5007BF36D /* Mapbox in Frameworks */,
 >>>>>>> ef9bed9 (iOS configurations to run/test on device)
+=======
+				2C672358289585B5007BF36D /* Mapbox in Frameworks */,
+>>>>>>> e3a0bb2e3645aba6a3473e3ab77d640199e17057
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,10 +74,14 @@
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-app.a in Frameworks */,
 <<<<<<< HEAD
+<<<<<<< HEAD
 				01C334E9289AEB70003247F6 /* Mapbox in Frameworks */,
 =======
 				2C672357289585B5007BF36D /* Mapbox in Frameworks */,
 >>>>>>> ef9bed9 (iOS configurations to run/test on device)
+=======
+				2C672357289585B5007BF36D /* Mapbox in Frameworks */,
+>>>>>>> e3a0bb2e3645aba6a3473e3ab77d640199e17057
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -599,6 +607,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 <<<<<<< HEAD
+<<<<<<< HEAD
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/MapboxMaps/MapboxMaps.framework/Headers\"",
@@ -651,6 +660,9 @@
 =======
 				DEVELOPMENT_TEAM = R6U5NYHCF6;
 >>>>>>> ef9bed9 (iOS configurations to run/test on device)
+=======
+				DEVELOPMENT_TEAM = R6U5NYHCF6;
+>>>>>>> e3a0bb2e3645aba6a3473e3ab77d640199e17057
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
