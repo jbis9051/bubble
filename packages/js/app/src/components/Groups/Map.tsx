@@ -9,12 +9,10 @@ interface Location {
 const Map: React.FunctionComponent<{
     location: Location;
     markerLocation: Location;
-    setLocation: (newLocation: Location) => void;
-}> = ({ location, markerLocation, setLocation }) => (
+}> = ({ location, markerLocation }) => (
     <MapTemplate
         region={location}
         markerRegion={markerLocation}
-        updateLocation={setLocation}
         style={{ flex: 1 }}
     />
 );

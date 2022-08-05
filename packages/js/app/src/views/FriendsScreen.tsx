@@ -26,11 +26,7 @@ const FriendsScreen = () => {
 
     return (
         <View style={{ flex: 1 }}>
-            <Map
-                location={viewLocation}
-                markerLocation={marker}
-                setLocation={setViewLocation}
-            />
+            <Map location={viewLocation} markerLocation={marker} />
             <SlideCard
                 setLocation={[setMapLocation, setMarkerLocation]}
                 marker={marker}

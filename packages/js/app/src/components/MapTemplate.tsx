@@ -20,22 +20,15 @@ const MapTemplate = ({
     region = initialRegion,
     style = {},
     markerRegion = initialRegion,
-    updateLocation = (_newRegion: Location) => null,
 }) => {
     const [location, setLocation] = useState(region);
     const [markerLocation, setMarkerLocation] = useState(markerRegion);
-    // const mapView = useRef<<MapView>>(null).current;
 
     useEffect(() => {
         setLocation(region);
     }, [region]);
 
     useEffect(() => {
-        // mapView?.animateToRegion({
-        //     latitudeDelta: 0.015,
-        //     longitudeDelta: 0.015,
-        //     ...markerRegion,
-        // }, 5000);
         setMarkerLocation(markerRegion);
     }, [markerRegion]);
 
@@ -46,11 +39,7 @@ const MapTemplate = ({
                 longitudeDelta: 0.015,
                 ...location,
             }}
-            onRegionChangeComplete={(newRegion) => {
-                updateLocation(newRegion);
-            }}
             style={style}
-            // ref={mapView}
         >
             <MapViewMarker
                 coordinate={{
