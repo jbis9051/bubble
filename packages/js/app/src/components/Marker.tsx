@@ -6,7 +6,7 @@ const Marker = () => (
         style={{
             flexDirection: 'column',
             alignItems: 'center',
-            paddingBottom: 95,
+            paddingBottom: 87.5,
         }}
     >
         <View
