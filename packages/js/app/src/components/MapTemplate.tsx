@@ -16,21 +16,12 @@ const initialRegion = {
     latitude: 37.78825,
 };
 
-const MapTemplate = ({
-    region = initialRegion,
-    style = {},
-    markerRegion = initialRegion,
-}) => {
+const MapTemplate = ({ region = initialRegion, style = {} }) => {
     const [location, setLocation] = useState(region);
-    const [markerLocation, setMarkerLocation] = useState(markerRegion);
 
     useEffect(() => {
         setLocation(region);
     }, [region]);
-
-    useEffect(() => {
-        setMarkerLocation(markerRegion);
-    }, [markerRegion]);
 
     return Platform.OS === 'ios' ? (
         <MapView
@@ -43,8 +34,8 @@ const MapTemplate = ({
         >
             <MapViewMarker
                 coordinate={{
-                    latitude: markerLocation.latitude,
-                    longitude: markerLocation.longitude,
+                    latitude: location.latitude,
+                    longitude: location.longitude,
                 }}
             >
                 <Marker />

@@ -41,12 +41,9 @@ const heightProps = {
 };
 
 const SlideCard: React.FunctionComponent<{
-    marker: Location;
-    setLocation: [
-        (newLocation: Location) => void,
-        (newLocation: Location) => void
-    ];
-}> = ({ marker, setLocation }) => {
+    location: Location;
+    setLocation: (newLocation: Location) => void;
+}> = ({ location, setLocation }) => {
     const { startingHeight, minHeight, marginTopHeight } = heightProps;
 
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
@@ -56,7 +53,7 @@ const SlideCard: React.FunctionComponent<{
     useEffect(() => {
         setBottomHeight(startingHeight);
         prevHeight.current = startingHeight;
-    }, [marker]);
+    }, [location]);
 
     const panResponder = useRef(
         PanResponder.create({

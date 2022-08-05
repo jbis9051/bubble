@@ -17,17 +17,9 @@ const initialRegion = {
 const UserIcon: React.FunctionComponent<{
     name: string;
     location?: Location;
-    setLocation: [
-        (newLocation: Location) => void,
-        (newLocation: Location) => void
-    ];
+    setLocation: (newLocation: Location) => void;
 }> = ({ name, location = initialRegion, setLocation }) => (
-    <TouchableWithoutFeedback
-        onPress={() => {
-            setLocation[0](location);
-            setLocation[1](location);
-        }}
-    >
+    <TouchableWithoutFeedback onPress={() => setLocation(location)}>
         <View style={styles.userIcon}>
             <ProfileImageTemplate source="" size={60} />
             <Text
