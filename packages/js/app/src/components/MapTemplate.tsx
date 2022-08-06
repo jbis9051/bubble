@@ -1,4 +1,4 @@
-import React, { useEffect, useState, CSSProperties } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, ViewStyle, StyleProp } from 'react-native';
 import MapView, { Region } from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
@@ -6,42 +6,80 @@ import Marker from './Marker';
 
 MapboxGL.setAccessToken(process.env.REACT_APP_MAPBOX_ACCESS_TOKEN as string);
 
-const initialRegion = {
-    longitude: -122.4324,
-    latitude: 37.78825,
+const initialRegion: Region[] = [
+    {
+        longitude: -122.4324,
+        latitude: 37.78825,
+        latitudeDelta: 0.015,
+        longitudeDelta: 0.015,
+    },
+];
+
+const regionContainingPoints = (locations: Region[]) => {
+    let minLatitude = locations[0].latitude;
+    let maxLatitude = locations[0].latitude;
+    let minLongitude = locations[0].longitude;
+    let maxLongitude = locations[0].longitude;
+
+    locations.forEach((location) => {
+        minLatitude = Math.min(minLatitude, location.latitude);
+        maxLatitude = Math.max(maxLatitude, location.latitude);
+        minLongitude = Math.min(minLongitude, location.longitude);
+        maxLongitude = Math.max(maxLongitude, location.longitude);
+    });
+
+    const midLat = (minLatitude + maxLatitude) / 2;
+    const midLng = (minLongitude + maxLongitude) / 2;
+
+    const deltaLat =
+        maxLatitude - minLatitude !== 0
+            ? (maxLatitude - minLatitude) * 1.5
+            : 0.015;
+    const deltaLng =
+        maxLongitude - minLongitude !== 0
+            ? (maxLongitude - minLongitude) * 1.5
+            : 0.015;
+
+    return {
+        latitude: midLat,
+        longitude: midLng,
+        latitudeDelta: deltaLat,
+        longitudeDelta: deltaLng,
+    };
 };
 
 const MapTemplate: React.FunctionComponent<{
-    region?: Region;
+    locations?: Region[];
     style?: StyleProp<ViewStyle>;
-}> = ({ region = initialRegion, style }) => {
-    const [location, setLocation] = useState(region);
+}> = ({ locations = initialRegion, style }) => {
+    const [viewLocations, setViewLocations] = useState(locations);
+    const { latitude, longitude } = regionContainingPoints(locations);
 
     useEffect(() => {
-        setLocation(region);
-    }, [region]);
+        setViewLocations(locations);
+    }, [locations]);
 
     return Platform.OS === 'ios' ? (
         <MapView
-            region={{
-                latitudeDelta: 0.015,
-                longitudeDelta: 0.015,
-                ...location,
-            }}
+            region={{ ...regionContainingPoints(viewLocations) }}
             style={style}
         >
-            <Marker
-                coordinate={{
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                }}
-            />
+            {locations.map((markerLocation, key) => (
+                <Marker
+                    coordinate={{
+                        latitude: markerLocation.latitude,
+                        longitude: markerLocation.longitude,
+                    }}
+                    key={key}
+                />
+            ))}
         </MapView>
     ) : (
+        // TODO: Fix this
         <MapboxGL.MapView style={style} styleURL={MapboxGL.StyleURL.Street}>
             <MapboxGL.Camera
-                zoomLevel={10}
-                centerCoordinate={Object.values(location)}
+                zoomLevel={1}
+                centerCoordinate={[longitude, latitude]}
             />
             <MapboxGL.UserLocation />
         </MapboxGL.MapView>
