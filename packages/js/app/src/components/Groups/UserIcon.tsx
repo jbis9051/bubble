@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableWithoutFeedback } from 'react-native';
 import { Region } from 'react-native-maps';
 import ProfileImageTemplate from '../ProfileImageTemplate';
+import Name from './Name';
 
 import styles from './styles';
 
@@ -20,13 +21,7 @@ const UserIcon: React.FunctionComponent<{
     <TouchableWithoutFeedback onPress={() => setLocation(location)}>
         <View style={styles.userIcon}>
             <ProfileImageTemplate source="" size={60} />
-            <Text
-                style={{ marginTop: 8 }}
-                numberOfLines={1}
-                adjustsFontSizeToFit={true}
-            >
-                {name}
-            </Text>
+            <Name name={name} />
         </View>
     </TouchableWithoutFeedback>
 );
