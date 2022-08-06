@@ -3,6 +3,7 @@ import { View, PanResponder, Dimensions, Text } from 'react-native';
 import { Region } from 'react-native-maps';
 import SlideCardTemplate from '../SlideCardTemplate';
 import UserIcon from './UserIcon';
+import GroupIcon from './GroupIcon';
 import DividerLine from '../Misc/DividerLine';
 
 import styles from './styles';
@@ -91,6 +92,10 @@ const SlideCard: React.FunctionComponent<{
                 <View>
                     <Text style={styles.peopleHeading}>People</Text>
                     <DividerLine />
+                    <View style={styles.groupView}>
+                        <GroupIcon groupName="Group 1" />
+                        <GroupIcon groupName="Group 2" />
+                    </View>
                     <View style={styles.userView}>
                         <UserIcon
                             name="John"
