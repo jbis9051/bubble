@@ -75,13 +75,21 @@ const MapTemplate: React.FunctionComponent<{
             ))}
         </MapView>
     ) : (
-        // TODO: Fix this
         <MapboxGL.MapView style={style} styleURL={MapboxGL.StyleURL.Street}>
             <MapboxGL.Camera
-                zoomLevel={1}
+                zoomLevel={15}
                 centerCoordinate={[longitude, latitude]}
             />
             <MapboxGL.UserLocation />
+            {locations.map((markerLocation, key) => (
+                <Marker
+                    coordinate={{
+                        latitude: markerLocation.latitude,
+                        longitude: markerLocation.longitude,
+                    }}
+                    key={key}
+                />
+            ))}
         </MapboxGL.MapView>
     );
 };
