@@ -48,9 +48,9 @@ const heightProps = {
 };
 
 const SlideCard: React.FunctionComponent<{
-    location: Region;
-    setLocation: (newLocation: Region) => void;
-}> = ({ location, setLocation }) => {
+    locations: Region[];
+    setLocations: (newLocations: Region[]) => void;
+}> = ({ locations, setLocations }) => {
     const { startingHeight, minHeight, marginTopHeight } = heightProps;
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const prevHeight = useRef(startingHeight);
@@ -59,7 +59,7 @@ const SlideCard: React.FunctionComponent<{
     useEffect(() => {
         setBottomHeight(startingHeight);
         prevHeight.current = startingHeight;
-    }, [location]);
+    }, [locations]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -93,36 +93,47 @@ const SlideCard: React.FunctionComponent<{
                     <Text style={styles.peopleHeading}>People</Text>
                     <DividerLine />
                     <View style={styles.groupView}>
-                        <GroupIcon groupName="Group 1" />
-                        <GroupIcon groupName="Group 2" />
+                        <GroupIcon
+                            groupName="Group 1"
+                            setLocations={setLocations}
+                        />
+                        <GroupIcon
+                            groupName="Group 2"
+                            locations={[
+                                coordinates[0],
+                                coordinates[2],
+                                coordinates[4],
+                            ]}
+                            setLocations={setLocations}
+                        />
                     </View>
                     <View style={styles.userView}>
                         <UserIcon
                             name="John"
-                            location={coordinates[0]}
-                            setLocation={setLocation}
+                            locations={[coordinates[0]]}
+                            setLocations={setLocations}
                         />
                         <UserIcon
                             name="Santhosh"
-                            location={coordinates[1]}
-                            setLocation={setLocation}
+                            locations={[coordinates[1]]}
+                            setLocations={setLocations}
                         />
                         <UserIcon
                             name="Kevin"
-                            location={coordinates[2]}
-                            setLocation={setLocation}
+                            locations={[coordinates[2]]}
+                            setLocations={setLocations}
                         />
                         <UserIcon
                             name="Kyle"
-                            location={coordinates[3]}
-                            setLocation={setLocation}
+                            locations={[coordinates[3]]}
+                            setLocations={setLocations}
                         />
                         <UserIcon
                             name="Sidney"
-                            location={coordinates[4]}
-                            setLocation={setLocation}
+                            locations={[coordinates[4]]}
+                            setLocations={setLocations}
                         />
-                        <UserIcon name="Lia" setLocation={setLocation} />
+                        <UserIcon name="Lia" setLocations={setLocations} />
                     </View>
                 </View>
             </SlideCardTemplate>

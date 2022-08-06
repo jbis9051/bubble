@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableWithoutFeedback } from 'react-native';
+import { View, TouchableWithoutFeedback } from 'react-native';
 import { Region } from 'react-native-maps';
 import ProfileImageTemplate from '../ProfileImageTemplate';
 import Name from './Name';
@@ -15,10 +15,10 @@ const initialRegion: Region = {
 
 const UserIcon: React.FunctionComponent<{
     name: string;
-    location?: Region;
-    setLocation: (newLocation: Region) => void;
-}> = ({ name, location = initialRegion, setLocation }) => (
-    <TouchableWithoutFeedback onPress={() => setLocation(location)}>
+    locations?: Region[];
+    setLocations: (newLocations: Region[]) => void;
+}> = ({ name, locations = [initialRegion], setLocations }) => (
+    <TouchableWithoutFeedback onPress={() => setLocations(locations)}>
         <View style={styles.userIcon}>
             <ProfileImageTemplate source="" size={60} />
             <Name name={name} />
