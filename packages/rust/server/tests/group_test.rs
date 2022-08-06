@@ -162,36 +162,46 @@ async fn add_user() {
 
     let mut cleanup = cleanup!({
         //user_group_id accepts the group_id of entry to be deleted
-        pub user_group_id: Option<(i32, i32)>,
+        pub user_group_id: Option<Vec<(i32, i32)>>,
         pub location_group_id: Option<i32>,
-        pub group_id: Option<i32>,
-        pub session_token: Option<Uuid>,
-        pub user_id: Option<i32>
+        pub group_id: Option<Uuid>,
+        pub session_token: Option<Vec<Uuid>>,
+        pub user_id: Option<Vec<i32>>
      }, |db, resources| {
-         if let Some((group_id, user_id)) = resources.user_group_id {
-            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2;")
-            .bind(&user_id)
-            .bind(&group_id)
+         if let Some(user_group_ids) = resources.user_group_id {
+            for i in user_group_ids {
+            sqlx::query("
+            DELETE
+            FROM user_group
+            WHERE user_id = $1
+            AND group_id = $2;")
+            .bind(&i.0)
+            .bind(&i.1)
             .execute(&db)
             .await
             .unwrap();
+                }
         }
         if let Some(location_group_id) = resources.location_group_id {
                 sqlx::query("DELETE FROM location_group WHERE id = $1").bind(&location_group_id).execute(&db).await.unwrap();
         }
         if let Some(group_id) = resources.group_id {
-                sqlx::query("DELETE FROM \"group\" WHERE id = $1").bind(&group_id).execute(&db).await.unwrap();
+                sqlx::query("DELETE FROM \"group\" WHERE uuid = $1").bind(&group_id).execute(&db).await.unwrap();
         }
         if let Some(session_token) = resources.session_token {
-                sqlx::query("DELETE FROM session_token WHERE token = $1").bind(&session_token).execute(&db).await.unwrap();
+            for i in session_token {
+                sqlx::query("DELETE FROM session_token WHERE token = $1").bind(&i).execute(&db).await.unwrap();
         }
+            }
         if let Some(user_id) = resources.user_id {
-                sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(&user_id).execute(&db).await.unwrap();
+            for i in user_id {
+                sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(&i).execute(&db).await.unwrap();
         }
+            }
     });
 
     let first_username: &str = "Porter Robinson";
-    let (token_admin, test_user) = helper::initialize_user(&db, &client, first_username).await;
+    let (token_admin, creator) = helper::initialize_user(&db, &client, first_username).await;
     let bearer = format!("Bearer {}", token_admin);
     let res = helper::create_group(&db, &client, "test_group_1", bearer)
         .await
@@ -225,10 +235,34 @@ async fn add_user() {
         .await;
     assert_eq!(res.status(), StatusCode::OK);
 
-    cleanup.resources.session_token = Some(token_admin);
-    cleanup.resources.session_token = Some(token_user_1);
-    cleanup.resources.session_token = Some(token_user_2);
-    cleanup.resources.user_id = Some(test_user.id);
-    cleanup.resources.user_id = Some(billy_joel.id);
-    cleanup.resources.user_id = Some(kanye_west.id);
+    let group_uuid_ref: &str = &*group_uuid;
+    let new_group = Group::from_uuid(&db, Uuid::parse_str(group_uuid_ref).unwrap())
+        .await
+        .unwrap();
+    let billy_joel_role = new_group.role(&db, billy_joel.id).await.unwrap();
+    let kanye_west_role = new_group.role(&db, kanye_west.id).await.unwrap();
+    assert_eq!(billy_joel_role, Role::Child);
+    assert_eq!(kanye_west_role, Role::Child);
+
+    let mut tokens: Vec<Uuid> = Vec::new();
+    tokens.push(token_admin);
+    tokens.push(token_user_1);
+    tokens.push(token_user_2);
+
+    let mut users: Vec<i32> = Vec::new();
+    let mut user_groups: Vec<(i32, i32)> = Vec::new();
+    user_groups.push((creator.id, new_group.id));
+    user_groups.push((billy_joel.id, new_group.id));
+    user_groups.push((kanye_west.id, new_group.id));
+
+    users.push(creator.id);
+    users.push(billy_joel.id);
+    users.push(kanye_west.id);
+
+    let group_uuid_ref: &str = &*group_uuid;
+
+    cleanup.resources.user_group_id = Some(user_groups);
+    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
+    cleanup.resources.session_token = Some(tokens);
+    cleanup.resources.user_id = Some(users);
 }

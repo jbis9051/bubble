@@ -167,12 +167,10 @@ async fn add_users(
             Ok(user) => user,
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
         };
-        println!("WE HIT BEFORE THE MODEL CALL");
-        group
-            .add_user(&db.0, user)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
-        println!("WE HIT AFTER THE MODEL CALL");
+        match group.add_user(&db.0, user).await {
+            Ok(_) => (),
+            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
+        };
     }
     StatusCode::OK
 }

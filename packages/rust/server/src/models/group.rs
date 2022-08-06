@@ -127,9 +127,7 @@ impl Group {
         .bind(Role::Child as i32)
         .execute(db)
         .await?;
-        println!("AFTER QUERY");
         self.members.push(user.uuid);
-        println!("PUSHES TO MEMBER VECTOR");
         Ok(())
     }
 
