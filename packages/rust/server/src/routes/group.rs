@@ -195,7 +195,8 @@ async fn delete_users(
             .map_err(map_sqlx_err)?;
         group.delete_user(&db.0, user).await.map_err(map_sqlx_err)?;
     }
-    StatusCode::OK
+
+    Ok(StatusCode::OK)
 }
 
 //
