@@ -18,6 +18,22 @@ pub struct User {
     pub created: NaiveDateTime,
 }
 
+impl From<PgRow> for User {
+    fn from(row: PgRow) -> Self {
+        User {
+            id: row.get("id"),
+            uuid: row.get("uuid"),
+            username: row.get("username"),
+            password: row.get("password"),
+            profile_picture: row.get("profile_picture"),
+            email: row.get("email"),
+            phone: row.get("phone"),
+            name: row.get("name"),
+            created: row.get("created"),
+        }
+    }
+}
+
 impl User {
     pub async fn create(&self, db: &DbPool) -> Result<User, sqlx::Error> {
         Ok(sqlx::query(
