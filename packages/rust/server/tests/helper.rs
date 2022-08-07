@@ -125,7 +125,7 @@ pub async fn signup_confirm_user(
     client: &TestClient,
     confirm: &Confirm,
     user_in: &User,
-) -> Result<(User, String), StatusCode> {
+) -> Result<(User, Uuid), StatusCode> {
     let res = client
         .post("/user/signup-confirm")
         .header("Content-Type", "application/json")
@@ -135,7 +135,8 @@ pub async fn signup_confirm_user(
     assert_eq!(res.status(), StatusCode::CREATED);
 
     let user = User::from_id(db, user_in.id).await.unwrap();
-    Ok((user, res.text().await))
+    let token: SessionToken = res.json().await;
+    Ok((user, Uuid::parse_str(&token.token).unwrap()))
 }
 
 // Anyone testing should use this one

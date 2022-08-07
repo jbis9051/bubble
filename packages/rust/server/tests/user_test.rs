@@ -173,9 +173,6 @@ async fn create_multiple_user() {
     let (brian, brian_token) = helper::signup_confirm_user(&db, &client, &brian_confirm_in, &brian)
         .await
         .unwrap();
-    println!("brain_token: {}", brian_token);
-    let brian_token = Uuid::parse_str(&brian_token).unwrap();
-    /////////
     let brian_session = &Session::filter_user_id(&db, brian.id).await.unwrap()[0];
     cleanup.resources.confirmation_id.remove(0);
     cleanup.resources.session_id.push(brian_session.id);
@@ -216,7 +213,6 @@ async fn create_multiple_user() {
     let (bill, bill_token) = helper::signup_confirm_user(&db, &client, &bill_confirm_in, &bill)
         .await
         .unwrap();
-    let bill_token = Uuid::parse_str(&bill_token).unwrap();
     let bill_session = &Session::filter_user_id(&db, bill.id).await.unwrap()[0];
     cleanup.resources.confirmation_id.remove(1);
     cleanup.resources.session_id.push(bill_session.id);
@@ -236,7 +232,6 @@ async fn create_multiple_user() {
     let (timmy, timmy_token) = helper::signup_confirm_user(&db, &client, &timmy_confirm_in, &timmy)
         .await
         .unwrap();
-    let timmy_token = Uuid::parse_str(&timmy_token).unwrap();
     let timmy_session = &Session::filter_user_id(&db, timmy.id).await.unwrap()[0];
     cleanup.resources.confirmation_id.remove(0);
     cleanup.resources.session_id.push(timmy_session.id);
