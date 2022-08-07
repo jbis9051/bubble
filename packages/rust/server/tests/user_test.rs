@@ -6,7 +6,6 @@ use bubble::routes::user::{Confirm, CreateUser};
 
 use bubble::models::session::Session;
 use sqlx::{Executor, Row};
-use uuid::Uuid;
 
 mod helper;
 

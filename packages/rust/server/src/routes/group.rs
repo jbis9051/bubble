@@ -202,7 +202,7 @@ async fn delete_users(
 //
 #[derive(Deserialize, Serialize)]
 pub struct NameChange {
-    name: String,
+    pub name: String,
 }
 
 //

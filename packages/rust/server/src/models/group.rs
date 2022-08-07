@@ -109,6 +109,10 @@ impl Group {
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM \"user_group\" WHERE group_id = $1")
+            .bind(self.id)
+            .execute(db)
+            .await?;
         sqlx::query("DELETE FROM \"group\" WHERE id = $1")
             .bind(self.id)
             .execute(db)
