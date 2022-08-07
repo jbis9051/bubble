@@ -28,8 +28,7 @@ async fn create_group() {
      }, |db, resources| {
          if let Some((group_id, user_id)) = resources.user_group_id {
             sqlx::query("
-            DELETE
-            FROM user_group
+            DELETE FROM user_group
             WHERE user_id = $1
             AND group_id = $2;")
             .bind(&user_id)
@@ -106,8 +105,7 @@ async fn read_group() {
      }, |db, resources| {
          if let Some((group_id, user_id)) = resources.user_group_id {
             sqlx::query("
-            DELETE
-            FROM user_group
+            DELETE FROM user_group
             WHERE user_id = $1
             AND group_id = $2;")
             .bind(&user_id)
@@ -190,8 +188,7 @@ async fn add_user() {
          if let Some(user_group_ids) = resources.user_group_id {
             for i in user_group_ids {
             sqlx::query("
-            DELETE
-            FROM user_group
+            DELETE FROM user_group
             WHERE user_id = $1
             AND group_id = $2;")
             .bind(&i.0)
