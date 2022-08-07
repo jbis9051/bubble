@@ -47,7 +47,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
         name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    //TODO add verification that email being used to create "confirmation" table is not in "user" table
+    //TODO add verification that email being used to create "confirmation" table is not in "user" table (transaction?)
     let user = match user.create(&db.0).await {
         Ok(user) => user,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
@@ -78,7 +78,7 @@ pub struct Confirm {
 }
 
 #[derive(Serialize, Deserialize)]
-struct SessionToken {
+pub struct SessionToken {
     pub token: String,
 }
 

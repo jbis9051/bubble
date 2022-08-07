@@ -20,7 +20,7 @@ pub struct User {
 
 impl User {
     pub async fn create(&self, db: &DbPool) -> Result<User, sqlx::Error> {
-        let row = sqlx::query(
+        Ok(sqlx::query(
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
                              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;",
         )
@@ -33,24 +33,31 @@ impl User {
         .bind(&self.name)
         .fetch_one(db)
         .await
-        .unwrap();
-        let user = User::from_row(&row);
-        Ok(user)
+        .unwrap()
+        .into())
     }
 
     pub async fn from_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
             .bind(id)
             .fetch_one(db)
-            .await?;
+            .await
+            .unwrap()
+            .into())
+    }
 
-        let user = User::from_row(&row);
-        Ok(user)
+    pub async fn from_username(db: &DbPool, username: &str) -> Result<User, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE username = $1;")
+            .bind(username)
+            .fetch_one(db)
+            .await
+            .unwrap()
+            .into())
     }
 
     pub async fn from_session(db: &DbPool, session_token: &str) -> Result<User, sqlx::Error> {
         let token = Uuid::parse_str(session_token).unwrap();
-        let row = sqlx::query(
+        Ok(sqlx::query(
             "SELECT *
                  FROM session_token
                  INNER JOIN \"user\"
@@ -59,31 +66,25 @@ impl User {
         )
         .bind(token)
         .fetch_one(db)
-        .await?;
-
-        let user = User::from_row(&row);
-        Ok(user)
+        .await?
+        .into())
     }
 
     pub async fn from_email(db: &DbPool, email: &str) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"user\" WHERE email = $1")
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE email = $1")
             .bind(email)
             .fetch_one(db)
-            .await?;
-
-        let user = User::from_row(&row);
-        Ok(user)
+            .await?
+            .into())
     }
 
     pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<User, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)
             .await
-            .unwrap();
-
-        let user = User::from_row(&row);
-        Ok(user)
+            .unwrap()
+            .into())
     }
 
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
@@ -107,30 +108,5 @@ impl User {
         .execute(db)
         .await?;
         Ok(())
-    }
-
-    //FOR TESTING
-    pub async fn uuid_from_username(db: &DbPool, username: &str) -> Result<Uuid, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"user\" WHERE username = $1;")
-            .bind(username)
-            .fetch_one(db)
-            .await
-            .unwrap();
-        let uuid = row.get("uuid");
-        Ok(uuid)
-    }
-
-    pub fn from_row(row: &PgRow) -> User {
-        User {
-            id: row.get("id"),
-            uuid: row.get("uuid"),
-            username: row.get("username"),
-            password: row.get("password"),
-            profile_picture: row.get("profile_picture"),
-            email: row.get("email"),
-            phone: row.get("phone"),
-            name: row.get("name"),
-            created: row.get("created"),
-        }
     }
 }

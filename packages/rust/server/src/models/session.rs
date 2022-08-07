@@ -33,6 +33,18 @@ impl Session {
         Ok(session)
     }
 
+    pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Session>, sqlx::Error> {
+        Ok(
+            sqlx::query("SELECT * FROM session_token WHERE user_id = $1;")
+                .bind(user_id)
+                .fetch_all(db)
+                .await?
+                .iter()
+                .map(Self::from_row)
+                .collect(),
+        )
+    }
+
     pub async fn from_token(db: &DbPool, token: &str) -> Result<Session, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM session_token WHERE token IS $1;")
             .bind(token)

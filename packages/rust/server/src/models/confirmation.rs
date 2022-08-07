@@ -39,6 +39,21 @@ impl Confirmation {
         Ok(conf)
     }
 
+    pub async fn filter_user_id(
+        db: &DbPool,
+        user_id: i32,
+    ) -> Result<Vec<Confirmation>, sqlx::Error> {
+        Ok(
+            sqlx::query("SELECT * FROM confirmation WHERE user_id = $1;")
+                .bind(user_id)
+                .fetch_all(db)
+                .await?
+                .iter()
+                .map(Self::from_row)
+                .collect(),
+        )
+    }
+
     pub async fn from_link_id(db: &DbPool, link_id: Uuid) -> Result<Confirmation, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
             .bind(link_id)

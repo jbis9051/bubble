@@ -6,6 +6,7 @@ use bubble::models::group::{Group, Role};
 use bubble::routes::group::{GroupInfo, UserID};
 use sqlx::Executor;
 
+use bubble::routes::user::CreateUser;
 use uuid::Uuid;
 
 mod helper;
@@ -48,9 +49,16 @@ async fn create_group() {
         }
     });
 
-    let first_username: &str = "Rina Sawayama";
-
-    let (token, test_user) = helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "Rina Sawayama".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token, test_user) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
     let bearer = format!("Bearer {}", token);
     let res = helper::create_group(&db, &client, "test_group_1", bearer)
         .await
@@ -119,9 +127,17 @@ async fn read_group() {
         }
     });
 
-    let first_username: &str = "Madonna";
+    let first_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "Madonna".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
 
-    let (token, test_user) = helper::initialize_user(&db, &client, first_username).await;
+    let (token, test_user) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
     let bearer = format!("Bearer {}", token);
     let res = helper::create_group(&db, &client, "test_group_1", bearer)
         .await
@@ -200,8 +216,16 @@ async fn add_user() {
             }
     });
 
-    let first_username: &str = "Porter Robinson";
-    let (token_admin, creator) = helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "Porter Robinson".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
     let bearer = format!("Bearer {}", token_admin);
     let res = helper::create_group(&db, &client, "test_group_1", bearer)
         .await
@@ -212,11 +236,27 @@ async fn add_user() {
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
 
-    let first_username: &str = "Billy Joel";
-    let (token_user_1, billy_joel) = helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "bj@gmail.com".to_string(),
+        username: "Billy Joel".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token_user_1, billy_joel) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
 
-    let first_username: &str = "Kanye West";
-    let (token_user_2, kanye_west) = helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "kw@gmail.com".to_string(),
+        username: "Kanye West".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token_user_2, kanye_west) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
 
     let mut user_ids: Vec<String> = Vec::new();
     user_ids.push(billy_joel.uuid.to_string());
@@ -301,8 +341,16 @@ async fn delete_user() {
         }
     });
 
-    let first_username: &str = "Bruce Springsteen";
-    let (token_admin, _creator) = helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "bs@gmail.com".to_string(),
+        username: "Bruce Springsteen".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token_admin, _creator) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
     let bearer = format!("Bearer {}", token_admin);
     let res = helper::create_group(&db, &client, "test_group_1", bearer)
         .await
@@ -313,12 +361,27 @@ async fn delete_user() {
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
 
-    let first_username: &str = "Dolly Parton";
-    let (_token_user_1, dolly_parton) = helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "dp@gmail.com".to_string(),
+        username: "Dolly Parton".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (_token_user_1, dolly_parton) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
 
-    let first_username: &str = "Artic Monkeys";
-    let (_token_user_2, artic_monkeys) =
-        helper::initialize_user(&db, &client, first_username).await;
+    let first_user = CreateUser {
+        email: "am@gmail.com".to_string(),
+        username: "Artic Monkeys".to_string(),
+        password: "testy".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (_token_user_2, artic_monkeys) = helper::initialize_user(&db, &client, &first_user)
+        .await
+        .unwrap();
 
     let mut user_ids: Vec<String> = Vec::new();
     user_ids.push(dolly_parton.uuid.to_string());
