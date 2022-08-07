@@ -5,7 +5,7 @@ use bubble::router;
 
 use bubble::routes::group::GroupName;
 use bubble::types::DbPool;
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPoolOptions, PgRow};
 
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
@@ -193,4 +193,17 @@ pub async fn create_group(
         .send()
         .await;
     Ok(res)
+}
+
+pub async fn get_user_group(
+    db: &DbPool,
+    group_id: i32,
+    user_id: i32,
+) -> Result<PgRow, sqlx::Error> {
+    let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
+        .bind(group_id)
+        .bind(user_id)
+        .fetch_one(db)
+        .await?;
+    Ok(row)
 }

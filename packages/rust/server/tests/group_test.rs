@@ -4,7 +4,10 @@ use std::borrow::Borrow;
 
 use bubble::models::group::{Group, Role};
 use bubble::routes::group::{GroupInfo, UserID};
+
 use sqlx::Executor;
+
+use sqlx::Row;
 
 use bubble::routes::user::CreateUser;
 use uuid::Uuid;
@@ -310,7 +313,7 @@ async fn add_user() {
 async fn delete_user() {
     let (db, client) = start_server().await;
 
-    let _cleanup = cleanup!({
+    let mut cleanup = cleanup!({
         //user_group_id accepts the group_id of entry to be deleted
         pub user_group_id: Option<Vec<(i32, i32)>>,
         pub location_group_id: Option<i32>,
@@ -348,7 +351,7 @@ async fn delete_user() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (token_admin, _creator) = helper::initialize_user(&db, &client, &first_user)
+    let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token_admin);
@@ -368,7 +371,7 @@ async fn delete_user() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (_token_user_1, dolly_parton) = helper::initialize_user(&db, &client, &first_user)
+    let (token_user_1, dolly_parton) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
 
@@ -379,7 +382,7 @@ async fn delete_user() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (_token_user_2, artic_monkeys) = helper::initialize_user(&db, &client, &first_user)
+    let (token_user_2, artic_monkeys) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
 
@@ -401,8 +404,6 @@ async fn delete_user() {
 
     let mut user_ids: Vec<String> = Vec::new();
     user_ids.push(dolly_parton.uuid.to_string());
-    println!("Printing from tests: {}", user_ids[0]);
-    let group_uuid = group_uuid;
 
     let read_route = format!("/group/{}/delete_users", group_uuid);
     let bearer = format!("Bearer {}", token_admin);
@@ -416,31 +417,74 @@ async fn delete_user() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let group_uuid_ref: &str = &*group_uuid;
-    let _new_group = Group::from_uuid(&db, Uuid::parse_str(group_uuid_ref).unwrap())
+    let new_group = Group::from_uuid(&db, Uuid::parse_str(group_uuid_ref).unwrap())
         .await
         .unwrap();
 
-    // let mut tokens: Vec<Uuid> = Vec::new();
-    // tokens.push(token_admin);
-    // tokens.push(token_user_1);
-    // tokens.push(token_user_2);
-    //
-    // let mut users: Vec<i32> = Vec::new();
-    // let mut user_groups: Vec<(i32, i32)> = Vec::new();
-    // user_groups.push((creator.id, new_group.id));
-    // user_groups.push((dolly_parton.id, new_group.id));
-    // user_groups.push((artic_monkeys.id, new_group.id));
-    //
-    // users.push(creator.id);
-    // users.push(dolly_parton.id);
-    // users.push(artic_monkeys.id);
-    //
-    // let group_uuid_ref: &str = &*group_uuid;
-    //
-    // cleanup.resources.user_group_id = Some(user_groups);
-    // cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
-    // cleanup.resources.session_token = Some(tokens);
-    // cleanup.resources.user_id = Some(users);
+    let remaining_user_group_row = helper::get_user_group(&db, new_group.id, artic_monkeys.id)
+        .await
+        .unwrap();
+    let artic_monkeys_role: i32 = remaining_user_group_row.get("role_id");
+    assert_eq!(artic_monkeys_role, Role::Child as i32);
+
+    let remaining_user_group_status =
+        match helper::get_user_group(&db, new_group.id, artic_monkeys.id).await {
+            Ok(_row) => StatusCode::OK,
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+
+    assert_eq!(remaining_user_group_status, StatusCode::OK);
+
+    let deleted_user_error = match helper::get_user_group(&db, new_group.id, dolly_parton.id).await
+    {
+        Ok(_row) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
+
+    //WE HAVE NOT TESTED EDGE CASE WHERE IF IT IS ADMIN, THEY CANNOT DELETE THEMSELVES FROM GROUP
+
+    let mut user_ids: Vec<String> = Vec::new();
+    user_ids.push(artic_monkeys.uuid.to_string());
+
+    let read_route = format!("/group/{}/delete_users", group_uuid);
+    let bearer = format!("Bearer {}", token_admin);
+    let res = client
+        .post(read_route.borrow())
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let deleted_user_error = match helper::get_user_group(&db, new_group.id, artic_monkeys.id).await
+    {
+        Ok(_row) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    };
+    assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
+    let mut tokens: Vec<Uuid> = Vec::new();
+    tokens.push(token_admin);
+    tokens.push(token_user_1);
+    tokens.push(token_user_2);
+
+    let mut users: Vec<i32> = Vec::new();
+    let mut user_groups: Vec<(i32, i32)> = Vec::new();
+    user_groups.push((creator.id, new_group.id));
+    user_groups.push((dolly_parton.id, new_group.id));
+    user_groups.push((artic_monkeys.id, new_group.id));
+
+    users.push(creator.id);
+    users.push(dolly_parton.id);
+    users.push(artic_monkeys.id);
+
+    let group_uuid_ref: &str = &*group_uuid;
+
+    cleanup.resources.user_group_id = Some(user_groups);
+    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
+    cleanup.resources.session_token = Some(tokens);
+    cleanup.resources.user_id = Some(users);
 }
 
 // async fn change_name() {
