@@ -48,8 +48,7 @@ impl User {
         .bind(&self.phone)
         .bind(&self.name)
         .fetch_one(db)
-        .await
-        .unwrap()
+        .await?
         .into())
     }
 
@@ -66,8 +65,7 @@ impl User {
         Ok(sqlx::query("SELECT * FROM \"user\" WHERE username = $1;")
             .bind(username)
             .fetch_one(db)
-            .await
-            .unwrap()
+            .await?
             .into())
     }
 
@@ -98,8 +96,7 @@ impl User {
         Ok(sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)
-            .await
-            .unwrap()
+            .await?
             .into())
     }
 
@@ -123,6 +120,15 @@ impl User {
         .bind(&self.id)
         .execute(db)
         .await?;
+        Ok(())
+    }
+
+    //TODO
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM \"user\" WHERE id = $1;")
+            .bind(self.id)
+            .execute(db)
+            .await?;
         Ok(())
     }
 }

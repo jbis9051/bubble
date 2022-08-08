@@ -26,8 +26,7 @@ impl Forgot {
         let row = sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
             .bind(uuid)
             .fetch_one(db)
-            .await
-            .unwrap();
+            .await?;
 
         Ok(Forgot {
             id: row.get("id"),
@@ -44,8 +43,7 @@ impl Forgot {
         .bind(&self.user_id)
         .bind(&self.forgot_id)
         .fetch_one(db)
-        .await
-        .unwrap();
+        .await?;
 
         let forgot = Forgot::from_row(&row);
         Ok(forgot)
@@ -55,8 +53,7 @@ impl Forgot {
         sqlx::query("DELETE FROM forgot_password WHERE forgot_id = $1")
             .bind(&self.forgot_id)
             .execute(db)
-            .await
-            .unwrap();
+            .await?;
 
         Ok(())
     }

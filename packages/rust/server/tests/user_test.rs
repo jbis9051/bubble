@@ -5,7 +5,6 @@ use bubble::models::user::User;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser};
 
 use bubble::models::session::Session;
-use sqlx::{Executor, Row};
 
 mod helper;
 
@@ -47,7 +46,6 @@ async fn create_user() {
 
     cleanup.resources.user_username = Some(created_user.username.clone());
 
-    //TODO implement from user
     let user = User::from_username(&db, &created_user.username)
         .await
         .unwrap();
@@ -317,8 +315,8 @@ async fn test_change_email() {
     });
 
     let user = CreateUser {
-        email: "test@gmail.com".to_string(),
-        username: "testusername".to_string(),
+        email: "emailtest@gmail.com".to_string(),
+        username: "emailtestusername".to_string(),
         password: "testpassword".to_string(),
         phone: None,
         name: "testname".to_string(),
@@ -327,10 +325,10 @@ async fn test_change_email() {
     cleanup.resources.user_id = Some(user.id);
     let session = Session::from_token(&db, token).await.unwrap();
     cleanup.resources.session_id = Some(session.id);
-    assert_eq!(user.username, "testusername");
+    assert_eq!(user.username, "emailtestusername");
     assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
-    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "testname");
     assert_eq!(session.token, token);
@@ -358,7 +356,7 @@ async fn test_change_email() {
     let session = Session::from_token(&db, token).await.unwrap();
     cleanup.resources.session_id = Some(session.id);
 
-    assert_eq!(user.username, "testusername");
+    assert_eq!(user.username, "emailtestusername");
     assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("newtest@gmail.com".to_string()));

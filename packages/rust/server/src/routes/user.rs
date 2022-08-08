@@ -11,6 +11,7 @@ use crate::models::confirmation::Confirmation;
 use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
+use crate::routes::map_sqlx_err;
 use crate::types::DbPool;
 use serde::{Deserialize, Serialize};
 
@@ -24,8 +25,7 @@ pub fn router() -> Router {
         .route("/forgot-confirm", post(forgot_confirm))
         .route("/change-email", post(change_email))
         .route("/change-email-confirm", post(change_email_confirm))
-    /*
-    .route("/delete", delete(delete_user))*/
+        .route("/delete", delete(delete_user))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -37,7 +37,10 @@ pub struct CreateUser {
     pub name: String,
 }
 
-async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> StatusCode {
+async fn signup(
+    db: Extension<DbPool>,
+    Json(payload): Json<CreateUser>,
+) -> Result<StatusCode, StatusCode> {
     let user = User {
         id: 0,
         uuid: Uuid::new_v4(),
@@ -50,10 +53,7 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     //TODO add verification that email being used to create "confirmation" table is not in "user" table (transaction?)
-    let user = match user.create(&db.0).await {
-        Ok(user) => user,
-        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
-    };
+    let user = user.create(&db.0).await.map_err(map_sqlx_err)?;
 
     let conf = Confirmation {
         id: 0,
@@ -62,16 +62,13 @@ async fn signup(db: Extension<DbPool>, Json(payload): Json<CreateUser>) -> Statu
         email: payload.email,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let conf = match conf.create(&db.0).await {
-        Ok(link_id) => link_id,
-        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR,
-    };
+    let conf = conf.create(&db.0).await.map_err(map_sqlx_err)?;
 
     println!(
         "Sending Email with link_id {:?} to {:?}",
         conf.link_id, conf.email
     );
-    StatusCode::CREATED
+    Ok(StatusCode::CREATED)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -88,51 +85,18 @@ async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let conf =
-        match Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap()).await {
-            Ok(conf) => conf,
-            Err(e) => {
-                let status = match e {
-                    sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                    _ => StatusCode::INTERNAL_SERVER_ERROR,
-                };
-                return Err(status);
-            }
-        };
+    let conf = Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap())
+        .await
+        .map_err(map_sqlx_err)?;
 
-    match conf.delete(&db.0).await {
-        Ok(_) => (),
-        Err(e) => {
-            let status = match e {
-                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            return Err(status);
-        }
-    }
+    conf.delete(&db.0).await.map_err(map_sqlx_err)?;
 
-    let mut user = match User::from_id(&db.0, conf.user_id).await {
-        Ok(user) => user,
-        Err(e) => {
-            let status = match e {
-                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            return Err(status);
-        }
-    };
+    let mut user = User::from_id(&db.0, conf.user_id)
+        .await
+        .map_err(map_sqlx_err)?;
 
     user.email = Some(conf.email);
-    match user.update(&db.0).await {
-        Ok(_) => (),
-        Err(e) => {
-            let status = match e {
-                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            return Err(status);
-        }
-    }
+    user.update(&db.0).await.map_err(map_sqlx_err)?;
 
     let session = Session {
         id: 0,
@@ -140,16 +104,7 @@ async fn signup_confirm(
         token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let session = match session.create(&db.0).await {
-        Ok(token) => token,
-        Err(e) => {
-            let status = match e {
-                sqlx::Error::RowNotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            return Err(status);
-        }
-    };
+    let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok((
         StatusCode::CREATED,
@@ -171,7 +126,9 @@ async fn signin(
     db: Extension<DbPool>,
     Json(payload): Json<SignInJson>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let user = User::from_email(&db.0, &payload.email).await.unwrap();
+    let user = User::from_email(&db.0, &payload.email)
+        .await
+        .map_err(map_sqlx_err)?;
     if user.password == payload.password {
         let session = Session {
             id: 0,
@@ -179,24 +136,30 @@ async fn signin(
             token: Uuid::new_v4(),
             created: NaiveDateTime::from_timestamp(0, 0),
         };
-        let session = session.create(&db.0).await.unwrap();
+        let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
 
-        return Ok((
+        Ok((
             StatusCode::CREATED,
             Json(SessionToken {
                 token: session.token.to_string(),
             }),
-        ));
+        ))
+    } else {
+        Err(StatusCode::NOT_FOUND)
     }
-    Err(StatusCode::NOT_FOUND)
 }
 
 // user must be signed in
-async fn signout(db: Extension<DbPool>, Json(payload): Json<SessionToken>) -> StatusCode {
+async fn signout(
+    db: Extension<DbPool>,
+    Json(payload): Json<SessionToken>,
+) -> Result<StatusCode, StatusCode> {
     let token = Uuid::parse_str(&payload.token).unwrap();
-    let session = Session::from_token(&db.0, token).await.unwrap();
-    session.delete(&db.0).await.unwrap();
-    StatusCode::OK
+    let session = Session::from_token(&db.0, token)
+        .await
+        .map_err(map_sqlx_err)?;
+    session.delete(&db.0).await.map_err(map_sqlx_err)?;
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -204,21 +167,26 @@ struct Email {
     email: String,
 }
 
-async fn forgot(db: Extension<DbPool>, Json(payload): Json<Email>) -> StatusCode {
-    let user = User::from_email(&db.0, &payload.email).await.unwrap();
+async fn forgot(
+    db: Extension<DbPool>,
+    Json(payload): Json<Email>,
+) -> Result<StatusCode, StatusCode> {
+    let user = User::from_email(&db.0, &payload.email)
+        .await
+        .map_err(map_sqlx_err)?;
     let forgot = Forgot {
         id: 0,
         user_id: user.id,
         forgot_id: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let forgot = forgot.create(&db.0).await.unwrap();
+    let forgot = forgot.create(&db.0).await.map_err(map_sqlx_err)?;
 
     println!(
         "Sending email with {:?} to {:?}",
         forgot.forgot_id, user.email
     );
-    StatusCode::CREATED
+    Ok(StatusCode::CREATED)
 }
 
 #[derive(Deserialize)]
@@ -227,15 +195,20 @@ struct ForgotConfirm {
     forgot_code: String,
 }
 
-async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm>) -> StatusCode {
+async fn forgot_confirm(
+    db: Extension<DbPool>,
+    Json(payload): Json<ForgotConfirm>,
+) -> Result<StatusCode, StatusCode> {
     let forgot = Forgot::from_uuid(&db.0, &payload.forgot_code)
         .await
-        .unwrap();
-    let mut user = User::from_id(&db.0, forgot.user_id).await.unwrap();
-    forgot.delete(&db.0).await.unwrap();
+        .map_err(map_sqlx_err)?;
+    let mut user = User::from_id(&db.0, forgot.user_id)
+        .await
+        .map_err(map_sqlx_err)?;
+    forgot.delete(&db.0).await.map_err(map_sqlx_err)?;
     user.password = payload.password;
-    user.update(&db.0).await.unwrap();
-    StatusCode::CREATED
+    user.update(&db.0).await.map_err(map_sqlx_err)?;
+    Ok(StatusCode::CREATED)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -244,10 +217,13 @@ pub struct ChangeEmail {
     pub new_email: String,
 }
 //User must be signed in
-async fn change_email(db: Extension<DbPool>, Json(payload): Json<ChangeEmail>) -> StatusCode {
+async fn change_email(
+    db: Extension<DbPool>,
+    Json(payload): Json<ChangeEmail>,
+) -> Result<StatusCode, StatusCode> {
     let user = User::from_session(&db.0, &payload.session_token)
         .await
-        .unwrap();
+        .map_err(map_sqlx_err)?;
 
     let change = Confirmation {
         id: 0,
@@ -256,10 +232,10 @@ async fn change_email(db: Extension<DbPool>, Json(payload): Json<ChangeEmail>) -
         email: payload.new_email,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let change = change.create(&db.0).await.unwrap();
+    let change = change.create(&db.0).await.map_err(map_sqlx_err)?;
 
     println!("Sending code {:?} to {:?}", change.link_id, change.email);
-    StatusCode::CREATED
+    Ok(StatusCode::CREATED)
 }
 
 async fn change_email_confirm(
@@ -269,16 +245,20 @@ async fn change_email_confirm(
     let confirmation =
         Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap())
             .await
-            .unwrap();
-    let mut user = User::from_id(&db.0, confirmation.user_id).await.unwrap();
+            .map_err(map_sqlx_err)?;
+    let mut user = User::from_id(&db.0, confirmation.user_id)
+        .await
+        .map_err(map_sqlx_err)?;
 
     user.email = Some(confirmation.email.clone());
-    user.update(&db.0).await.unwrap();
-    confirmation.delete(&db.0).await.unwrap();
+    user.update(&db.0).await.map_err(map_sqlx_err)?;
+    confirmation.delete(&db.0).await.map_err(map_sqlx_err)?;
 
-    let sessions = Session::filter_user_id(&db.0, user.id).await.unwrap();
+    let sessions = Session::filter_user_id(&db.0, user.id)
+        .await
+        .map_err(map_sqlx_err)?;
     for session in sessions {
-        session.delete(&db.0).await.unwrap();
+        session.delete(&db.0).await.map_err(map_sqlx_err)?;
     }
 
     let session = Session {
@@ -287,7 +267,7 @@ async fn change_email_confirm(
         token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let session = session.create(&db.0).await.unwrap();
+    let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
     Ok((
         StatusCode::CREATED,
         Json(SessionToken {
@@ -296,10 +276,19 @@ async fn change_email_confirm(
     ))
 }
 
-/*
-async fn delete_user(Path(params): &str) {
-    let password = params.get("password");
+#[derive(Serialize, Deserialize)]
+pub struct DeleteJson {
+    token: String,
+    password: String,
+}
+async fn delete_user(
+    db: Extension<DbPool>,
+    Json(payload): Json<DeleteJson>,
+) -> Result<StatusCode, StatusCode> {
+    let user = User::from_session(&db.0, &payload.token)
+        .await
+        .map_err(map_sqlx_err)?;
 
+    user.delete(&db.0).await.map_err(map_sqlx_err)?;
     todo!();
 }
-*/
