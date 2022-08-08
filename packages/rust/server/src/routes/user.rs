@@ -23,6 +23,7 @@ pub fn router() -> Router {
         .route("/forgot", post(forgot))
         .route("/forgot-confirm", post(forgot_confirm))
         .route("/change-email", post(change_email))
+        .route("/change-email-confirm", post(change_email_confirm))
     /*
     .route("/delete", delete(delete_user))*/
 }
@@ -237,10 +238,10 @@ async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm
     StatusCode::CREATED
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ChangeEmail {
-    session_token: String,
-    new_email: String,
+    pub session_token: String,
+    pub new_email: String,
 }
 //User must be signed in
 async fn change_email(db: Extension<DbPool>, Json(payload): Json<ChangeEmail>) -> StatusCode {
@@ -264,15 +265,21 @@ async fn change_email(db: Extension<DbPool>, Json(payload): Json<ChangeEmail>) -
 async fn change_email_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
-) -> Result<(StatusCode, String), StatusCode> {
+) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
     let confirmation =
         Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap())
             .await
             .unwrap();
     let mut user = User::from_id(&db.0, confirmation.user_id).await.unwrap();
+
     user.email = Some(confirmation.email.clone());
     user.update(&db.0).await.unwrap();
     confirmation.delete(&db.0).await.unwrap();
+
+    let sessions = Session::filter_user_id(&db.0, user.id).await.unwrap();
+    for session in sessions {
+        session.delete(&db.0).await.unwrap();
+    }
 
     let session = Session {
         id: 0,
@@ -281,7 +288,12 @@ async fn change_email_confirm(
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     let session = session.create(&db.0).await.unwrap();
-    Ok((StatusCode::CREATED, session.token.to_string()))
+    Ok((
+        StatusCode::CREATED,
+        Json(SessionToken {
+            token: session.token.to_string(),
+        }),
+    ))
 }
 
 /*

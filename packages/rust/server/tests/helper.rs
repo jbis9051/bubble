@@ -10,7 +10,7 @@ use sqlx::postgres::{PgPoolOptions, PgRow};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 
-use bubble::routes::user::{Confirm, CreateUser, SessionToken, SignInJson};
+use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, SessionToken, SignInJson};
 
 use bubble::models::session::Session;
 use std::future::Future;
@@ -178,6 +178,47 @@ pub async fn signout_user(
     assert_eq!(res.status(), StatusCode::OK);
 
     Ok(())
+}
+
+pub async fn change_email(
+    db: &DbPool,
+    client: &TestClient,
+    change: &ChangeEmail,
+) -> Result<Uuid, StatusCode> {
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let row = sqlx::query("SELECT * FROM confirmation WHERE email = $1;")
+        .bind(&change.new_email)
+        .fetch_one(db)
+        .await
+        .unwrap();
+    let confirmation = Confirmation::from_row(&row);
+
+    Ok(confirmation.link_id)
+}
+
+pub async fn change_email_confirm(
+    db: &DbPool,
+    client: &TestClient,
+    confirm: &Confirm,
+) -> Result<(User, Uuid), StatusCode> {
+    let res = client
+        .post("/user/change-email-confirm")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&confirm).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let token: SessionToken = res.json().await;
+    let user = User::from_session(db, &token.token).await.unwrap();
+
+    Ok((user, Uuid::parse_str(&token.token).unwrap()))
 }
 
 // Anyone testing should use this one

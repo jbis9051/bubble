@@ -2,10 +2,11 @@ use crate::helper::start_server;
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
-use bubble::routes::user::{Confirm, CreateUser};
+use bubble::routes::user::{ChangeEmail, Confirm, CreateUser};
 
 use bubble::models::session::Session;
 use sqlx::{Executor, Row};
+use uuid::Uuid;
 
 mod helper;
 
@@ -260,6 +261,7 @@ async fn test_signin_signout() {
             sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(id).execute(&db).await.unwrap();
         }
     });
+
     let user = CreateUser {
         email: "test@gmail.com".to_string(),
         username: "testusername".to_string(),
@@ -291,6 +293,78 @@ async fn test_signin_signout() {
     let token = helper::signin_user(&db, &client, &user).await.unwrap();
     let session = Session::from_token(&db, token).await.unwrap();
     cleanup.resources.session_id = Some(session.id);
+    assert_eq!(session.token, token);
+    assert_eq!(session.user_id, user.id);
+}
+
+#[tokio::test]
+async fn test_change_email() {
+    let (db, client) = start_server().await;
+
+    let mut cleanup = cleanup!({
+        pub confirmation_id: Option<i32>,
+        pub session_id: Option<i32>,
+        pub user_id: Option<i32>,
+    }, |db, resources| {
+        if let Some(id) = resources.confirmation_id {
+            sqlx::query("DELETE FROM confirmation WHERE id = $1").bind(id).execute(&db).await.unwrap();
+        }
+        if let Some(id) = resources.session_id {
+            sqlx::query("DELETE FROM session_token WHERE id = $1").bind(id).execute(&db).await.unwrap();
+        }
+        if let Some(id) = resources.user_id {
+            sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(id).execute(&db).await.unwrap();
+        }
+    });
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token, user) = helper::initialize_user(&db, &client, &user).await.unwrap();
+    cleanup.resources.user_id = Some(user.id);
+    let session = Session::from_token(&db, token).await.unwrap();
+    cleanup.resources.session_id = Some(session.id);
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.password, "testpassword");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(session.token, token);
+    assert_eq!(session.user_id, user.id);
+
+    let change = ChangeEmail {
+        session_token: token.to_string(),
+        new_email: "newtest@gmail.com".to_string(),
+    };
+    let link_id = helper::change_email(&db, &client, &change).await.unwrap();
+    let confirmation = Confirmation::from_link_id(&db, link_id).await.unwrap();
+    cleanup.resources.confirmation_id = Some(confirmation.id);
+    assert_eq!(confirmation.user_id, user.id);
+    assert_eq!(confirmation.link_id, link_id);
+    assert_eq!(confirmation.email, change.new_email);
+
+    let confirm = Confirm {
+        link_id: link_id.to_string(),
+    };
+    let (user, token) = helper::change_email_confirm(&db, &client, &confirm)
+        .await
+        .unwrap();
+    println!("token2: {:?}", token);
+    cleanup.resources.confirmation_id = None;
+    let session = Session::from_token(&db, token).await.unwrap();
+    cleanup.resources.session_id = Some(session.id);
+
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.password, "testpassword");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("newtest@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 }

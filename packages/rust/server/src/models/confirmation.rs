@@ -14,7 +14,7 @@ pub struct Confirmation {
 }
 
 impl Confirmation {
-    fn from_row(row: &PgRow) -> Confirmation {
+    pub fn from_row(row: &PgRow) -> Confirmation {
         Confirmation {
             id: row.get("id"),
             user_id: row.get("user_id"),
