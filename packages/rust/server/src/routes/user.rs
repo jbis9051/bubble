@@ -22,7 +22,8 @@ pub fn router() -> Router {
         .route("/signout", delete(signout))
         .route("/forgot", post(forgot))
         .route("/forgot-confirm", post(forgot_confirm))
-    /*.route("/change-email", post(change_email))
+        .route("/change-email", post(change_email))
+    /*
     .route("/delete", delete(delete_user))*/
 }
 
@@ -159,10 +160,10 @@ async fn signup_confirm(
 
 //get user
 
-#[derive(Deserialize)]
-struct SignInJson {
-    email: String,
-    password: String,
+#[derive(Serialize, Deserialize)]
+pub struct SignInJson {
+    pub email: String,
+    pub password: String,
 }
 
 async fn signin(
@@ -189,8 +190,10 @@ async fn signin(
     Err(StatusCode::NOT_FOUND)
 }
 
+// user must be signed in
 async fn signout(db: Extension<DbPool>, Json(payload): Json<SessionToken>) -> StatusCode {
-    let session = Session::from_token(&db.0, &payload.token).await.unwrap();
+    let token = Uuid::parse_str(&payload.token).unwrap();
+    let session = Session::from_token(&db.0, token).await.unwrap();
     session.delete(&db.0).await.unwrap();
     StatusCode::OK
 }
@@ -233,19 +236,55 @@ async fn forgot_confirm(db: Extension<DbPool>, Json(payload): Json<ForgotConfirm
     user.update(&db.0).await.unwrap();
     StatusCode::CREATED
 }
-/*
-async fn change_email(db: Extension<DbPool>, Json(payload): Json<Email>) -> StatusCode {
-    let user = User::get_by_email(&db.0, &payload.email).await.unwrap();
-    let link_id = User::create_confirmation(&db.0, &user, &payload.email)
+
+#[derive(Deserialize)]
+pub struct ChangeEmail {
+    session_token: String,
+    new_email: String,
+}
+//User must be signed in
+async fn change_email(db: Extension<DbPool>, Json(payload): Json<ChangeEmail>) -> StatusCode {
+    let user = User::from_session(&db.0, &payload.session_token)
         .await
         .unwrap();
 
-    println!("Sending {:?} to {:?}", link_id, &payload.email);
+    let change = Confirmation {
+        id: 0,
+        user_id: user.id,
+        link_id: Uuid::new_v4(),
+        email: payload.new_email,
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
+    let change = change.create(&db.0).await.unwrap();
+
+    println!("Sending code {:?} to {:?}", change.link_id, change.email);
     StatusCode::CREATED
 }
 
+async fn change_email_confirm(
+    db: Extension<DbPool>,
+    Json(payload): Json<Confirm>,
+) -> Result<(StatusCode, String), StatusCode> {
+    let confirmation =
+        Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap())
+            .await
+            .unwrap();
+    let mut user = User::from_id(&db.0, confirmation.user_id).await.unwrap();
+    user.email = Some(confirmation.email.clone());
+    user.update(&db.0).await.unwrap();
+    confirmation.delete(&db.0).await.unwrap();
 
-async fn change_email_confirm() {}
+    let session = Session {
+        id: 0,
+        user_id: user.id,
+        token: Uuid::new_v4(),
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
+    let session = session.create(&db.0).await.unwrap();
+    Ok((StatusCode::CREATED, session.token.to_string()))
+}
+
+/*
 async fn delete_user(Path(params): &str) {
     let password = params.get("password");
 

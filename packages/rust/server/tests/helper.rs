@@ -10,8 +10,9 @@ use sqlx::postgres::{PgPoolOptions, PgRow};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 
-use bubble::routes::user::{Confirm, CreateUser, SessionToken};
+use bubble::routes::user::{Confirm, CreateUser, SessionToken, SignInJson};
 
+use bubble::models::session::Session;
 use std::future::Future;
 use std::{env, thread};
 use tokio::runtime::Runtime;
@@ -139,6 +140,46 @@ pub async fn signup_confirm_user(
     Ok((user, Uuid::parse_str(&token.token).unwrap()))
 }
 
+pub async fn signin_user(
+    _db: &DbPool,
+    client: &TestClient,
+    user: &User,
+) -> Result<Uuid, StatusCode> {
+    let signin = SignInJson {
+        email: user.email.clone().unwrap(),
+        password: user.password.clone(),
+    };
+    let res = client
+        .post("/user/signin")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&signin).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let token: SessionToken = res.json().await;
+    Ok(Uuid::parse_str(&token.token).unwrap())
+}
+
+pub async fn signout_user(
+    _db: &DbPool,
+    client: &TestClient,
+    session: &Session,
+) -> Result<(), StatusCode> {
+    let token = SessionToken {
+        token: session.token.to_string(),
+    };
+    let res = client
+        .delete("/user/signout")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&token).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    Ok(())
+}
+
 // Anyone testing should use this one
 pub async fn initialize_user(
     db: &DbPool,
@@ -170,6 +211,7 @@ pub async fn initialize_user(
         .await;
     assert_eq!(confirm_res.status(), StatusCode::CREATED);
 
+    let user = User::from_id(db, user.id).await.unwrap();
     let session_token: SessionToken = confirm_res.json().await;
     let token = Uuid::parse_str(&session_token.token).unwrap();
 

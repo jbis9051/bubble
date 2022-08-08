@@ -45,8 +45,8 @@ impl Session {
         )
     }
 
-    pub async fn from_token(db: &DbPool, token: &str) -> Result<Session, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM session_token WHERE token IS $1;")
+    pub async fn from_token(db: &DbPool, token: Uuid) -> Result<Session, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM session_token WHERE token = $1;")
             .bind(token)
             .fetch_one(db)
             .await?;

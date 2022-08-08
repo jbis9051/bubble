@@ -244,3 +244,53 @@ async fn create_multiple_user() {
     assert_eq!(timmy_session.user_id, timmy.id);
     assert_eq!(timmy_session.token, timmy_token);
 }
+
+#[tokio::test]
+async fn test_signin_signout() {
+    let (db, client) = start_server().await;
+
+    let mut cleanup = cleanup!({
+        pub session_id: Option<i32>,
+        pub user_id: Option<i32>,
+    }, |db, resources| {
+        if let Some(id) = resources.session_id {
+            sqlx::query("DELETE FROM session_token WHERE id = $1").bind(id).execute(&db).await.unwrap();
+        }
+        if let Some(id) = resources.user_id {
+            sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(id).execute(&db).await.unwrap();
+        }
+    });
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+
+    let (token, user) = helper::initialize_user(&db, &client, &user).await.unwrap();
+    cleanup.resources.user_id = Some(user.id);
+    let session = Session::from_token(&db, token).await.unwrap();
+    cleanup.resources.session_id = Some(session.id);
+
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.password, "testpassword");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(session.user_id, user.id);
+    assert_eq!(session.token, token);
+
+    helper::signout_user(&db, &client, &session).await.unwrap();
+    cleanup.resources.session_id = None;
+
+    let sessions = Session::filter_user_id(&db, user.id).await.unwrap();
+    assert_eq!(sessions.len(), 0);
+
+    let token = helper::signin_user(&db, &client, &user).await.unwrap();
+    let session = Session::from_token(&db, token).await.unwrap();
+    cleanup.resources.session_id = Some(session.id);
+    assert_eq!(session.token, token);
+    assert_eq!(session.user_id, user.id);
+}
