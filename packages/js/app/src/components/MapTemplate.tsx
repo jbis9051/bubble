@@ -62,6 +62,7 @@ const MapTemplate: React.FunctionComponent<{
     return Platform.OS === 'ios' ? (
         <MapView
             region={{ ...regionContainingPoints(viewLocations) }}
+            showsCompass={false}
             style={style}
         >
             {locations.map((markerLocation, key) => (
