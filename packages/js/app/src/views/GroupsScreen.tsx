@@ -20,6 +20,7 @@ const initialRegions: Region[] = [
 const GroupsScreen = () => {
     const [locations, setLocations] = useState(initialRegions);
     const [isFocused, setFocus] = useState(false);
+    const [search, setSearch] = useState('');
     const insets = useSafeAreaInsets();
     const deviceWidth = Dimensions.get('window').width;
 
@@ -30,6 +31,7 @@ const GroupsScreen = () => {
             {isFocused && (
                 <TouchableWithoutFeedback onPress={() => setFocus(false)}>
                     <BlurView
+                        blurType="light"
                         style={{
                             position: 'absolute',
                             top: 0,
@@ -44,12 +46,15 @@ const GroupsScreen = () => {
                 insets={insets}
                 isFocused={isFocused}
                 setFocus={setFocus}
+                setSearch={setSearch}
             />
             {isFocused && (
                 <SearchGroups
                     insets={insets}
+                    search={search}
                     setLocations={setLocations}
                     setFocus={setFocus}
+                    setSearch={setSearch}
                 />
             )}
         </View>

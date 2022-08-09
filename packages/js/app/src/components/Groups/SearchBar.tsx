@@ -9,7 +9,8 @@ const SearchBar: React.FunctionComponent<{
     insets: EdgeInsets;
     isFocused: boolean;
     setFocus: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ insets, isFocused, setFocus }) => {
+    setSearch: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ insets, isFocused, setFocus, setSearch }) => {
     const deviceWidth = Dimensions.get('window').width;
     const searchBar = useRef<TextInput>(null);
 
@@ -32,8 +33,12 @@ const SearchBar: React.FunctionComponent<{
                 style={styles.searchIcon}
             />
             <TextInput
+                style={{
+                    flex: 1,
+                }}
                 placeholder="Search groups"
                 ref={searchBar}
+                onChangeText={setSearch}
                 onFocus={() => setFocus(true)}
                 onBlur={() => setFocus(false)}
             />

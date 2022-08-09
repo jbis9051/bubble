@@ -41,14 +41,31 @@ const coordinates: Region[] = [
 
 const SearchGroups: React.FunctionComponent<{
     insets: EdgeInsets;
+    search: string;
     setLocations: (newLocations: Region[]) => void;
     setFocus: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ insets, setLocations, setFocus }) => {
+    setSearch: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ insets, search, setLocations, setFocus, setSearch }) => {
     const deviceWidth = Dimensions.get('window').width;
+    const groups = [
+        {
+            groupName: 'Group 1',
+        },
+        {
+            groupName: 'Group 2',
+            locations: [coordinates[0], coordinates[2], coordinates[4]],
+        },
+        {
+            groupName: 'Group 3',
+        },
+        {
+            groupName: 'Group 4',
+        },
+    ];
 
     return (
         <BlurView
-            blurType="light"
+            blurType="xlight"
             style={{
                 width: deviceWidth - 30,
                 backgroundColor: 'transparent',
@@ -59,32 +76,22 @@ const SearchGroups: React.FunctionComponent<{
             }}
         >
             <View style={styles.groupView}>
-                <GroupIcon
-                    groupName="Group 1"
-                    setLocations={setLocations}
-                    setFocus={setFocus}
-                    lightText={true}
-                />
-                <GroupIcon
-                    groupName="Group 2"
-                    locations={[coordinates[0], coordinates[2], coordinates[4]]}
-                    setLocations={setLocations}
-                    setFocus={setFocus}
-                    lightText={true}
-                />
-                <GroupIcon
-                    groupName="Group 3"
-                    setLocations={setLocations}
-                    setFocus={setFocus}
-                    lightText={true}
-                />
-                <GroupIcon
-                    groupName="Group 4"
-                    locations={[coordinates[0], coordinates[2], coordinates[4]]}
-                    setLocations={setLocations}
-                    setFocus={setFocus}
-                    lightText={true}
-                />
+                {groups
+                    .filter((group) =>
+                        search.length > 0
+                            ? group.groupName.includes(search)
+                            : true
+                    )
+                    .map((group) => (
+                        <GroupIcon
+                            groupName={group.groupName}
+                            locations={group.locations}
+                            setLocations={setLocations}
+                            setFocus={setFocus}
+                            setSearch={setSearch}
+                            lightText={false}
+                        />
+                    ))}
             </View>
         </BlurView>
     );
