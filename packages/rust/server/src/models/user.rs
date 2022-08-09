@@ -70,7 +70,7 @@ impl User {
     }
 
     pub async fn from_session(db: &DbPool, session_token: &str) -> Result<User, sqlx::Error> {
-        let token = Uuid::parse_str(session_token).unwrap();
+        let uuid = Uuid::parse_str(session_token).unwrap();
         Ok(sqlx::query(
             "SELECT *
                  FROM session_token
@@ -78,7 +78,7 @@ impl User {
                  ON session_token.user_id = \"user\".id
                  WHERE session_token.token = $1;",
         )
-        .bind(token)
+        .bind(uuid)
         .fetch_one(db)
         .await?
         .into())

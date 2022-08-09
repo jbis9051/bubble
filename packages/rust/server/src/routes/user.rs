@@ -85,9 +85,12 @@ async fn signup_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let conf = Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap())
-        .await
-        .map_err(map_sqlx_err)?;
+    let conf = Confirmation::from_link_id(
+        &db.0,
+        Uuid::parse_str(&payload.link_id).map_err(|_| StatusCode::BAD_REQUEST)?,
+    )
+    .await
+    .map_err(map_sqlx_err)?;
 
     conf.delete(&db.0).await.map_err(map_sqlx_err)?;
 
@@ -154,7 +157,7 @@ async fn signout(
     db: Extension<DbPool>,
     Json(payload): Json<SessionToken>,
 ) -> Result<StatusCode, StatusCode> {
-    let token = Uuid::parse_str(&payload.token).unwrap();
+    let token = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
     let session = Session::from_token(&db.0, token)
         .await
         .map_err(map_sqlx_err)?;
@@ -242,10 +245,12 @@ async fn change_email_confirm(
     db: Extension<DbPool>,
     Json(payload): Json<Confirm>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let confirmation =
-        Confirmation::from_link_id(&db.0, Uuid::parse_str(&payload.link_id).unwrap())
-            .await
-            .map_err(map_sqlx_err)?;
+    let confirmation = Confirmation::from_link_id(
+        &db.0,
+        Uuid::parse_str(&payload.link_id).map_err(|_| StatusCode::BAD_REQUEST)?,
+    )
+    .await
+    .map_err(map_sqlx_err)?;
     let mut user = User::from_id(&db.0, confirmation.user_id)
         .await
         .map_err(map_sqlx_err)?;
@@ -290,5 +295,5 @@ async fn delete_user(
         .map_err(map_sqlx_err)?;
 
     user.delete(&db.0).await.map_err(map_sqlx_err)?;
-    todo!();
+    todo!()
 }
