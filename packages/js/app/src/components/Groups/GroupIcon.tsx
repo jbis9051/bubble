@@ -41,11 +41,24 @@ const GroupIcon: React.FunctionComponent<{
     groupName: string;
     locations?: Region[];
     setLocations: (newLocations: Region[]) => void;
-}> = ({ groupName, locations = coordinates, setLocations }) => (
-    <TouchableWithoutFeedback onPress={() => setLocations(locations)}>
+    setFocus: React.Dispatch<React.SetStateAction<boolean>>;
+    lightText?: boolean;
+}> = ({
+    groupName,
+    locations = coordinates,
+    setLocations,
+    setFocus,
+    lightText,
+}) => (
+    <TouchableWithoutFeedback
+        onPress={() => {
+            setLocations(locations);
+            setFocus(false);
+        }}
+    >
         <View style={styles.groupContainer}>
             <Image style={styles.groupIcon} />
-            <Name name={groupName} />
+            <Name name={groupName} lightText={lightText} />
         </View>
     </TouchableWithoutFeedback>
 );

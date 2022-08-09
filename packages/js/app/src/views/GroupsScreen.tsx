@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, TouchableWithoutFeedback } from 'react-native';
+import { View, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from '@react-native-community/blur';
 import Map from '../components/Groups/Map';
 import SearchBar from '../components/Groups/SearchBar';
 import SlideCard from '../components/Groups/SlideCard';
+import SearchGroups from '../components/Groups/SearchGroups';
 
 const initialRegions: Region[] = [
     {
@@ -20,6 +21,7 @@ const GroupsScreen = () => {
     const [locations, setLocations] = useState(initialRegions);
     const [isFocused, setFocus] = useState(false);
     const insets = useSafeAreaInsets();
+    const deviceWidth = Dimensions.get('window').width;
 
     return (
         <View style={{ flex: 1 }}>
@@ -43,6 +45,13 @@ const GroupsScreen = () => {
                 isFocused={isFocused}
                 setFocus={setFocus}
             />
+            {isFocused && (
+                <SearchGroups
+                    insets={insets}
+                    setLocations={setLocations}
+                    setFocus={setFocus}
+                />
+            )}
         </View>
     );
 };
