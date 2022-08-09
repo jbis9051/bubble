@@ -42,7 +42,7 @@ const coordinates: Region[] = [
 ];
 
 const heightProps = {
-    startingHeight: 180,
+    startingHeight: 70,
     minHeight: 70,
     marginTopHeight: 200,
 };

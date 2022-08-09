@@ -1,4 +1,4 @@
-import { ShadowPropTypesIOS, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import Colors from '../../constants/Colors';
 
@@ -9,12 +9,22 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
     },
+    searchIcon: {
+        padding: 5,
+        marginRight: 5,
+        height: 14,
+        color: '#d3d3d3',
+    },
     searchBar: {
-        height: 50,
+        position: 'absolute',
+        flexDirection: 'row',
+        height: 35,
+        width: '100%',
         borderRadius: 10,
-        fontSize: 24,
+        fontSize: 14,
         backgroundColor: '#ffffff',
-        paddingLeft: 15,
+        padding: 10,
+        marginLeft: 15,
     },
     userView: {
         flexDirection: 'row',
