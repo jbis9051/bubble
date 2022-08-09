@@ -52,11 +52,11 @@ async fn create_group() {
     });
 
     let first_user = CreateUser {
-        email: "test@gmail.com".to_string(),
+        email: "rina@gmail.com".to_string(),
         username: "Rina Sawayama".to_string(),
-        password: "testy".to_string(),
+        password: "thishell".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "chosenfamily".to_string(),
     };
     let (token, test_user) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -129,11 +129,11 @@ async fn read_group() {
     });
 
     let first_user = CreateUser {
-        email: "test@gmail.com".to_string(),
+        email: "kissmemore@gmail.com".to_string(),
         username: "Madonna".to_string(),
-        password: "testy".to_string(),
+        password: "material".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "girl".to_string(),
     };
 
     let (token, test_user) = helper::initialize_user(&db, &client, &first_user)
@@ -217,11 +217,11 @@ async fn add_user() {
     });
 
     let first_user = CreateUser {
-        email: "test@gmail.com".to_string(),
+        email: "everythigngoeson@gmail.com".to_string(),
         username: "Porter Robinson".to_string(),
-        password: "testy".to_string(),
+        password: "musician".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "passthesettingsun".to_string(),
     };
     let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -239,9 +239,9 @@ async fn add_user() {
     let first_user = CreateUser {
         email: "bj@gmail.com".to_string(),
         username: "Billy Joel".to_string(),
-        password: "testy".to_string(),
+        password: "shesbeenlivingina".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "uptownworld".to_string(),
     };
     let (token_user_1, billy_joel) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -250,9 +250,9 @@ async fn add_user() {
     let first_user = CreateUser {
         email: "kw@gmail.com".to_string(),
         username: "Kanye West".to_string(),
-        password: "testy".to_string(),
+        password: "ifigetlockedup".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "iwontfinishthesent".to_string(),
     };
     let (token_user_2, kanye_west) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -342,11 +342,11 @@ async fn delete_user() {
     });
 
     let first_user = CreateUser {
-        email: "bs@gmail.com".to_string(),
+        email: "dancinginthedark@gmail.com".to_string(),
         username: "Bruce Springsteen".to_string(),
-        password: "testy".to_string(),
+        password: "sitaroundgettingolder".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "thejokesonme".to_string(),
     };
     let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -364,9 +364,9 @@ async fn delete_user() {
     let first_user = CreateUser {
         email: "dp@gmail.com".to_string(),
         username: "Dolly Parton".to_string(),
-        password: "testy".to_string(),
+        password: "clearbluemorning".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "ninetofive".to_string(),
     };
     let (token_user_1, dolly_parton) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -375,9 +375,9 @@ async fn delete_user() {
     let first_user = CreateUser {
         email: "am@gmail.com".to_string(),
         username: "Artic Monkeys".to_string(),
-        password: "testy".to_string(),
+        password: "doiwannaknow".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "arabella".to_string(),
     };
     let (token_user_2, artic_monkeys) = helper::initialize_user(&db, &client, &first_user)
         .await
@@ -514,11 +514,11 @@ async fn change_name() {
     });
 
     let first_user = CreateUser {
-        email: "bs@gmail.com".to_string(),
-        username: "Bruce Springsteen".to_string(),
-        password: "testy".to_string(),
+        email: "nmh@gmail.com".to_string(),
+        username: "Neutral Milk Hotel".to_string(),
+        password: "nmh".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "Neutral Milk Hotel".to_string(),
     };
     let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
         .await
