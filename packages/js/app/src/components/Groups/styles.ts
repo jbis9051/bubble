@@ -1,8 +1,21 @@
-import { StyleSheet } from 'react-native';
+import { ShadowPropTypesIOS, StyleSheet } from 'react-native';
 
 import Colors from '../../constants/Colors';
 
 const styles = StyleSheet.create({
+    shadow: {
+        shadowColor: '#171717',
+        shadowOffset: { width: -3, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+    },
+    searchBar: {
+        height: 50,
+        borderRadius: 10,
+        fontSize: 24,
+        backgroundColor: '#ffffff',
+        paddingLeft: 15,
+    },
     userView: {
         flexDirection: 'row',
         flexWrap: 'wrap',
