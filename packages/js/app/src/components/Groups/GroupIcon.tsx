@@ -42,8 +42,8 @@ const GroupIcon: React.FunctionComponent<{
     locations?: Region[];
     lightText?: boolean;
     setLocations: (newLocations: Region[]) => void;
-    setFocus: React.Dispatch<React.SetStateAction<boolean>>;
-    setSearch: React.Dispatch<React.SetStateAction<string>>;
+    setFocus?: React.Dispatch<React.SetStateAction<boolean>>;
+    setSearch?: React.Dispatch<React.SetStateAction<string>>;
 }> = ({
     groupName,
     locations = coordinates,
@@ -55,8 +55,10 @@ const GroupIcon: React.FunctionComponent<{
     <TouchableWithoutFeedback
         onPress={() => {
             setLocations(locations);
-            setFocus(false);
-            setSearch('');
+            if (setFocus && setSearch) {
+                setFocus(false);
+                setSearch('');
+            }
         }}
     >
         <View style={styles.groupContainer}>

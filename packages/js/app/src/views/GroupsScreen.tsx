@@ -44,6 +44,7 @@ const GroupsScreen = () => {
             )}
             <SearchBar
                 insets={insets}
+                search={search}
                 isFocused={isFocused}
                 setFocus={setFocus}
                 setSearch={setSearch}

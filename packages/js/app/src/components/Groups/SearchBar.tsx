@@ -7,10 +7,11 @@ import styles from './styles';
 
 const SearchBar: React.FunctionComponent<{
     insets: EdgeInsets;
+    search: string;
     isFocused: boolean;
     setFocus: React.Dispatch<React.SetStateAction<boolean>>;
     setSearch: React.Dispatch<React.SetStateAction<string>>;
-}> = ({ insets, isFocused, setFocus, setSearch }) => {
+}> = ({ insets, search, isFocused, setFocus, setSearch }) => {
     const deviceWidth = Dimensions.get('window').width;
     const searchBar = useRef<TextInput>(null);
 
@@ -36,6 +37,7 @@ const SearchBar: React.FunctionComponent<{
                 style={{
                     flex: 1,
                 }}
+                value={search}
                 placeholder="Search groups"
                 ref={searchBar}
                 onChangeText={setSearch}
