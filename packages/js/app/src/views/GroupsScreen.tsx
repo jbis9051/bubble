@@ -15,7 +15,7 @@ const initialRegions: Region[] = [
     },
 ];
 
-const FriendsScreen = () => {
+const GroupsScreen = () => {
     const [locations, setLocations] = useState(initialRegions);
     const insets = useSafeAreaInsets();
 
@@ -28,4 +28,4 @@ const FriendsScreen = () => {
     );
 };
 
-export default FriendsScreen;
+export default GroupsScreen;

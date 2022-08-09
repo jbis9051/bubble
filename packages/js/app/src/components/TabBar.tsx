@@ -3,15 +3,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import {
     faHouse as homeIcon,
-    faUserGroup as friendsIcon,
+    faUserGroup as groupsIcon,
     faMap as mapIcon,
     faCircleUser as userIcon,
 } from '@fortawesome/free-solid-svg-icons';
 import HomeScreen from '../views/HomeScreen';
 import MapScreen from '../views/MapScreen';
 import ProfileScreen from '../views/ProfileScreen';
-import FriendsScreen from '../views/FriendsScreen';
-
+import GroupsScreen from '../views/GroupsScreen';
 import TabIcon from './TabIcon';
 
 const Tab = createBottomTabNavigator();
@@ -38,13 +37,13 @@ const TabBar = () => (
             }}
         />
         <Tab.Screen
-            name="Friends"
-            component={FriendsScreen}
+            name="Groups"
+            component={GroupsScreen}
             options={{
                 tabBarIcon: ({ focused }) => (
                     <TabIcon
-                        name="Friends"
-                        icon={friendsIcon}
+                        name="Groups"
+                        icon={groupsIcon}
                         focused={focused}
                     />
                 ),
