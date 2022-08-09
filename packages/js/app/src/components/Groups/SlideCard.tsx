@@ -90,7 +90,7 @@ const SlideCard: React.FunctionComponent<{
                 panResponder={panResponder}
             >
                 <View>
-                    <Text style={styles.peopleHeading}>People</Text>
+                    <Text style={styles.peopleHeading}>Groups</Text>
                     <DividerLine />
                     <View style={styles.groupView}>
                         <GroupIcon
