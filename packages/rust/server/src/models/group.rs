@@ -38,6 +38,11 @@ pub struct UserID {
     id: i32,
 }
 
+#[derive(sqlx::FromRow)]
+pub struct UserIDs {
+    pub user_ids: Vec<String>,
+}
+
 impl Group {
     //returns role of user in a group from user_group
     pub async fn role(&self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
@@ -48,6 +53,19 @@ impl Group {
             .await?;
         let role_id: i32 = row.get("role_id");
         Ok((role_id as u8).try_into().unwrap())
+    }
+
+    pub async fn get_users(&self, db: &DbPool) -> Result<Vec<String>, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 ")
+            .bind(self.id)
+            .fetch_all(db)
+            .await?;
+        let mut users_in_group: Vec<String> = vec![];
+        for i in row {
+            let user_id: i32 = i.get("user_id");
+            users_in_group.push(user_id.to_string());
+        }
+        Ok(users_in_group)
     }
 
     fn from_row(row: &PgRow) -> Group {

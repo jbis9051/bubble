@@ -21,6 +21,7 @@ pub fn router() -> Router {
         .route("/:id/delete_users", post(delete_users))
         .route("/:id/name", patch(change_name))
         .route("/:id", delete(delete_group))
+        .route("/:id/get_users", get(get_users))
 }
 
 // Accept data -> deserialiable
@@ -51,7 +52,7 @@ async fn create(
         uuid: Uuid::new_v4(),
         group_name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
-        members: Vec::new(),
+        members: vec![],
     };
 
     group.create(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
@@ -128,6 +129,31 @@ async fn add_users(
         group.add_user(&db.0, user).await.map_err(map_sqlx_err)?;
     }
     Ok(StatusCode::OK)
+}
+
+async fn get_users(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    user: AuthenticatedUser,
+) -> Result<(StatusCode, Json<UserID>), StatusCode> {
+    let uuid_converted: Uuid =
+        Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let group = Group::from_uuid(&db.0, uuid_converted)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
+
+    if user_role != Role::Admin {
+        println!("User is not Admin of group");
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    let users_in_group = UserID {
+        users: group.get_users(&db).await.map_err(map_sqlx_err)?,
+    };
+    Ok((StatusCode::OK, Json(users_in_group)))
 }
 
 // //request JSON: vec<user_ids>

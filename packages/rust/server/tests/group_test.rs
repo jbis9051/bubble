@@ -258,9 +258,7 @@ async fn add_user() {
         .await
         .unwrap();
 
-    let mut user_ids: Vec<String> = Vec::new();
-    user_ids.push(billy_joel.uuid.to_string());
-    user_ids.push(kanye_west.uuid.to_string());
+    let user_ids: Vec<String> = vec![billy_joel.uuid.to_string(), kanye_west.uuid.to_string()];
 
     let read_route = format!("/group/{}/new_users", group_uuid);
 
@@ -283,20 +281,27 @@ async fn add_user() {
     assert_eq!(billy_joel_role, Role::Child);
     assert_eq!(kanye_west_role, Role::Child);
 
-    let mut tokens: Vec<Uuid> = Vec::new();
-    tokens.push(token_admin);
-    tokens.push(token_user_1);
-    tokens.push(token_user_2);
+    //TESTING GET_USERS, A SEPERATE TEST WOULD BE VERY WET
+    let bearer = format!("Bearer {}", token_admin);
+    let read_route = format!("/group/{}/get_users", group_uuid);
+    let res = client
+        .get(read_route.borrow())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let user_ids: UserID = res.json().await;
+    assert_eq!(*user_ids.users.get(0).unwrap(), creator.id.to_string());
+    assert_eq!(*user_ids.users.get(1).unwrap(), billy_joel.id.to_string());
+    assert_eq!(*user_ids.users.get(2).unwrap(), kanye_west.id.to_string());
 
-    let mut users: Vec<i32> = Vec::new();
-    let mut user_groups: Vec<(i32, i32)> = Vec::new();
-    user_groups.push((creator.id, new_group.id));
-    user_groups.push((billy_joel.id, new_group.id));
-    user_groups.push((kanye_west.id, new_group.id));
-
-    users.push(creator.id);
-    users.push(billy_joel.id);
-    users.push(kanye_west.id);
+    let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
+    let users: Vec<i32> = vec![creator.id, billy_joel.id, kanye_west.id];
+    let user_groups: Vec<(i32, i32)> = vec![
+        (creator.id, new_group.id),
+        (billy_joel.id, new_group.id),
+        (kanye_west.id, new_group.id),
+    ];
 
     let group_uuid_ref: &str = &*group_uuid;
 
@@ -383,9 +388,10 @@ async fn delete_user() {
         .await
         .unwrap();
 
-    let mut user_ids: Vec<String> = Vec::new();
-    user_ids.push(dolly_parton.uuid.to_string());
-    user_ids.push(artic_monkeys.uuid.to_string());
+    let user_ids: Vec<String> = vec![
+        dolly_parton.uuid.to_string(),
+        artic_monkeys.uuid.to_string(),
+    ];
 
     let read_route = format!("/group/{}/new_users", group_uuid);
 
@@ -399,8 +405,7 @@ async fn delete_user() {
         .await;
     assert_eq!(res.status(), StatusCode::OK);
 
-    let mut user_ids: Vec<String> = Vec::new();
-    user_ids.push(dolly_parton.uuid.to_string());
+    let user_ids: Vec<String> = vec![dolly_parton.uuid.to_string()];
 
     let read_route = format!("/group/{}/delete_users", group_uuid);
     let bearer = format!("Bearer {}", token_admin);
@@ -441,8 +446,7 @@ async fn delete_user() {
 
     //WE HAVE NOT TESTED EDGE CASE WHERE IF IT IS ADMIN, THEY CANNOT DELETE THEMSELVES FROM GROUP
 
-    let mut user_ids: Vec<String> = Vec::new();
-    user_ids.push(artic_monkeys.uuid.to_string());
+    let user_ids: Vec<String> = vec![artic_monkeys.uuid.to_string()];
 
     let read_route = format!("/group/{}/delete_users", group_uuid);
     let bearer = format!("Bearer {}", token_admin);
@@ -461,20 +465,14 @@ async fn delete_user() {
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     };
     assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
-    let mut tokens: Vec<Uuid> = Vec::new();
-    tokens.push(token_admin);
-    tokens.push(token_user_1);
-    tokens.push(token_user_2);
+    let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
 
-    let mut users: Vec<i32> = Vec::new();
-    let mut user_groups: Vec<(i32, i32)> = Vec::new();
-    user_groups.push((creator.id, new_group.id));
-    user_groups.push((dolly_parton.id, new_group.id));
-    user_groups.push((artic_monkeys.id, new_group.id));
-
-    users.push(creator.id);
-    users.push(dolly_parton.id);
-    users.push(artic_monkeys.id);
+    let users: Vec<i32> = vec![creator.id, dolly_parton.id, artic_monkeys.id];
+    let user_groups: Vec<(i32, i32)> = vec![
+        (creator.id, new_group.id),
+        (dolly_parton.id, new_group.id),
+        (artic_monkeys.id, new_group.id),
+    ];
 
     let group_uuid_ref: &str = &*group_uuid;
 
@@ -627,11 +625,12 @@ async fn delete() {
     let group_uuid = group_info.uuid;
     let bearer = format!("Bearer {}", token_admin);
     let read_route = format!("/group/{}", group_uuid);
-    let _res = client
+    let res = client
         .delete(read_route.borrow())
         .header("Authorization", bearer)
         .send()
         .await;
+    assert_eq!(res.status(), StatusCode::OK);
     let delete_group = match Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap()).await {
         Ok(_group) => StatusCode::OK,
         Err(_) => StatusCode::BAD_REQUEST,
