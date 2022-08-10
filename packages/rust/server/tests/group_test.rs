@@ -27,10 +27,7 @@ async fn create_group() {
         pub user_id: Option<i32>
      }, |db, resources| {
          if let Some((group_id, user_id)) = resources.user_group_id {
-            sqlx::query("
-            DELETE FROM user_group
-            WHERE user_id = $1
-            AND group_id = $2;")
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2;")
             .bind(&user_id)
             .bind(&group_id)
             .execute(&db)
@@ -62,7 +59,8 @@ async fn create_group() {
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token);
-    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+    let group_name_in = "test_group_1".to_owned();
+    let res = helper::create_group(&db, &client, group_name_in, bearer)
         .await
         .unwrap();
     let status = res.status();
@@ -104,10 +102,7 @@ async fn read_group() {
         pub user_id: Option<i32>
      }, |db, resources| {
          if let Some((group_id, user_id)) = resources.user_group_id {
-            sqlx::query("
-            DELETE FROM user_group
-            WHERE user_id = $1
-            AND group_id = $2;")
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2;")
             .bind(&user_id)
             .bind(&group_id)
             .execute(&db)
@@ -140,7 +135,8 @@ async fn read_group() {
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token);
-    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+    let group_name_in = "test_group_1".to_owned();
+    let res = helper::create_group(&db, &client, group_name_in, bearer)
         .await
         .unwrap();
 
@@ -173,6 +169,7 @@ async fn read_group() {
     cleanup.resources.user_group_id = Some(user_group);
 }
 
+//route get_users is also tested to verify add_users
 #[tokio::test]
 async fn add_user() {
     let (db, client) = start_server().await;
@@ -187,10 +184,7 @@ async fn add_user() {
      }, |db, resources| {
          if let Some(user_group_ids) = resources.user_group_id {
             for i in user_group_ids {
-            sqlx::query("
-            DELETE FROM user_group
-            WHERE user_id = $1
-            AND group_id = $2;")
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2;")
             .bind(&i.0)
             .bind(&i.1)
             .execute(&db)
@@ -227,7 +221,8 @@ async fn add_user() {
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token_admin);
-    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+    let group_name_in = "test_group_1".to_owned();
+    let res = helper::create_group(&db, &client, group_name_in, bearer)
         .await
         .unwrap();
 
@@ -283,7 +278,7 @@ async fn add_user() {
 
     //TESTING GET_USERS, A SEPERATE TEST WOULD BE VERY WET
     let bearer = format!("Bearer {}", token_admin);
-    let read_route = format!("/group/{}/get_users", group_uuid);
+    let read_route = format!("/group/{}/members", group_uuid);
     let res = client
         .get(read_route.borrow())
         .header("Authorization", bearer)
@@ -357,7 +352,8 @@ async fn delete_user() {
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token_admin);
-    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+    let group_name_in = "test_group_1".to_owned();
+    let res = helper::create_group(&db, &client, group_name_in, bearer)
         .await
         .unwrap();
 
@@ -443,8 +439,6 @@ async fn delete_user() {
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     };
     assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
-
-    //WE HAVE NOT TESTED EDGE CASE WHERE IF IT IS ADMIN, THEY CANNOT DELETE THEMSELVES FROM GROUP
 
     let user_ids: Vec<String> = vec![artic_monkeys.uuid.to_string()];
 
@@ -536,7 +530,8 @@ async fn change_name() {
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token_admin);
-    let res = helper::create_group(&db, &client, "GroupNameOne", bearer)
+    let group_name_in = "GroupNameOne".to_owned();
+    let res = helper::create_group(&db, &client, group_name_in, bearer)
         .await
         .unwrap();
 
@@ -593,11 +588,7 @@ async fn delete() {
         pub user_id: Option<i32>
      }, |db, resources| {
          if let Some((group_id, user_id)) = resources.user_group_id {
-            sqlx::query("
-            DELETE
-            FROM user_group
-            WHERE user_id = $1
-            AND group_id = $2;")
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2;")
             .bind(&user_id)
             .bind(&group_id)
             .execute(&db)
@@ -629,7 +620,8 @@ async fn delete() {
         .await
         .unwrap();
     let bearer = format!("Bearer {}", token_admin);
-    let res = helper::create_group(&db, &client, "test_group_1", bearer)
+    let group_name_in = "test_group_1".to_owned();
+    let res = helper::create_group(&db, &client, group_name_in, bearer)
         .await
         .unwrap();
 

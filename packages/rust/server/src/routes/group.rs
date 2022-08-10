@@ -21,7 +21,7 @@ pub fn router() -> Router {
         .route("/:id/delete_users", post(delete_users))
         .route("/:id/name", patch(change_name))
         .route("/:id", delete(delete_group))
-        .route("/:id/get_users", get(get_users))
+        .route("/:id/members", get(members))
 }
 
 // Accept data -> deserialiable
@@ -83,7 +83,6 @@ async fn read(
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
     if user_role != Role::Admin {
-        println!("User is not Admin of group");
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -117,7 +116,6 @@ async fn add_users(
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
     if user_role != Role::Admin {
-        println!("User is not Admin of group");
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -131,7 +129,7 @@ async fn add_users(
     Ok(StatusCode::OK)
 }
 
-async fn get_users(
+async fn members(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
@@ -146,12 +144,11 @@ async fn get_users(
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
     if user_role != Role::Admin {
-        println!("User is not Admin of group");
         return Err(StatusCode::UNAUTHORIZED);
     }
 
     let users_in_group = UserID {
-        users: group.get_users(&db).await.map_err(map_sqlx_err)?,
+        users: group.members(&db).await.map_err(map_sqlx_err)?,
     };
     Ok((StatusCode::OK, Json(users_in_group)))
 }
@@ -170,7 +167,6 @@ async fn delete_users(
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
     if user_role != Role::Admin {
-        println!("User is not Admin of group");
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -182,7 +178,6 @@ async fn delete_users(
             .map_err(map_sqlx_err)?;
         let user_role = group.role(&db, user.id).await.unwrap();
         if user_role == Role::Admin {
-            println!("Please give another user the role of admin before leaving the group.");
             return Err(StatusCode::BAD_REQUEST);
         }
         group.delete_user(&db.0, user).await.map_err(map_sqlx_err)?;
@@ -212,7 +207,6 @@ async fn change_name(
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
     if user_role != Role::Admin {
-        println!("User is not Admin of group");
         return Err(StatusCode::UNAUTHORIZED);
     }
     //must resolve where normal rust or json is how requests replies sent
@@ -237,7 +231,6 @@ async fn delete_group(
 
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
     if user_role != Role::Admin {
-        println!("User is not Admin of group");
         return Err(StatusCode::UNAUTHORIZED);
     }
 

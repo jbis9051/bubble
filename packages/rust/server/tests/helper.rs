@@ -264,10 +264,9 @@ pub async fn initialize_user(
 pub async fn create_group(
     _db: &DbPool,
     client: &TestClient,
-    group_name: &str,
+    group_name: String,
     bearer: String,
 ) -> Result<TestResponse, sqlx::Error> {
-    let group_name: String = group_name.parse().unwrap();
     let res = client
         .post("/group/create")
         .header("Content-Type", "application/json")

@@ -28,7 +28,7 @@ class MainApplicationTurboModuleManagerDelegate
       const JavaTurboModule::InitParams &params) override;
 
   /**
-   * Test-only method. Allows routes to verify whether a TurboModule can be
+   * Test-only method. Allows user to verify whether a TurboModule can be
    * created by instances of this class.
    */
   bool canCreateTurboModule(std::string name);

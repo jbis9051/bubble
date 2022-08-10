@@ -94,6 +94,25 @@ Request Data:
 }
 ```
 
+### Get Users From Group
+
+```http request
+GET /group/<id>/get_users
+```
+
+Response: 
+
+```json
+{
+  "UserID": [
+    1,
+    2,
+    3,
+    10
+  ]
+}
+```
+
 ---
 
 # User

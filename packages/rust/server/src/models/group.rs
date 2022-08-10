@@ -55,16 +55,19 @@ impl Group {
         Ok((role_id as u8).try_into().unwrap())
     }
 
-    pub async fn get_users(&self, db: &DbPool) -> Result<Vec<String>, sqlx::Error> {
+    pub async fn members(&self, db: &DbPool) -> Result<Vec<String>, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 ")
             .bind(self.id)
             .fetch_all(db)
             .await?;
-        let mut users_in_group: Vec<String> = vec![];
-        for i in row {
-            let user_id: i32 = i.get("user_id");
-            users_in_group.push(user_id.to_string());
-        }
+        let users_in_group = row
+            .iter()
+            .map(|entry| entry.get::<i32, &str>("user_id").to_string())
+            .collect::<Vec<String>>();
+
+        // let users_in_group = row.iter().map(|entry| entry.get("user_id")).collect::<Vec<i32>>();
+        // let user_in_group_fmt = users_in_group.iter().map(|entry| entry.to_string()).collect::<Vec<String>>();
+
         Ok(users_in_group)
     }
 
