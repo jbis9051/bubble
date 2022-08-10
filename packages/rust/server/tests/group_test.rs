@@ -58,6 +58,10 @@ async fn create_group() {
     let (token, test_user) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
+
+    cleanup.resources.session_token = Some(token);
+    cleanup.resources.user_id = Some(test_user.id);
+
     let bearer = format!("Bearer {}", token);
     let group_name_in = "test_group_1".to_owned();
     let res = helper::create_group(&db, &client, group_name_in, bearer)
@@ -69,24 +73,22 @@ async fn create_group() {
     assert_eq!(status, StatusCode::CREATED);
 
     let group_uuid = group_info.uuid;
+    let group = Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap())
+        .await
+        .expect("No group exists in database.");
+
+    cleanup.resources.group_id = Some(group.id);
+    let user_group: (i32, i32) = (test_user.id, group.id);
+    cleanup.resources.user_group_id = Some(user_group);
+
+    assert_eq!(group.group_name, "test_group_1");
+
     let group_name = group_info.name;
 
     assert_eq!(group_name, "test_group_1");
 
-    let group = Group::from_uuid(&db, Uuid::parse_str(&group_uuid).unwrap())
-        .await
-        .expect("No group exists in database.");
-    assert_eq!(group.group_name, "test_group_1");
-
     let role_id = group.role(&db, test_user.id).await.unwrap();
     assert_eq!(role_id, Role::Admin);
-
-    let user_group: (i32, i32) = (test_user.id, group.id);
-
-    cleanup.resources.user_group_id = Some(user_group);
-    cleanup.resources.group_id = Some(group.id);
-    cleanup.resources.session_token = Some(token);
-    cleanup.resources.user_id = Some(test_user.id);
 }
 
 #[tokio::test]
@@ -134,6 +136,8 @@ async fn read_group() {
     let (token, test_user) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
+    cleanup.resources.user_id = Some(test_user.id);
+    cleanup.resources.session_token = Some(token);
     let bearer = format!("Bearer {}", token);
     let group_name_in = "test_group_1".to_owned();
     let res = helper::create_group(&db, &client, group_name_in, bearer)
@@ -145,6 +149,12 @@ async fn read_group() {
     let group_info: GroupInfo = res.json().await;
     let group_name = group_info.name;
     let group_uuid = group_info.uuid;
+    let group_uuid_fmt = Uuid::parse_str(&group_uuid).unwrap();
+    let temp_group = Group::from_uuid(&db, group_uuid_fmt).await.unwrap();
+    cleanup.resources.group_id = Some(temp_group.id);
+    let user_group: (i32, i32) = (temp_group.id, test_user.id);
+
+    cleanup.resources.user_group_id = Some(user_group);
 
     let read_route = format!("/group/{}", group_uuid);
 
@@ -158,15 +168,6 @@ async fn read_group() {
 
     assert_eq!(read_group.name, group_name);
     assert_eq!(read_group.uuid, group_uuid);
-
-    let group_uuid = Uuid::parse_str(&group_uuid).unwrap();
-    let temp_group = Group::from_uuid(&db, group_uuid).await.unwrap();
-    let user_group: (i32, i32) = (temp_group.id, test_user.id);
-
-    cleanup.resources.session_token = Some(token);
-    cleanup.resources.group_id = Some(temp_group.id);
-    cleanup.resources.user_id = Some(test_user.id);
-    cleanup.resources.user_group_id = Some(user_group);
 }
 
 //route get_users is also tested to verify add_users
@@ -231,6 +232,9 @@ async fn add_user() {
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
 
+    let group_uuid_ref: &str = &*group_uuid;
+    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
+
     let first_user = CreateUser {
         email: "bj@gmail.com".to_string(),
         username: "Billy Joel".to_string(),
@@ -253,6 +257,11 @@ async fn add_user() {
         .await
         .unwrap();
 
+    let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
+    let users: Vec<i32> = vec![creator.id, billy_joel.id, kanye_west.id];
+    cleanup.resources.session_token = Some(tokens);
+    cleanup.resources.user_id = Some(users);
+
     let user_ids: Vec<String> = vec![billy_joel.uuid.to_string(), kanye_west.uuid.to_string()];
 
     let read_route = format!("/group/{}/new_users", group_uuid);
@@ -271,6 +280,14 @@ async fn add_user() {
     let new_group = Group::from_uuid(&db, Uuid::parse_str(group_uuid_ref).unwrap())
         .await
         .unwrap();
+    let user_groups: Vec<(i32, i32)> = vec![
+        (creator.id, new_group.id),
+        (billy_joel.id, new_group.id),
+        (kanye_west.id, new_group.id),
+    ];
+
+    cleanup.resources.user_group_id = Some(user_groups);
+
     let billy_joel_role = new_group.role(&db, billy_joel.id).await.unwrap();
     let kanye_west_role = new_group.role(&db, kanye_west.id).await.unwrap();
     assert_eq!(billy_joel_role, Role::Child);
@@ -289,21 +306,6 @@ async fn add_user() {
     assert_eq!(*user_ids.users.get(0).unwrap(), creator.id.to_string());
     assert_eq!(*user_ids.users.get(1).unwrap(), billy_joel.id.to_string());
     assert_eq!(*user_ids.users.get(2).unwrap(), kanye_west.id.to_string());
-
-    let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
-    let users: Vec<i32> = vec![creator.id, billy_joel.id, kanye_west.id];
-    let user_groups: Vec<(i32, i32)> = vec![
-        (creator.id, new_group.id),
-        (billy_joel.id, new_group.id),
-        (kanye_west.id, new_group.id),
-    ];
-
-    let group_uuid_ref: &str = &*group_uuid;
-
-    cleanup.resources.user_group_id = Some(user_groups);
-    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
-    cleanup.resources.session_token = Some(tokens);
-    cleanup.resources.user_id = Some(users);
 }
 
 #[tokio::test]
@@ -362,6 +364,9 @@ async fn delete_user() {
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
 
+    let group_uuid_ref: &str = &*group_uuid;
+    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
+
     let first_user = CreateUser {
         email: "dp@gmail.com".to_string(),
         username: "Dolly Parton".to_string(),
@@ -384,6 +389,11 @@ async fn delete_user() {
         .await
         .unwrap();
 
+    let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
+    let users: Vec<i32> = vec![creator.id, dolly_parton.id, artic_monkeys.id];
+    cleanup.resources.session_token = Some(tokens);
+    cleanup.resources.user_id = Some(users);
+
     let user_ids: Vec<String> = vec![
         dolly_parton.uuid.to_string(),
         artic_monkeys.uuid.to_string(),
@@ -399,6 +409,18 @@ async fn delete_user() {
         .header("Authorization", bearer)
         .send()
         .await;
+
+    let group_uuid_ref: &str = &*group_uuid;
+    let new_group = Group::from_uuid(&db, Uuid::parse_str(group_uuid_ref).unwrap())
+        .await
+        .unwrap();
+    let user_groups: Vec<(i32, i32)> = vec![
+        (creator.id, new_group.id),
+        (dolly_parton.id, new_group.id),
+        (artic_monkeys.id, new_group.id),
+    ];
+    cleanup.resources.user_group_id = Some(user_groups);
+
     assert_eq!(res.status(), StatusCode::OK);
 
     let user_ids: Vec<String> = vec![dolly_parton.uuid.to_string()];
@@ -413,11 +435,6 @@ async fn delete_user() {
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::OK);
-
-    let group_uuid_ref: &str = &*group_uuid;
-    let new_group = Group::from_uuid(&db, Uuid::parse_str(group_uuid_ref).unwrap())
-        .await
-        .unwrap();
 
     let remaining_user_group_row = helper::get_user_group(&db, new_group.id, artic_monkeys.id)
         .await
@@ -472,22 +489,6 @@ async fn delete_user() {
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
-
-    let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
-
-    let users: Vec<i32> = vec![creator.id, dolly_parton.id, artic_monkeys.id];
-    let user_groups: Vec<(i32, i32)> = vec![
-        (creator.id, new_group.id),
-        (dolly_parton.id, new_group.id),
-        (artic_monkeys.id, new_group.id),
-    ];
-
-    let group_uuid_ref: &str = &*group_uuid;
-
-    cleanup.resources.user_group_id = Some(user_groups);
-    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
-    cleanup.resources.session_token = Some(tokens);
-    cleanup.resources.user_id = Some(users);
 }
 
 #[tokio::test]
@@ -529,6 +530,10 @@ async fn change_name() {
     let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
+
+    cleanup.resources.session_token = Some(token_admin);
+    cleanup.resources.user_id = Some(creator.id);
+
     let bearer = format!("Bearer {}", token_admin);
     let group_name_in = "GroupNameOne".to_owned();
     let res = helper::create_group(&db, &client, group_name_in, bearer)
@@ -540,6 +545,9 @@ async fn change_name() {
     let group_info: GroupInfo = res.json().await;
     let group_name = group_info.name;
     let group_uuid = group_info.uuid;
+
+    let group_uuid_ref: &str = &*group_uuid;
+    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
 
     assert_eq!(group_name, "GroupNameOne");
 
@@ -563,16 +571,12 @@ async fn change_name() {
     let changed_group = Group::from_uuid(&db, Uuid::parse_str(&*group_uuid).unwrap())
         .await
         .unwrap();
-    let group_name = changed_group.group_name;
-    assert_eq!(group_name, "GroupNameTwo");
 
     let user_group: (i32, i32) = (changed_group.id, creator.id);
-    let group_uuid_ref: &str = &*group_uuid;
-
     cleanup.resources.user_group_id = Some(user_group);
-    cleanup.resources.group_id = Some(Uuid::parse_str(group_uuid_ref).unwrap());
-    cleanup.resources.session_token = Some(token_admin);
-    cleanup.resources.user_id = Some(creator.id);
+
+    let group_name = changed_group.group_name;
+    assert_eq!(group_name, "GroupNameTwo");
 }
 
 #[tokio::test]
@@ -619,6 +623,10 @@ async fn delete() {
     let (token_admin, creator) = helper::initialize_user(&db, &client, &first_user)
         .await
         .unwrap();
+
+    cleanup.resources.session_token = Some(token_admin);
+    cleanup.resources.user_id = Some(creator.id);
+
     let bearer = format!("Bearer {}", token_admin);
     let group_name_in = "test_group_1".to_owned();
     let res = helper::create_group(&db, &client, group_name_in, bearer)
@@ -642,6 +650,4 @@ async fn delete() {
         Err(_) => StatusCode::BAD_REQUEST,
     };
     assert_eq!(delete_group, StatusCode::BAD_REQUEST);
-    cleanup.resources.session_token = Some(token_admin);
-    cleanup.resources.user_id = Some(creator.id);
 }
