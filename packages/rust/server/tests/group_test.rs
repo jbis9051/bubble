@@ -465,6 +465,20 @@ async fn delete_user() {
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     };
     assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
+
+    let user_ids: Vec<String> = vec![creator.uuid.to_string()];
+
+    let read_route = format!("/group/{}/delete_users", group_uuid);
+    let bearer = format!("Bearer {}", token_admin);
+    let res = client
+        .post(read_route.borrow())
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
     let tokens: Vec<Uuid> = vec![token_admin, token_user_1, token_user_2];
 
     let users: Vec<i32> = vec![creator.id, dolly_parton.id, artic_monkeys.id];

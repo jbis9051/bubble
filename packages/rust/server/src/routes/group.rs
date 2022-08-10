@@ -180,6 +180,11 @@ async fn delete_users(
         let user = User::from_uuid(&db.0, user_id)
             .await
             .map_err(map_sqlx_err)?;
+        let user_role = group.role(&db, user.id).await.unwrap();
+        if user_role == Role::Admin {
+            println!("Please give another user the role of admin before leaving the group.");
+            return Err(StatusCode::BAD_REQUEST);
+        }
         group.delete_user(&db.0, user).await.map_err(map_sqlx_err)?;
     }
 
