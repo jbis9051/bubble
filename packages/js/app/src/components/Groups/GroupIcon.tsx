@@ -66,6 +66,7 @@ const GroupIcon: React.FunctionComponent<{
     setBlur?: React.Dispatch<React.SetStateAction<boolean>>;
     setSearch?: React.Dispatch<React.SetStateAction<string>>;
     setGroup?: React.Dispatch<React.SetStateAction<UserLocation[]>>;
+    setUserGroup?: React.Dispatch<React.SetStateAction<UserLocation[]>>;
 }> = ({
     groupName,
     locations = coordinates,
@@ -75,6 +76,7 @@ const GroupIcon: React.FunctionComponent<{
     setBlur,
     setSearch,
     setGroup,
+    setUserGroup,
 }) => (
     <TouchableWithoutFeedback
         onPress={() => {
@@ -83,11 +85,12 @@ const GroupIcon: React.FunctionComponent<{
                     (userLocation) => userLocation.location
                 )
             );
-            if (setFocus && setSearch && setBlur && setGroup) {
+            if (setFocus && setSearch && setBlur && setGroup && setUserGroup) {
                 setFocus(false);
                 setBlur(false);
                 setSearch('');
                 setGroup(locations);
+                setUserGroup(locations);
             }
         }}
     >

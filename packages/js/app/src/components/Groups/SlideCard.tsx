@@ -6,7 +6,7 @@ import UserInfo from './UserInfo';
 
 const heightProps = {
     startingHeight: 100,
-    minHeight: 0,
+    minHeight: 100,
     marginTopHeight: 200,
 };
 
@@ -16,11 +16,20 @@ type UserLocation = {
 };
 
 const SlideCard: React.FunctionComponent<{
+    userGroup: UserLocation[];
     group: UserLocation[];
     locations: Region[];
     setLocations: React.Dispatch<React.SetStateAction<Region[]>>;
     setGroups: React.Dispatch<React.SetStateAction<UserLocation[]>>;
-}> = ({ group, locations, setLocations, setGroups }) => {
+    setUserGroup: React.Dispatch<React.SetStateAction<UserLocation[]>>;
+}> = ({
+    userGroup,
+    group,
+    locations,
+    setLocations,
+    setGroups,
+    setUserGroup,
+}) => {
     const { startingHeight, minHeight, marginTopHeight } = heightProps;
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const prevHeight = useRef(startingHeight);
@@ -29,7 +38,7 @@ const SlideCard: React.FunctionComponent<{
     useEffect(() => {
         setBottomHeight(startingHeight);
         prevHeight.current = startingHeight;
-    }, [group, locations]);
+    }, [group, locations, userGroup]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -61,7 +70,7 @@ const SlideCard: React.FunctionComponent<{
                 panResponder={panResponder}
             >
                 <View>
-                    {group.map((user, key) => (
+                    {userGroup.map((user, key) => (
                         <UserInfo
                             user={user}
                             key={key}

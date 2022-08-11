@@ -67,6 +67,7 @@ const SearchGroups: React.FunctionComponent<{
     setBlur: React.Dispatch<React.SetStateAction<boolean>>;
     setSearch: React.Dispatch<React.SetStateAction<string>>;
     setGroup: React.Dispatch<React.SetStateAction<UserLocation[]>>;
+    setUserGroup: React.Dispatch<React.SetStateAction<UserLocation[]>>;
 }> = ({
     insets,
     search,
@@ -75,6 +76,7 @@ const SearchGroups: React.FunctionComponent<{
     setBlur,
     setSearch,
     setGroup,
+    setUserGroup,
 }) => {
     const deviceWidth = Dimensions.get('window').width;
     const groups = [
@@ -152,6 +154,7 @@ const SearchGroups: React.FunctionComponent<{
                                 setSearch={setSearch}
                                 setBlur={setBlur}
                                 setGroup={setGroup}
+                                setUserGroup={setUserGroup}
                                 lightText={false}
                                 key={key}
                             />
