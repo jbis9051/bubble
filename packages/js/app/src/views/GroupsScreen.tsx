@@ -8,26 +8,36 @@ import SearchBar from '../components/Groups/SearchBar';
 import SlideCard from '../components/Groups/SlideCard';
 import SearchGroups from '../components/Groups/SearchGroups';
 
-const initialRegions: Region[] = [
+const initialRegions: UserLocation[] = [
     {
-        longitude: -122.4324,
-        latitude: 37.78825,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Anonymous',
+        location: {
+            longitude: -122.4324,
+            latitude: 37.78825,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
 ];
 
+type UserLocation = {
+    name?: string;
+    location: Region;
+};
+
 const GroupsScreen = () => {
-    const [locations, setLocations] = useState(initialRegions);
+    const [locations, setLocations] = useState([initialRegions[0].location]);
     const [isFocused, setFocus] = useState(false);
     const [isBlurred, setBlur] = useState(false);
     const [search, setSearch] = useState('');
+    const [activeGroup, setActiveGroup] =
+        useState<UserLocation[]>(initialRegions);
     const insets = useSafeAreaInsets();
 
     return (
         <View style={{ flex: 1 }}>
             <Map locations={locations} />
-            <SlideCard locations={locations} setLocations={setLocations} />
+            <SlideCard group={activeGroup} setLocations={setLocations} />
             {isFocused && (
                 <TouchableWithoutFeedback
                     onPress={() => {
@@ -64,6 +74,7 @@ const GroupsScreen = () => {
                     setFocus={setFocus}
                     setSearch={setSearch}
                     setBlur={setBlur}
+                    setGroup={setActiveGroup}
                 />
             )}
         </View>

@@ -6,47 +6,76 @@ import { BlurView } from '@react-native-community/blur';
 import GroupIcon from './GroupIcon';
 import styles from './styles';
 
-const coordinates: Region[] = [
+type UserLocation = {
+    name?: string;
+    location: Region;
+};
+
+const coordinates: UserLocation[] = [
     {
-        longitude: -74.6551,
-        latitude: 40.3431,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Johnny',
+        location: {
+            longitude: -74.6551,
+            latitude: 40.3431,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -83.7382,
-        latitude: 42.287,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Santhosh',
+        location: {
+            longitude: -83.7382,
+            latitude: 42.287,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -74.0131,
-        latitude: 40.7118,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Kyle',
+        location: {
+            longitude: -74.0131,
+            latitude: 40.7118,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -122.009,
-        latitude: 37.3346,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Sidney',
+        location: {
+            longitude: -122.009,
+            latitude: 37.3346,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -73.620071,
-        latitude: 41.027054,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Lia',
+        location: {
+            longitude: -73.620071,
+            latitude: 41.027054,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
 ];
 
 const SearchGroups: React.FunctionComponent<{
     insets: EdgeInsets;
     search: string;
-    setLocations: (newLocations: Region[]) => void;
+    setLocations: React.Dispatch<React.SetStateAction<Region[]>>;
     setFocus: React.Dispatch<React.SetStateAction<boolean>>;
     setBlur: React.Dispatch<React.SetStateAction<boolean>>;
     setSearch: React.Dispatch<React.SetStateAction<string>>;
-}> = ({ insets, search, setLocations, setFocus, setBlur, setSearch }) => {
+    setGroup: React.Dispatch<React.SetStateAction<UserLocation[]>>;
+}> = ({
+    insets,
+    search,
+    setLocations,
+    setFocus,
+    setBlur,
+    setSearch,
+    setGroup,
+}) => {
     const deviceWidth = Dimensions.get('window').width;
     const groups = [
         {
@@ -122,6 +151,7 @@ const SearchGroups: React.FunctionComponent<{
                                 setFocus={setFocus}
                                 setSearch={setSearch}
                                 setBlur={setBlur}
+                                setGroup={setGroup}
                                 lightText={false}
                                 key={key}
                             />

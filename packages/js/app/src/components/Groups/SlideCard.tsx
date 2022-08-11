@@ -2,9 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, PanResponder, Dimensions, Text } from 'react-native';
 import { Region } from 'react-native-maps';
 import SlideCardTemplate from '../SlideCardTemplate';
-import UserIcon from './UserIcon';
-import GroupIcon from './GroupIcon';
-import DividerLine from '../Misc/DividerLine';
+import ProfileImageTemplate from '../ProfileImageTemplate';
 
 import styles from './styles';
 
@@ -42,15 +40,22 @@ const coordinates: Region[] = [
 ];
 
 const heightProps = {
-    startingHeight: 45,
+    startingHeight: 150,
     minHeight: 45,
     marginTopHeight: 200,
 };
 
+type UserLocation = {
+    name?: string;
+    location: Region;
+    longitude?: number;
+    latitude?: number;
+};
+
 const SlideCard: React.FunctionComponent<{
-    locations: Region[];
-    setLocations: (newLocations: Region[]) => void;
-}> = ({ locations, setLocations }) => {
+    group: UserLocation[];
+    setLocations: React.Dispatch<React.SetStateAction<Region[]>>;
+}> = ({ group, setLocations }) => {
     const { startingHeight, minHeight, marginTopHeight } = heightProps;
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const prevHeight = useRef(startingHeight);
@@ -59,7 +64,7 @@ const SlideCard: React.FunctionComponent<{
     useEffect(() => {
         setBottomHeight(startingHeight);
         prevHeight.current = startingHeight;
-    }, [locations]);
+    }, [group]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -85,53 +90,44 @@ const SlideCard: React.FunctionComponent<{
                     height: bottomHeight,
                     position: 'absolute',
                     bottom: 0,
+                    left: 0,
+                    right: 0,
                 }}
                 panResponder={panResponder}
             >
                 <View>
-                    <View style={styles.groupView}>
-                        <GroupIcon
-                            groupName="Group 1"
-                            setLocations={setLocations}
-                        />
-                        <GroupIcon
-                            groupName="Group 2"
-                            locations={[
-                                coordinates[0],
-                                coordinates[2],
-                                coordinates[4],
-                            ]}
-                            setLocations={setLocations}
-                        />
-                    </View>
-                    <View style={styles.userView}>
-                        <UserIcon
-                            name="John"
-                            locations={[coordinates[0]]}
-                            setLocations={setLocations}
-                        />
-                        <UserIcon
-                            name="Santhosh"
-                            locations={[coordinates[1]]}
-                            setLocations={setLocations}
-                        />
-                        <UserIcon
-                            name="Kevin"
-                            locations={[coordinates[2]]}
-                            setLocations={setLocations}
-                        />
-                        <UserIcon
-                            name="Kyle"
-                            locations={[coordinates[3]]}
-                            setLocations={setLocations}
-                        />
-                        <UserIcon
-                            name="Sidney"
-                            locations={[coordinates[4]]}
-                            setLocations={setLocations}
-                        />
-                        <UserIcon name="Lia" setLocations={setLocations} />
-                    </View>
+                    {group.map((user, key) => (
+                        <View
+                            key={key}
+                            style={{
+                                flexDirection: 'row',
+                                margin: 10,
+                            }}
+                        >
+                            <ProfileImageTemplate source="" size={50} />
+                            <View
+                                style={{
+                                    flexDirection: 'column',
+                                    marginLeft: 10,
+                                }}
+                            >
+                                <Text style={{ fontSize: 24 }}>
+                                    {user.name ?? 'Anonymous'}
+                                </Text>
+                                {user.location && (
+                                    <Text>
+                                        {user.location.longitude}{' '}
+                                        {user.location.latitude}
+                                    </Text>
+                                )}
+                                {user.longitude && user.latitude && (
+                                    <Text>
+                                        {user.longitude} {user.latitude}
+                                    </Text>
+                                )}
+                            </View>
+                        </View>
+                    ))}
                 </View>
             </SlideCardTemplate>
         </View>

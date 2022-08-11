@@ -1,50 +1,71 @@
 import React from 'react';
-import { View, Image, TouchableWithoutFeedback } from 'react-native';
+import { View, Image, TouchableWithoutFeedback, Alert } from 'react-native';
 import { Region } from 'react-native-maps';
 import styles from './styles';
 import Name from './Name';
 
-const coordinates: Region[] = [
+const coordinates: UserLocation[] = [
     {
-        longitude: -74.6551,
-        latitude: 40.3431,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Johnny',
+        location: {
+            longitude: -74.6551,
+            latitude: 40.3431,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -83.7382,
-        latitude: 42.287,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Santhosh',
+        location: {
+            longitude: -83.7382,
+            latitude: 42.287,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -74.0131,
-        latitude: 40.7118,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Kyle',
+        location: {
+            longitude: -74.0131,
+            latitude: 40.7118,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -122.009,
-        latitude: 37.3346,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Sidney',
+        location: {
+            longitude: -122.009,
+            latitude: 37.3346,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
     {
-        longitude: -73.620071,
-        latitude: 41.027054,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Lia',
+        location: {
+            longitude: -73.620071,
+            latitude: 41.027054,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
 ];
 
+type UserLocation = {
+    name?: string;
+    location: Region;
+};
+
 const GroupIcon: React.FunctionComponent<{
     groupName: string;
-    locations?: Region[];
+    locations?: UserLocation[];
     lightText?: boolean;
-    setLocations: (newLocations: Region[]) => void;
+    setLocations: React.Dispatch<React.SetStateAction<Region[]>>;
     setFocus?: React.Dispatch<React.SetStateAction<boolean>>;
     setBlur?: React.Dispatch<React.SetStateAction<boolean>>;
     setSearch?: React.Dispatch<React.SetStateAction<string>>;
+    setGroup?: React.Dispatch<React.SetStateAction<UserLocation[]>>;
 }> = ({
     groupName,
     locations = coordinates,
@@ -53,14 +74,20 @@ const GroupIcon: React.FunctionComponent<{
     setFocus,
     setBlur,
     setSearch,
+    setGroup,
 }) => (
     <TouchableWithoutFeedback
         onPress={() => {
-            setLocations(locations);
-            if (setFocus && setSearch && setBlur) {
+            setLocations(
+                Object.values(locations).map(
+                    (userLocation) => userLocation.location
+                )
+            );
+            if (setFocus && setSearch && setBlur && setGroup) {
                 setFocus(false);
                 setBlur(false);
                 setSearch('');
+                setGroup(locations);
             }
         }}
     >
