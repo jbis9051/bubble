@@ -36,8 +36,13 @@ const GroupsScreen = () => {
 
     return (
         <View style={{ flex: 1 }}>
-            <Map locations={locations} />
-            <SlideCard group={activeGroup} setLocations={setLocations} />
+            <Map locations={activeGroup} />
+            <SlideCard
+                group={activeGroup}
+                locations={locations}
+                setLocations={setLocations}
+                setGroups={setActiveGroup}
+            />
             {isFocused && (
                 <TouchableWithoutFeedback
                     onPress={() => {

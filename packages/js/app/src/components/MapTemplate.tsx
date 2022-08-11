@@ -6,12 +6,20 @@ import Marker from './Marker';
 
 MapboxGL.setAccessToken(process.env.REACT_APP_MAPBOX_ACCESS_TOKEN as string);
 
-const initialRegion: Region[] = [
+type UserLocation = {
+    name?: string;
+    location: Region;
+};
+
+const initialRegion: UserLocation[] = [
     {
-        longitude: -122.4324,
-        latitude: 37.78825,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
+        name: 'Anonymous',
+        location: {
+            longitude: -122.4324,
+            latitude: 37.78825,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+        },
     },
 ];
 
@@ -49,14 +57,22 @@ const regionContainingPoints = (locations: Region[]) => {
 };
 
 const MapTemplate: React.FunctionComponent<{
-    locations?: Region[];
+    locations?: UserLocation[];
     style?: StyleProp<ViewStyle>;
 }> = ({ locations = initialRegion, style }) => {
-    const [viewLocations, setViewLocations] = useState(locations);
-    const { latitude, longitude } = regionContainingPoints(locations);
+    const [viewLocations, setViewLocations] = useState(
+        Object.values(locations).map((userLocation) => userLocation.location)
+    );
+    const { latitude, longitude } = regionContainingPoints(
+        Object.values(locations).map((userLocation) => userLocation.location)
+    );
 
     useEffect(() => {
-        setViewLocations(locations);
+        setViewLocations(
+            Object.values(locations).map(
+                (userLocation) => userLocation.location
+            )
+        );
     }, [locations]);
 
     return Platform.OS === 'ios' ? (
@@ -65,11 +81,12 @@ const MapTemplate: React.FunctionComponent<{
             showsCompass={false}
             style={style}
         >
-            {locations.map((markerLocation, key) => (
+            {locations.map((userLocation, key) => (
                 <Marker
+                    name={userLocation.name}
                     coordinate={{
-                        latitude: markerLocation.latitude,
-                        longitude: markerLocation.longitude,
+                        latitude: userLocation.location.latitude,
+                        longitude: userLocation.location.longitude,
                     }}
                     key={key}
                 />

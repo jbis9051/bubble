@@ -4,8 +4,9 @@ import { Marker as MarkerView } from 'react-native-maps';
 import MapboxGL from '@rnmapbox/maps';
 
 const Marker: React.FunctionComponent<{
+    name: string;
     coordinate: { longitude: number; latitude: number };
-}> = ({ coordinate }) =>
+}> = ({ name, coordinate }) =>
     Platform.OS === 'ios' ? (
         <MarkerView
             coordinate={{
@@ -36,7 +37,7 @@ const Marker: React.FunctionComponent<{
                             fontSize: 48,
                         }}
                     >
-                        J
+                        {name[0]}
                     </Text>
                 </View>
                 <View
@@ -80,7 +81,7 @@ const Marker: React.FunctionComponent<{
                             fontSize: 48,
                         }}
                     >
-                        J
+                        {name[0]}
                     </Text>
                 </View>
                 <View

@@ -1,61 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, PanResponder, Dimensions, Text } from 'react-native';
+import { View, PanResponder, Dimensions } from 'react-native';
 import { Region } from 'react-native-maps';
 import SlideCardTemplate from '../SlideCardTemplate';
-import ProfileImageTemplate from '../ProfileImageTemplate';
-
-import styles from './styles';
-
-const coordinates: Region[] = [
-    {
-        longitude: -74.6551,
-        latitude: 40.3431,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
-    },
-    {
-        longitude: -83.7382,
-        latitude: 42.287,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
-    },
-    {
-        longitude: -74.0131,
-        latitude: 40.7118,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
-    },
-    {
-        longitude: -122.009,
-        latitude: 37.3346,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
-    },
-    {
-        longitude: -73.620071,
-        latitude: 41.027054,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.015,
-    },
-];
+import UserInfo from './UserInfo';
 
 const heightProps = {
-    startingHeight: 150,
-    minHeight: 45,
+    startingHeight: 100,
+    minHeight: 0,
     marginTopHeight: 200,
 };
 
 type UserLocation = {
     name?: string;
     location: Region;
-    longitude?: number;
-    latitude?: number;
 };
 
 const SlideCard: React.FunctionComponent<{
     group: UserLocation[];
+    locations: Region[];
     setLocations: React.Dispatch<React.SetStateAction<Region[]>>;
-}> = ({ group, setLocations }) => {
+    setGroups: React.Dispatch<React.SetStateAction<UserLocation[]>>;
+}> = ({ group, locations, setLocations, setGroups }) => {
     const { startingHeight, minHeight, marginTopHeight } = heightProps;
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const prevHeight = useRef(startingHeight);
@@ -64,7 +29,7 @@ const SlideCard: React.FunctionComponent<{
     useEffect(() => {
         setBottomHeight(startingHeight);
         prevHeight.current = startingHeight;
-    }, [group]);
+    }, [group, locations]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -97,36 +62,12 @@ const SlideCard: React.FunctionComponent<{
             >
                 <View>
                     {group.map((user, key) => (
-                        <View
+                        <UserInfo
+                            user={user}
                             key={key}
-                            style={{
-                                flexDirection: 'row',
-                                margin: 10,
-                            }}
-                        >
-                            <ProfileImageTemplate source="" size={50} />
-                            <View
-                                style={{
-                                    flexDirection: 'column',
-                                    marginLeft: 10,
-                                }}
-                            >
-                                <Text style={{ fontSize: 24 }}>
-                                    {user.name ?? 'Anonymous'}
-                                </Text>
-                                {user.location && (
-                                    <Text>
-                                        {user.location.longitude}{' '}
-                                        {user.location.latitude}
-                                    </Text>
-                                )}
-                                {user.longitude && user.latitude && (
-                                    <Text>
-                                        {user.longitude} {user.latitude}
-                                    </Text>
-                                )}
-                            </View>
-                        </View>
+                            setGroups={setGroups}
+                            setLocations={setLocations}
+                        />
                     ))}
                 </View>
             </SlideCardTemplate>
