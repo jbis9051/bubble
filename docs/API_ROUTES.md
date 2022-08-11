@@ -95,7 +95,7 @@ Request Data:
 ```
 
 ### Get Users From Group
-
+#### Returns Uuids of all users in the specified group
 ```http request
 GET /group/<id>/get_users
 ```
@@ -105,10 +105,9 @@ Response:
 ```json
 {
   "UserID": [
-    1,
-    2,
-    3,
-    10
+    2a680053-a824-44e0-9edf-9f5b7155a392,
+    0a784c65-ae55-45c1-a0c5-e5e013271b63,
+    b29fe319-94e1-4d80-8b61-51e4cd3ddb7e,
   ]
 }
 ```

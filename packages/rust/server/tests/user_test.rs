@@ -260,11 +260,11 @@ async fn test_signin_signout() {
     });
 
     let user = CreateUser {
-        email: "test@gmail.com".to_string(),
-        username: "testusername".to_string(),
-        password: "testpassword".to_string(),
+        email: "eltonjohn@gmail.com".to_string(),
+        username: "candleinthewind".to_string(),
+        password: "tinydancer".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "theretreat".to_string(),
     };
 
     let (token, user) = helper::initialize_user(&db, &client, &user).await.unwrap();
@@ -272,12 +272,12 @@ async fn test_signin_signout() {
     let session = Session::from_token(&db, token).await.unwrap();
     cleanup.resources.session_id = Some(session.id);
 
-    assert_eq!(user.username, "testusername");
-    assert_eq!(user.password, "testpassword");
+    assert_eq!(user.username, "candleinthewind");
+    assert_eq!(user.password, "tinydancer");
     assert_eq!(user.profile_picture, None);
-    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.email, Some("eltonjohn@gmail.com".to_string()));
     assert_eq!(user.phone, None);
-    assert_eq!(user.name, "testname");
+    assert_eq!(user.name, "theretreat");
     assert_eq!(session.user_id, user.id);
     assert_eq!(session.token, token);
 
