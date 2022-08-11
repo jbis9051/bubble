@@ -303,9 +303,10 @@ async fn add_user() {
         .await;
     assert_eq!(res.status(), StatusCode::OK);
     let user_ids: UserID = res.json().await;
-    assert_eq!(*user_ids.users.get(0).unwrap(), creator.id.to_string());
-    assert_eq!(*user_ids.users.get(1).unwrap(), billy_joel.id.to_string());
-    assert_eq!(*user_ids.users.get(2).unwrap(), kanye_west.id.to_string());
+
+    assert_eq!(*user_ids.users.get(0).unwrap(), creator.uuid.to_string());
+    assert_eq!(*user_ids.users.get(1).unwrap(), billy_joel.uuid.to_string());
+    assert_eq!(*user_ids.users.get(2).unwrap(), kanye_west.uuid.to_string());
 }
 
 #[tokio::test]

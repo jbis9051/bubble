@@ -129,6 +129,7 @@ async fn add_users(
     Ok(StatusCode::OK)
 }
 
+//returns UUID of members
 async fn members(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -146,11 +147,14 @@ async fn members(
     if user_role != Role::Admin {
         return Err(StatusCode::UNAUTHORIZED);
     }
+    let users_in_group = group.members(&db).await.map_err(map_sqlx_err)?;
+    let mut user_uuids_in_group = UserID { users: vec![] };
+    user_uuids_in_group.users = users_in_group
+        .iter()
+        .map(|user| user.uuid.to_string())
+        .collect::<Vec<String>>();
 
-    let users_in_group = UserID {
-        users: group.members(&db).await.map_err(map_sqlx_err)?,
-    };
-    Ok((StatusCode::OK, Json(users_in_group)))
+    Ok((StatusCode::OK, Json(user_uuids_in_group)))
 }
 
 // //request JSON: vec<user_ids>

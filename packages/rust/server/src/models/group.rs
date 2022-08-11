@@ -55,20 +55,25 @@ impl Group {
         Ok((role_id as u8).try_into().unwrap())
     }
 
-    pub async fn members(&self, db: &DbPool) -> Result<Vec<String>, sqlx::Error> {
+    pub async fn members(&self, db: &DbPool) -> Result<Vec<User>, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 ")
             .bind(self.id)
             .fetch_all(db)
             .await?;
-        let users_in_group = row
-            .iter()
-            .map(|entry| entry.get::<i32, &str>("user_id").to_string())
-            .collect::<Vec<String>>();
+        let mut users_in_group: Vec<User> = vec![];
+        for i in row {
+            users_in_group.push(User::from_id(db, i.get("id")).await.unwrap());
+        }
+        Ok(users_in_group)
+        // let users_in_group = row
+        //     .iter()
+        //     .map(|entry| entry.get::<i32, &str>("user_id").to_string())
+        //     .collect::<Vec<String>>();
+
+        // let users_in_group_fmt = users_in_group.iter().map(|entry| User::from_id(&db, i32::from_str(entry).unwrap())).collect::<Vec<User>>();
 
         // let users_in_group = row.iter().map(|entry| entry.get("user_id")).collect::<Vec<i32>>();
         // let user_in_group_fmt = users_in_group.iter().map(|entry| entry.to_string()).collect::<Vec<String>>();
-
-        Ok(users_in_group)
     }
 
     fn from_row(row: &PgRow) -> Group {
