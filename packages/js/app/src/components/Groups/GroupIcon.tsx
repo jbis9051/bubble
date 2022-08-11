@@ -43,6 +43,7 @@ const GroupIcon: React.FunctionComponent<{
     lightText?: boolean;
     setLocations: (newLocations: Region[]) => void;
     setFocus?: React.Dispatch<React.SetStateAction<boolean>>;
+    setBlur?: React.Dispatch<React.SetStateAction<boolean>>;
     setSearch?: React.Dispatch<React.SetStateAction<string>>;
 }> = ({
     groupName,
@@ -50,13 +51,15 @@ const GroupIcon: React.FunctionComponent<{
     lightText,
     setLocations,
     setFocus,
+    setBlur,
     setSearch,
 }) => (
     <TouchableWithoutFeedback
         onPress={() => {
             setLocations(locations);
-            if (setFocus && setSearch) {
+            if (setFocus && setSearch && setBlur) {
                 setFocus(false);
+                setBlur(false);
                 setSearch('');
             }
         }}

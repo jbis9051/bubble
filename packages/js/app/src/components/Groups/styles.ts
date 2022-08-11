@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     groupContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        margin: 13,
+        margin: 8,
     },
     groupIcon: {
         borderRadius: 15,

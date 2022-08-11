@@ -20,16 +20,21 @@ const initialRegions: Region[] = [
 const GroupsScreen = () => {
     const [locations, setLocations] = useState(initialRegions);
     const [isFocused, setFocus] = useState(false);
+    const [isBlurred, setBlur] = useState(false);
     const [search, setSearch] = useState('');
     const insets = useSafeAreaInsets();
-    const deviceWidth = Dimensions.get('window').width;
 
     return (
         <View style={{ flex: 1 }}>
             <Map locations={locations} />
             <SlideCard locations={locations} setLocations={setLocations} />
             {isFocused && (
-                <TouchableWithoutFeedback onPress={() => setFocus(false)}>
+                <TouchableWithoutFeedback
+                    onPress={() => {
+                        setFocus(false);
+                        setBlur(false);
+                    }}
+                >
                     <BlurView
                         blurType="light"
                         style={{
@@ -45,9 +50,11 @@ const GroupsScreen = () => {
             <SearchBar
                 insets={insets}
                 search={search}
+                isBlurred={isBlurred}
                 isFocused={isFocused}
                 setFocus={setFocus}
                 setSearch={setSearch}
+                setBlur={setBlur}
             />
             {isFocused && (
                 <SearchGroups
@@ -56,6 +63,7 @@ const GroupsScreen = () => {
                     setLocations={setLocations}
                     setFocus={setFocus}
                     setSearch={setSearch}
+                    setBlur={setBlur}
                 />
             )}
         </View>

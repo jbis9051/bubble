@@ -42,8 +42,8 @@ const coordinates: Region[] = [
 ];
 
 const heightProps = {
-    startingHeight: 70,
-    minHeight: 70,
+    startingHeight: 45,
+    minHeight: 45,
     marginTopHeight: 200,
 };
 
@@ -85,13 +85,10 @@ const SlideCard: React.FunctionComponent<{
                     height: bottomHeight,
                     position: 'absolute',
                     bottom: 0,
-                    marginTop: 0,
                 }}
                 panResponder={panResponder}
             >
                 <View>
-                    <Text style={styles.peopleHeading}>Groups</Text>
-                    <DividerLine />
                     <View style={styles.groupView}>
                         <GroupIcon
                             groupName="Group 1"
