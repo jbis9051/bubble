@@ -30,18 +30,17 @@ const GroupsScreen = () => {
     const [isFocused, setFocus] = useState(false);
     const [isBlurred, setBlur] = useState(false);
     const [search, setSearch] = useState('');
-    const [activeGroup, setActiveGroup] =
-        useState<UserLocation[]>(initialRegions);
+    const [group, setGroup] = useState<UserLocation[]>(initialRegions);
     const insets = useSafeAreaInsets();
 
     return (
         <View style={{ flex: 1 }}>
-            <Map locations={activeGroup} />
+            <Map locations={group} />
             <SlideCard
-                group={activeGroup}
+                group={group}
                 locations={locations}
                 setLocations={setLocations}
-                setGroups={setActiveGroup}
+                setGroups={setGroup}
             />
             {isFocused && (
                 <TouchableWithoutFeedback
@@ -79,7 +78,7 @@ const GroupsScreen = () => {
                     setFocus={setFocus}
                     setSearch={setSearch}
                     setBlur={setBlur}
-                    setGroup={setActiveGroup}
+                    setGroup={setGroup}
                 />
             )}
         </View>
