@@ -107,10 +107,7 @@ impl Group {
             .await?;
         let mut users_in_group: Vec<User> = vec![];
         for i in row {
-            let user_to_be_added = match User::from_id(db, i.get("id")).await {
-                Ok(user_to_be_added) => user_to_be_added,
-                Err(_) => return Err(sqlx::Error::RowNotFound),
-            };
+            let user_to_be_added = User::from_id(db, i.get("id")).await?;
             users_in_group.push(user_to_be_added);
         }
         Ok(users_in_group)

@@ -3,6 +3,11 @@ use axum::routing::{delete, post};
 use axum::Router;
 use axum::{Extension, Json};
 
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
+
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
@@ -41,11 +46,11 @@ async fn signup(
     db: Extension<DbPool>,
     Json(payload): Json<CreateUser>,
 ) -> Result<StatusCode, StatusCode> {
-    let user = User {
+    let mut user = User {
         id: 0,
         uuid: Uuid::new_v4(),
         username: payload.username,
-        password: payload.password,
+        password: String::new(),
         profile_picture: None,
         email: None,
         phone: payload.phone,
@@ -53,7 +58,10 @@ async fn signup(
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     //TODO add verification that email being used to create "confirmation" table is not in "user" table (transaction?)
-    let user = user.create(&db.0).await.map_err(map_sqlx_err)?;
+    let user = user
+        .create(&db.0, &payload.password)
+        .await
+        .map_err(map_sqlx_err)?;
 
     let conf = Confirmation {
         id: 0,
@@ -132,24 +140,28 @@ async fn signin(
     let user = User::from_email(&db.0, &payload.email)
         .await
         .map_err(map_sqlx_err)?;
-    if user.password == payload.password {
-        let session = Session {
-            id: 0,
-            user_id: user.id,
-            token: Uuid::new_v4(),
-            created: NaiveDateTime::from_timestamp(0, 0),
-        };
-        let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
 
-        Ok((
-            StatusCode::CREATED,
-            Json(SessionToken {
-                token: session.token.to_string(),
-            }),
-        ))
-    } else {
-        Err(StatusCode::NOT_FOUND)
-    }
+    let password = payload.password.as_bytes();
+
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
+    let session = Session {
+        id: 0,
+        user_id: user.id,
+        token: Uuid::new_v4(),
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
+    let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(SessionToken {
+            token: session.token.to_string(),
+        }),
+    ))
 }
 
 // user must be signed in
@@ -209,7 +221,12 @@ async fn forgot_confirm(
         .await
         .map_err(map_sqlx_err)?;
     forgot.delete(&db.0).await.map_err(map_sqlx_err)?;
-    user.password = payload.password;
+
+    let password = payload.password.as_bytes();
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+
+    user.password = argon2.hash_password(password, &salt).unwrap().to_string();
     user.update(&db.0).await.map_err(map_sqlx_err)?;
     Ok(StatusCode::CREATED)
 }
