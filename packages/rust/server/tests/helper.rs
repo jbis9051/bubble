@@ -1,5 +1,4 @@
 use axum_test_helper::{TestClient, TestResponse};
-use std::env;
 
 use bubble::models::user::User;
 use bubble::router;
@@ -14,42 +13,91 @@ use bubble::models::confirmation::Confirmation;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, SessionToken, SignInJson};
 
 use bubble::models::session::Session;
-use sqlx::migrate::MigrateDatabase;
-use sqlx::Postgres;
+use std::future::Future;
+use std::{env, thread};
+use tokio::runtime::Runtime;
 use uuid::Uuid;
 
-pub struct TempDatabase {
-    pool: DbPool,
-    _db_url: String,
+#[macro_export]
+macro_rules! cleanup {
+    ($structdef: tt, |$dbarg:ident, $resourcesarg: ident| $code: expr) => {{
+        #[derive(Default)]
+        struct CleanupResources
+            $structdef
+
+        let cleanup_resources = CleanupResources::default();
+
+        use sqlx::postgres::PgPoolOptions;
+        use std::env;
+
+        async fn cleanup($resourcesarg: CleanupResources) {
+            let $dbarg = PgPoolOptions::new()
+                .max_connections(5)
+                .connect(&env::var("DB_URL").unwrap())
+                .await
+                .unwrap();
+            $code
+        }
+
+        $crate::helper::Cleanup::new(Box::new(cleanup), cleanup_resources)
+    }};
+
+    (|$dbarg:ident| $code: expr) => {{
+        use sqlx::postgres::PgPoolOptions;
+        use std::env;
+
+        async fn cleanup(_: ()) {
+            let $dbarg = PgPoolOptions::new()
+                .max_connections(5)
+                .connect(&env::var("DB_URL").unwrap())
+                .await
+                .unwrap();
+            $code
+        }
+
+        $crate::helper::Cleanup::new(Box::new(cleanup), ())
+    }}
 }
 
-impl TempDatabase {
-    pub async fn new() -> Self {
-        let db_url = format!("{}/{}", env::var("DB_URL").unwrap(), Uuid::new_v4());
-        Postgres::create_database(&db_url).await.unwrap();
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&db_url)
-            .await
-            .unwrap();
+type CB<F, Resources> = Box<dyn Fn(Resources) -> F>;
 
-        sqlx::migrate!("../db/migrations").run(&pool).await.unwrap();
+pub struct Cleanup<F: 'static + Future + Send, Resources: Default> {
+    cleanup: Option<CB<F, Resources>>,
+    pub resources: Resources,
+}
 
+impl<F: 'static + Future + Send, Resources: Default> Cleanup<F, Resources> {
+    pub fn new(cleanup: CB<F, Resources>, resources: Resources) -> Self {
         Self {
-            pool,
-            _db_url: db_url,
+            cleanup: Some(cleanup),
+            resources,
         }
     }
-
-    pub fn pool(&self) -> &DbPool {
-        &self.pool
+}
+impl<F: 'static + Future + Send, Resources: Default> Drop for Cleanup<F, Resources> {
+    fn drop(&mut self) {
+        let cleanup = self.cleanup.take().unwrap();
+        let resources = std::mem::take(&mut self.resources);
+        let future = cleanup(resources);
+        thread::spawn(|| {
+            Runtime::new().unwrap().block_on(future);
+        })
+        .join();
     }
 }
 
-pub async fn start_server(pool: DbPool) -> TestClient {
+pub async fn start_server() -> (DbPool, TestClient) {
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&env::var("DB_URL").unwrap())
+        .await
+        .unwrap();
+
+    let pool2 = pool.clone();
+
     let router = router::router(pool);
 
-    TestClient::new(router)
+    (pool2, TestClient::new(router))
 }
 
 // For user authentication testing only
@@ -216,9 +264,10 @@ pub async fn initialize_user(
 pub async fn create_group(
     _db: &DbPool,
     client: &TestClient,
-    group_name: String,
+    group_name: &str,
     bearer: String,
 ) -> Result<TestResponse, sqlx::Error> {
+    let group_name: String = group_name.parse().unwrap();
     let res = client
         .post("/group/create")
         .header("Content-Type", "application/json")
