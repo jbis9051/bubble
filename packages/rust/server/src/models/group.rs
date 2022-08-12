@@ -15,6 +15,15 @@ pub struct Group {
     pub created: chrono::NaiveDateTime,
     pub members: Vec<Uuid>,
 }
+
+pub struct UserGroup {
+    pub id: i32,
+    pub user_id: i32,
+    pub group_id: i32,
+    pub role_id: Role,
+    pub created: chrono::NaiveDateTime,
+}
+
 #[derive(Debug, PartialEq)]
 #[repr(u8)]
 pub enum Role {
@@ -37,6 +46,43 @@ impl TryFrom<u8> for Role {
 #[derive(sqlx::FromRow)]
 pub struct UserIDs {
     pub user_ids: Vec<String>,
+}
+
+#[derive(sqlx::FromRow)]
+pub struct GroupIDs {
+    pub group_ids: Vec<UserGroup>,
+}
+
+pub async fn delete_user_groups(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM user_group WHERE user_id = $1")
+        .bind(user_id)
+        .execute(db)
+        .await?;
+    Ok(())
+}
+
+pub async fn get_user_groups(db: &DbPool, user_id_in: i32) -> Result<Vec<UserGroup>, sqlx::Error> {
+    let mut user_groups: Vec<UserGroup> = vec![];
+    let row = sqlx::query("SELECT * FROM user_group WHERE user_id = $1")
+        .bind(user_id_in)
+        .fetch_all(db)
+        .await?;
+    for i in row {
+        let role_id: i32 = i.get("role_id");
+        let user_role = match Role::try_from(role_id as u8) {
+            Ok(user_role) => user_role,
+            Err(_) => return Err(sqlx::Error::RowNotFound),
+        };
+        let new_user_group = UserGroup {
+            id: i.get("id"),
+            user_id: user_id_in,
+            group_id: i.get("group_id"),
+            role_id: user_role,
+            created: i.get("created"),
+        };
+        user_groups.push(new_user_group);
+    }
+    Ok(user_groups)
 }
 
 impl Group {
