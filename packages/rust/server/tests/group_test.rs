@@ -66,7 +66,7 @@ async fn read_group() {
         name: "girl".to_string(),
     };
 
-    let (token, test_user) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (token, _) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -81,9 +81,6 @@ async fn read_group() {
     let group_info: GroupInfo = res.json().await;
     let group_name = group_info.name;
     let group_uuid = group_info.uuid;
-    let group_uuid_fmt = Uuid::parse_str(&group_uuid).unwrap();
-    let temp_group = Group::from_uuid(db.pool(), group_uuid_fmt).await.unwrap();
-    let _user_group: (i32, i32) = (temp_group.id, test_user.id);
 
     let read_route = format!("/group/{}", group_uuid);
 
@@ -99,7 +96,6 @@ async fn read_group() {
     assert_eq!(read_group.uuid, group_uuid);
 }
 
-//route get_users is also tested to verify add_users
 #[tokio::test]
 async fn add_user() {
     let db = TempDatabase::new().await;
@@ -126,8 +122,6 @@ async fn add_user() {
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
 
-    let _group_uuid_ref: &str = &*group_uuid;
-
     let first_user = CreateUser {
         email: "bj@gmail.com".to_string(),
         username: "Billy Joel".to_string(),
@@ -135,7 +129,7 @@ async fn add_user() {
         phone: None,
         name: "uptownworld".to_string(),
     };
-    let (_token_user_1, billy_joel) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_, billy_joel) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -146,7 +140,7 @@ async fn add_user() {
         phone: None,
         name: "iwontfinishthesent".to_string(),
     };
-    let (_token_user_2, kanye_west) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_, kanye_west) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -171,10 +165,9 @@ async fn add_user() {
 
     let billy_joel_role = new_group.role(db.pool(), billy_joel.id).await.unwrap();
     let kanye_west_role = new_group.role(db.pool(), kanye_west.id).await.unwrap();
-    assert_eq!(billy_joel_role, Role::Child);
-    assert_eq!(kanye_west_role, Role::Child);
+    assert_eq!(billy_joel_role, Role::Member);
+    assert_eq!(kanye_west_role, Role::Member);
 
-    //TESTING GET_USERS, A SEPERATE TEST WOULD BE VERY WET
     let bearer = format!("Bearer {}", token_admin);
     let read_route = format!("/group/{}/members", group_uuid);
     let res = client
@@ -223,7 +216,7 @@ async fn delete_user() {
         phone: None,
         name: "ninetofive".to_string(),
     };
-    let (_token_user_1, dolly_parton) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_, dolly_parton) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -234,7 +227,7 @@ async fn delete_user() {
         phone: None,
         name: "arabella".to_string(),
     };
-    let (_token_user_2, artic_monkeys) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_, artic_monkeys) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -279,7 +272,7 @@ async fn delete_user() {
             .await
             .unwrap();
     let artic_monkeys_role: i32 = remaining_user_group_row.get("role_id");
-    assert_eq!(artic_monkeys_role, Role::Child as i32);
+    assert_eq!(artic_monkeys_role, Role::Member as i32);
 
     let remaining_user_group_status =
         match helper::get_user_group(db.pool(), new_group.id, artic_monkeys.id).await {
@@ -342,7 +335,7 @@ async fn change_name() {
         phone: None,
         name: "Neutral Milk Hotel".to_string(),
     };
-    let (token_admin, _creator) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (token_admin, _) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -397,7 +390,7 @@ async fn delete() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (token_admin, _creator) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (token_admin, _) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 

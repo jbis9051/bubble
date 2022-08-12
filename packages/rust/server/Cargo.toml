@@ -17,9 +17,6 @@ axum = {version = "0.5.10", features =["headers"]}
 # Random number generator
 rand_core = "0.6.3"
 
-# Password Hashing
-argon2 = "0.4.1"
-
 [dependencies.uuid]
 features = ["v4"]
 

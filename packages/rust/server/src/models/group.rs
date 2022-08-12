@@ -4,6 +4,7 @@ use sqlx::postgres::PgRow;
 use sqlx::types::chrono;
 
 use crate::models::user::User;
+
 use sqlx::types::Uuid;
 use sqlx::Row;
 
@@ -18,7 +19,7 @@ pub struct Group {
 #[repr(u8)]
 pub enum Role {
     Admin = 0,
-    Child = 1,
+    Member = 1,
 }
 
 impl TryFrom<u8> for Role {
@@ -27,15 +28,10 @@ impl TryFrom<u8> for Role {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Role::Admin),
-            1 => Ok(Role::Child),
+            1 => Ok(Role::Member),
             _ => Err(()),
         }
     }
-}
-
-#[derive(sqlx::FromRow)]
-pub struct UserID {
-    id: i32,
 }
 
 #[derive(sqlx::FromRow)]
@@ -44,7 +40,6 @@ pub struct UserIDs {
 }
 
 impl Group {
-    //returns role of user in a group from user_group
     pub async fn role(&self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
             .bind(self.id)
@@ -52,7 +47,11 @@ impl Group {
             .fetch_one(db)
             .await?;
         let role_id: i32 = row.get("role_id");
-        Ok((role_id as u8).try_into().unwrap())
+        let role_enum = match Role::try_from(role_id as u8) {
+            Ok(role_enum) => role_enum,
+            Err(_) => return Err(sqlx::Error::RowNotFound),
+        };
+        Ok(role_enum)
     }
 
     pub async fn members(&self, db: &DbPool) -> Result<Vec<User>, sqlx::Error> {
@@ -62,18 +61,13 @@ impl Group {
             .await?;
         let mut users_in_group: Vec<User> = vec![];
         for i in row {
-            users_in_group.push(User::from_id(db, i.get("id")).await.unwrap());
+            let user_to_be_added = match User::from_id(db, i.get("id")).await {
+                Ok(user_to_be_added) => user_to_be_added,
+                Err(_) => return Err(sqlx::Error::RowNotFound),
+            };
+            users_in_group.push(user_to_be_added);
         }
         Ok(users_in_group)
-        // let users_in_group = row
-        //     .iter()
-        //     .map(|entry| entry.get::<i32, &str>("user_id").to_string())
-        //     .collect::<Vec<String>>();
-
-        // let users_in_group_fmt = users_in_group.iter().map(|entry| User::from_id(&db, i32::from_str(entry).unwrap())).collect::<Vec<User>>();
-
-        // let users_in_group = row.iter().map(|entry| entry.get("user_id")).collect::<Vec<i32>>();
-        // let user_in_group_fmt = users_in_group.iter().map(|entry| entry.to_string()).collect::<Vec<String>>();
     }
 
     fn from_row(row: &PgRow) -> Group {
@@ -146,7 +140,6 @@ impl Group {
         Ok(())
     }
 
-    //Roles: Owner, User
     pub async fn add_user(&mut self, db: &DbPool, user: User) -> Result<(), sqlx::Error> {
         sqlx::query(
             "INSERT INTO user_group (user_id, group_id, role_id)
@@ -154,7 +147,7 @@ impl Group {
         )
         .bind(user.id)
         .bind(self.id)
-        .bind(Role::Child as i32)
+        .bind(Role::Member as i32)
         .execute(db)
         .await?;
         self.members.push(user.uuid);

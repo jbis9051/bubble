@@ -24,10 +24,6 @@ pub fn router() -> Router {
         .route("/:id/members", get(members))
 }
 
-// Accept data -> deserialiable
-// Return Data -> Serializable
-
-//create and read functions
 #[derive(Default, Deserialize, Serialize)]
 pub struct GroupInfo {
     pub uuid: String,
@@ -38,9 +34,7 @@ pub struct GroupInfo {
 #[derive(Deserialize, Serialize)]
 pub struct GroupName {
     pub name: String,
-    //token string
 }
-//Respond with JSON: id, name, created_date
 
 async fn create(
     db: Extension<DbPool>,
@@ -66,7 +60,6 @@ async fn create(
     Ok((StatusCode::CREATED, Json(new_group)))
 }
 
-// respond with JSON: id, name, created_date
 async fn read(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -75,7 +68,6 @@ async fn read(
     let uuid_converted: Uuid =
         Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    //UNSURE IF COLUMN INDEX OUT OF BOUNDS IS NECESSARY
     let group: Group = Group::from_uuid(&db.0, uuid_converted)
         .await
         .map_err(map_sqlx_err)?;
@@ -99,7 +91,6 @@ pub struct UserID {
     pub users: Vec<String>,
 }
 
-//request JSON: vec<user_ids>
 async fn add_users(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -129,7 +120,6 @@ async fn add_users(
     Ok(StatusCode::OK)
 }
 
-//returns UUID of members
 async fn members(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -157,7 +147,6 @@ async fn members(
     Ok((StatusCode::OK, Json(user_uuids_in_group)))
 }
 
-// //request JSON: vec<user_ids>
 async fn delete_users(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -174,13 +163,15 @@ async fn delete_users(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    // TODO Transaciton or something
     for member_uuid in &payload.users {
         let user_id = Uuid::parse_str(member_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
         let user = User::from_uuid(&db.0, user_id)
             .await
             .map_err(map_sqlx_err)?;
-        let user_role = group.role(&db, user.id).await.unwrap();
+        let user_role = group
+            .role(&db, user.id)
+            .await
+            .map_err(|_| StatusCode::BAD_REQUEST)?;
         if user_role == Role::Admin {
             return Err(StatusCode::BAD_REQUEST);
         }
@@ -190,14 +181,11 @@ async fn delete_users(
     Ok(StatusCode::OK)
 }
 
-//
 #[derive(Deserialize, Serialize)]
 pub struct NameChange {
     pub name: String,
 }
 
-//
-// //request json: name
 async fn change_name(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -213,7 +201,7 @@ async fn change_name(
     if user_role != Role::Admin {
         return Err(StatusCode::UNAUTHORIZED);
     }
-    //must resolve where normal rust or json is how requests replies sent
+
     let name_to_change: &str = &payload.name;
     group.group_name = name_to_change
         .parse()
@@ -223,7 +211,6 @@ async fn change_name(
     Ok(StatusCode::OK)
 }
 
-// //none, just id passed from path
 async fn delete_group(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,

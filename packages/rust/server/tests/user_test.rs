@@ -34,8 +34,7 @@ async fn create_user() {
         .unwrap();
 
     assert_eq!(user.username, created_user.username);
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, created_user.password);
+    assert_eq!(user.password, created_user.password);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, None);
     assert_eq!(user.phone, created_user.phone);
@@ -62,6 +61,7 @@ async fn create_user() {
         )
         .send()
         .await;
+    let _session = &Session::filter_user_id(db.pool(), user.id).await.unwrap()[0];
 
     assert_eq!(confirm_res.status(), StatusCode::CREATED);
 
@@ -70,8 +70,7 @@ async fn create_user() {
         .unwrap();
 
     assert_eq!(user.username, created_user.username);
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, created_user.password);
+    assert_eq!(user.password, created_user.password);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some(created_user.email));
     assert_eq!(user.phone, created_user.phone);
@@ -98,8 +97,7 @@ async fn create_multiple_user() {
         .unwrap()[0];
 
     assert_eq!(brian.username, "machine_learning_man");
-    println!("password = {}", brian.password);
-    //assert_eq!(brian.password, "lots_of_abstraction");
+    assert_eq!(brian.password, "lots_of_abstraction");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, None);
     assert_eq!(brian.phone, None);
@@ -121,9 +119,10 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
+    println!("Something is about to go wrong");
+
     assert_eq!(timmy.username, "web_development_dude");
-    println!("password = {}", timmy.password);
-    //assert_eq!(timmy.password, "html_rocks");
+    assert_eq!(timmy.password, "html_rocks");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, None);
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
@@ -141,8 +140,7 @@ async fn create_multiple_user() {
     let brian_session = &Session::filter_user_id(db.pool(), brian.id).await.unwrap()[0];
 
     assert_eq!(brian.username, "machine_learning_man");
-    println!("password = {}", brian.password);
-    //assert_eq!(brian.password, "lots_of_abstraction");
+    assert_eq!(brian.password, "lots_of_abstraction");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, Some("python@gmail.com".to_string()));
     assert_eq!(brian.phone, None);
@@ -165,8 +163,7 @@ async fn create_multiple_user() {
         .unwrap()[0];
 
     assert_eq!(bill.username, "big_programmer_pro");
-    println!("password = {}", bill.password);
-    //assert_eq!(bill.password, "cool_crustacean");
+    assert_eq!(bill.password, "cool_crustacean");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, None);
     assert_eq!(bill.phone, Some("18004321234".to_string()));
@@ -184,8 +181,7 @@ async fn create_multiple_user() {
     let bill_session = &Session::filter_user_id(db.pool(), bill.id).await.unwrap()[0];
 
     assert_eq!(bill.username, "big_programmer_pro");
-    println!("password = {}", bill.password);
-    //assert_eq!(bill.password, "cool_crustacean");
+    assert_eq!(bill.password, "cool_crustacean");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, Some("rust@gmail.com".to_string()));
     assert_eq!(bill.phone, Some("18004321234".to_string()));
@@ -203,8 +199,7 @@ async fn create_multiple_user() {
     let timmy_session = &Session::filter_user_id(db.pool(), timmy.id).await.unwrap()[0];
 
     assert_eq!(timmy.username, "web_development_dude");
-    println!("password = {}", timmy.password);
-    //assert_eq!(timmy.password, "html_rocks");
+    assert_eq!(timmy.password, "html_rocks");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, Some("javascript@gmail.com".to_string()));
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
@@ -219,25 +214,25 @@ async fn test_signin_signout() {
     let client = start_server(db.pool().clone()).await;
 
     let user = CreateUser {
-        email: "test@gmail.com".to_string(),
-        username: "testusername".to_string(),
-        password: "testpassword".to_string(),
+        email: "eltonjohn@gmail.com".to_string(),
+        username: "candleinthewind".to_string(),
+        password: "tinydancer".to_string(),
         phone: None,
-        name: "testname".to_string(),
+        name: "theretreat".to_string(),
     };
 
-    let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
+
     let session = Session::from_token(db.pool(), token).await.unwrap();
 
-    assert_eq!(user.username, "testusername");
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, "testpassword");
+    assert_eq!(user.username, "candleinthewind");
+    assert_eq!(user.password, "tinydancer");
     assert_eq!(user.profile_picture, None);
-    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.email, Some("eltonjohn@gmail.com".to_string()));
     assert_eq!(user.phone, None);
-    assert_eq!(user.name, "testname");
+    assert_eq!(user.name, "theretreat");
     assert_eq!(session.user_id, user.id);
     assert_eq!(session.token, token);
 
@@ -248,11 +243,11 @@ async fn test_signin_signout() {
     let sessions = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(sessions.len(), 0);
 
-    user.password = "testpassword".to_string();
     let token = helper::signin_user(db.pool(), &client, &user)
         .await
         .unwrap();
     let session = Session::from_token(db.pool(), token).await.unwrap();
+
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 }
@@ -272,10 +267,11 @@ async fn test_change_email() {
     let (token, user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
+
     let session = Session::from_token(db.pool(), token).await.unwrap();
+
     assert_eq!(user.username, "emailtestusername");
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, "testpassword");
+    assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
     assert_eq!(user.phone, None);
@@ -307,8 +303,7 @@ async fn test_change_email() {
     let session = Session::from_token(db.pool(), token).await.unwrap();
 
     assert_eq!(user.username, "emailtestusername");
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, "testpassword");
+    assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("newtest@gmail.com".to_string()));
     assert_eq!(user.phone, None);

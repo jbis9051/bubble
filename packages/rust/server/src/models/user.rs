@@ -2,11 +2,6 @@ use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
-use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
-    Argon2,
-};
-
 use crate::types::DbPool;
 
 use sqlx::types::chrono::NaiveDateTime;
@@ -40,13 +35,7 @@ impl From<PgRow> for User {
 }
 
 impl User {
-    pub async fn create(&mut self, db: &DbPool, password: &str) -> Result<User, sqlx::Error> {
-        let password = password.as_bytes();
-        let salt = SaltString::generate(&mut OsRng);
-        let argon2 = Argon2::default();
-
-        self.password = argon2.hash_password(password, &salt).unwrap().to_string();
-
+    pub async fn create(&self, db: &DbPool) -> Result<User, sqlx::Error> {
         Ok(sqlx::query(
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
                              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;",
@@ -84,10 +73,10 @@ impl User {
         let uuid = Uuid::parse_str(session_token).unwrap();
         Ok(sqlx::query(
             "SELECT *
-                 FROM session_token
+                 FROM session
                  INNER JOIN \"user\"
-                 ON session_token.user_id = \"user\".id
-                 WHERE session_token.token = $1;",
+                 ON session.user_id = \"user\".id
+                 WHERE session.token = $1;",
         )
         .bind(uuid)
         .fetch_one(db)
