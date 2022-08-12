@@ -5,8 +5,6 @@ use std::borrow::Borrow;
 use bubble::models::group::{Group, Role};
 use bubble::routes::group::{GroupInfo, NameChange, UserID};
 
-use sqlx::Executor;
-
 use sqlx::Row;
 
 use bubble::routes::user::CreateUser;
@@ -85,7 +83,7 @@ async fn read_group() {
     let group_uuid = group_info.uuid;
     let group_uuid_fmt = Uuid::parse_str(&group_uuid).unwrap();
     let temp_group = Group::from_uuid(db.pool(), group_uuid_fmt).await.unwrap();
-    let user_group: (i32, i32) = (temp_group.id, test_user.id);
+    let _user_group: (i32, i32) = (temp_group.id, test_user.id);
 
     let read_route = format!("/group/{}", group_uuid);
 
@@ -128,7 +126,7 @@ async fn add_user() {
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
 
-    let group_uuid_ref: &str = &*group_uuid;
+    let _group_uuid_ref: &str = &*group_uuid;
 
     let first_user = CreateUser {
         email: "bj@gmail.com".to_string(),
@@ -137,7 +135,7 @@ async fn add_user() {
         phone: None,
         name: "uptownworld".to_string(),
     };
-    let (token_user_1, billy_joel) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_token_user_1, billy_joel) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -148,7 +146,7 @@ async fn add_user() {
         phone: None,
         name: "iwontfinishthesent".to_string(),
     };
-    let (token_user_2, kanye_west) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_token_user_2, kanye_west) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -225,7 +223,7 @@ async fn delete_user() {
         phone: None,
         name: "ninetofive".to_string(),
     };
-    let (token_user_1, dolly_parton) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_token_user_1, dolly_parton) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -236,7 +234,7 @@ async fn delete_user() {
         phone: None,
         name: "arabella".to_string(),
     };
-    let (token_user_2, artic_monkeys) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (_token_user_2, artic_monkeys) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -344,7 +342,7 @@ async fn change_name() {
         phone: None,
         name: "Neutral Milk Hotel".to_string(),
     };
-    let (token_admin, creator) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (token_admin, _creator) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
@@ -399,7 +397,7 @@ async fn delete() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (token_admin, creator) = helper::initialize_user(db.pool(), &client, &first_user)
+    let (token_admin, _creator) = helper::initialize_user(db.pool(), &client, &first_user)
         .await
         .unwrap();
 
