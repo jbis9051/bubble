@@ -4,6 +4,11 @@ use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser};
 
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
+
 use bubble::models::session::Session;
 
 mod helper;
@@ -33,9 +38,13 @@ async fn create_user() {
         .await
         .unwrap();
 
+    let password = "password".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(user.username, created_user.username);
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, created_user.password);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, None);
     assert_eq!(user.phone, created_user.phone);
@@ -69,9 +78,13 @@ async fn create_user() {
         .await
         .unwrap();
 
+    let password = "password".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(user.username, created_user.username);
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, created_user.password);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some(created_user.email));
     assert_eq!(user.phone, created_user.phone);
@@ -97,9 +110,13 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
+    let password = "lots_of_abstraction".as_bytes();
+    let parsed_hash = PasswordHash::new(&brian.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(brian.username, "machine_learning_man");
-    println!("password = {}", brian.password);
-    //assert_eq!(brian.password, "lots_of_abstraction");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, None);
     assert_eq!(brian.phone, None);
@@ -121,9 +138,13 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
+    let password = "html_rocks".as_bytes();
+    let parsed_hash = PasswordHash::new(&timmy.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(timmy.username, "web_development_dude");
-    println!("password = {}", timmy.password);
-    //assert_eq!(timmy.password, "html_rocks");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, None);
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
@@ -140,9 +161,13 @@ async fn create_multiple_user() {
             .unwrap();
     let brian_session = &Session::filter_user_id(db.pool(), brian.id).await.unwrap()[0];
 
+    let password = "lots_of_abstraction".as_bytes();
+    let parsed_hash = PasswordHash::new(&brian.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(brian.username, "machine_learning_man");
-    println!("password = {}", brian.password);
-    //assert_eq!(brian.password, "lots_of_abstraction");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, Some("python@gmail.com".to_string()));
     assert_eq!(brian.phone, None);
@@ -164,9 +189,13 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
+    let password = "cool_crustacean".as_bytes();
+    let parsed_hash = PasswordHash::new(&bill.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(bill.username, "big_programmer_pro");
-    println!("password = {}", bill.password);
-    //assert_eq!(bill.password, "cool_crustacean");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, None);
     assert_eq!(bill.phone, Some("18004321234".to_string()));
@@ -183,9 +212,13 @@ async fn create_multiple_user() {
             .unwrap();
     let bill_session = &Session::filter_user_id(db.pool(), bill.id).await.unwrap()[0];
 
+    let password = "cool_crustacean".as_bytes();
+    let parsed_hash = PasswordHash::new(&bill.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(bill.username, "big_programmer_pro");
-    println!("password = {}", bill.password);
-    //assert_eq!(bill.password, "cool_crustacean");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, Some("rust@gmail.com".to_string()));
     assert_eq!(bill.phone, Some("18004321234".to_string()));
@@ -202,9 +235,13 @@ async fn create_multiple_user() {
             .unwrap();
     let timmy_session = &Session::filter_user_id(db.pool(), timmy.id).await.unwrap()[0];
 
+    let password = "html_rocks".as_bytes();
+    let parsed_hash = PasswordHash::new(&timmy.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(timmy.username, "web_development_dude");
-    println!("password = {}", timmy.password);
-    //assert_eq!(timmy.password, "html_rocks");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, Some("javascript@gmail.com".to_string()));
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
@@ -231,9 +268,13 @@ async fn test_signin_signout() {
         .unwrap();
     let session = Session::from_token(db.pool(), token).await.unwrap();
 
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(user.username, "testusername");
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
     assert_eq!(user.phone, None);
@@ -273,9 +314,14 @@ async fn test_change_email() {
         .await
         .unwrap();
     let session = Session::from_token(db.pool(), token).await.unwrap();
+
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(user.username, "emailtestusername");
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
     assert_eq!(user.phone, None);
