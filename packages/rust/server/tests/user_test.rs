@@ -1,4 +1,4 @@
-use crate::helper::start_server;
+use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
@@ -10,7 +10,8 @@ mod helper;
 
 #[tokio::test]
 async fn create_user() {
-    let (db, client) = start_server().await;
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
 
     let created_user = CreateUser {
         email: "test@gmail.com".to_string(),
@@ -20,22 +21,6 @@ async fn create_user() {
         name: "John Doe".to_string(),
     };
 
-    let mut cleanup = cleanup!({
-        pub confirmation_id: Option<i32>,
-        pub session_id: Option<i32>,
-        pub user_username: Option<String>,
-    }, |db, resources| {
-        if let Some(confirmation_id) = resources.confirmation_id {
-            sqlx::query("DELETE FROM confirmation WHERE id = $1").bind(&confirmation_id).execute(&db).await.unwrap();
-        }
-        if let Some(session_id) = resources.session_id {
-            sqlx::query("DELETE FROM session_token WHERE id = $1").bind(&session_id).execute(&db).await.unwrap();
-        }
-        if let Some(username) = resources.user_username {
-            sqlx::query("DELETE FROM \"user\" WHERE username = $1").bind(&username).execute(&db).await.unwrap();
-        }
-
-    });
     let res = client
         .post("/user/signup")
         .header("Content-Type", "application/json")
@@ -44,9 +29,7 @@ async fn create_user() {
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    cleanup.resources.user_username = Some(created_user.username.clone());
-
-    let user = User::from_username(&db, &created_user.username)
+    let user = User::from_username(db.pool(), &created_user.username)
         .await
         .unwrap();
 
@@ -57,11 +40,12 @@ async fn create_user() {
     assert_eq!(user.phone, created_user.phone);
     assert_eq!(user.name, created_user.name);
 
-    let confirmations = Confirmation::filter_user_id(&db, user.id).await.unwrap();
+    let confirmations = Confirmation::filter_user_id(db.pool(), user.id)
+        .await
+        .unwrap();
     assert_eq!(confirmations.len(), 1);
 
     let confirmation = &confirmations[0];
-    cleanup.resources.confirmation_id = Some(confirmation.id);
 
     assert_eq!(confirmation.user_id, user.id);
     assert_eq!(confirmation.email, created_user.email);
@@ -77,13 +61,11 @@ async fn create_user() {
         )
         .send()
         .await;
-    cleanup.resources.confirmation_id = None;
-    let session = &Session::filter_user_id(&db, user.id).await.unwrap()[0];
-    cleanup.resources.session_id = Some(session.id);
+    let session = &Session::filter_user_id(db.pool(), user.id).await.unwrap()[0];
 
     assert_eq!(confirm_res.status(), StatusCode::CREATED);
 
-    let user = User::from_username(&db, &created_user.username)
+    let user = User::from_username(db.pool(), &created_user.username)
         .await
         .unwrap();
 
@@ -97,23 +79,8 @@ async fn create_user() {
 
 #[tokio::test]
 async fn create_multiple_user() {
-    let (db, client) = start_server().await;
-
-    let mut cleanup = cleanup!({
-        pub confirmation_id: Vec<i32>,
-        pub session_id: Vec<i32>,
-        pub user_id: Vec<i32>,
-    }, |db, resources| {
-        for id in resources.confirmation_id {
-            sqlx::query("DELETE FROM confirmation WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-        for id in resources.session_id {
-            sqlx::query("DELETE FROM session_token WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-        for id in resources.user_id {
-            sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-    });
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
 
     let brian_in = CreateUser {
         email: "python@gmail.com".to_string(),
@@ -122,13 +89,12 @@ async fn create_multiple_user() {
         phone: None,
         name: "Brian".to_string(),
     };
-    let (brian, _brian_link) = helper::signup_user(&db, &client, &brian_in).await.unwrap();
-    let brian_confirmation = &Confirmation::filter_user_id(&db, brian.id).await.unwrap()[0];
-    cleanup.resources.user_id.push(brian.id);
-    cleanup
-        .resources
-        .confirmation_id
-        .push(brian_confirmation.id);
+    let (brian, _brian_link) = helper::signup_user(db.pool(), &client, &brian_in)
+        .await
+        .unwrap();
+    let brian_confirmation = &Confirmation::filter_user_id(db.pool(), brian.id)
+        .await
+        .unwrap()[0];
 
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.password, "lots_of_abstraction");
@@ -146,13 +112,13 @@ async fn create_multiple_user() {
         phone: Some("66260701534".to_string()),
         name: "Little Timmy III".to_string(),
     };
-    let (timmy, _timmy_link) = helper::signup_user(&db, &client, &timmy_in).await.unwrap();
-    let timmy_confirmation = &Confirmation::filter_user_id(&db, timmy.id).await.unwrap()[0];
-    cleanup.resources.user_id.push(timmy.id);
-    cleanup
-        .resources
-        .confirmation_id
-        .push(timmy_confirmation.id);
+    let (timmy, _timmy_link) = helper::signup_user(db.pool(), &client, &timmy_in)
+        .await
+        .unwrap();
+    let timmy_confirmation = &Confirmation::filter_user_id(db.pool(), timmy.id)
+        .await
+        .unwrap()[0];
+
     println!("Something is about to go wrong");
 
     assert_eq!(timmy.username, "web_development_dude");
@@ -167,12 +133,11 @@ async fn create_multiple_user() {
     let brian_confirm_in = Confirm {
         link_id: brian_confirmation.link_id.to_string(),
     };
-    let (brian, brian_token) = helper::signup_confirm_user(&db, &client, &brian_confirm_in, &brian)
-        .await
-        .unwrap();
-    let brian_session = &Session::filter_user_id(&db, brian.id).await.unwrap()[0];
-    cleanup.resources.confirmation_id.remove(0);
-    cleanup.resources.session_id.push(brian_session.id);
+    let (brian, brian_token) =
+        helper::signup_confirm_user(db.pool(), &client, &brian_confirm_in, &brian)
+            .await
+            .unwrap();
+    let brian_session = &Session::filter_user_id(db.pool(), brian.id).await.unwrap()[0];
 
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.password, "lots_of_abstraction");
@@ -190,10 +155,12 @@ async fn create_multiple_user() {
         phone: Some("18004321234".to_string()),
         name: "bill".to_string(),
     };
-    let (bill, _bill_link) = helper::signup_user(&db, &client, &bill_in).await.unwrap();
-    let bill_confirmation = &Confirmation::filter_user_id(&db, bill.id).await.unwrap()[0];
-    cleanup.resources.user_id.push(bill.id);
-    cleanup.resources.confirmation_id.push(bill_confirmation.id);
+    let (bill, _bill_link) = helper::signup_user(db.pool(), &client, &bill_in)
+        .await
+        .unwrap();
+    let bill_confirmation = &Confirmation::filter_user_id(db.pool(), bill.id)
+        .await
+        .unwrap()[0];
 
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.password, "cool_crustacean");
@@ -207,12 +174,11 @@ async fn create_multiple_user() {
     let bill_confirm_in = Confirm {
         link_id: bill_confirmation.link_id.to_string(),
     };
-    let (bill, bill_token) = helper::signup_confirm_user(&db, &client, &bill_confirm_in, &bill)
-        .await
-        .unwrap();
-    let bill_session = &Session::filter_user_id(&db, bill.id).await.unwrap()[0];
-    cleanup.resources.confirmation_id.remove(1);
-    cleanup.resources.session_id.push(bill_session.id);
+    let (bill, bill_token) =
+        helper::signup_confirm_user(db.pool(), &client, &bill_confirm_in, &bill)
+            .await
+            .unwrap();
+    let bill_session = &Session::filter_user_id(db.pool(), bill.id).await.unwrap()[0];
 
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.password, "cool_crustacean");
@@ -226,12 +192,11 @@ async fn create_multiple_user() {
     let timmy_confirm_in = Confirm {
         link_id: timmy_confirmation.link_id.to_string(),
     };
-    let (timmy, timmy_token) = helper::signup_confirm_user(&db, &client, &timmy_confirm_in, &timmy)
-        .await
-        .unwrap();
-    let timmy_session = &Session::filter_user_id(&db, timmy.id).await.unwrap()[0];
-    cleanup.resources.confirmation_id.remove(0);
-    cleanup.resources.session_id.push(timmy_session.id);
+    let (timmy, timmy_token) =
+        helper::signup_confirm_user(db.pool(), &client, &timmy_confirm_in, &timmy)
+            .await
+            .unwrap();
+    let timmy_session = &Session::filter_user_id(db.pool(), timmy.id).await.unwrap()[0];
 
     assert_eq!(timmy.username, "web_development_dude");
     assert_eq!(timmy.password, "html_rocks");
@@ -245,19 +210,8 @@ async fn create_multiple_user() {
 
 #[tokio::test]
 async fn test_signin_signout() {
-    let (db, client) = start_server().await;
-
-    let mut cleanup = cleanup!({
-        pub session_id: Option<i32>,
-        pub user_id: Option<i32>,
-    }, |db, resources| {
-        if let Some(id) = resources.session_id {
-            sqlx::query("DELETE FROM session_token WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-        if let Some(id) = resources.user_id {
-            sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-    });
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
 
     let user = CreateUser {
         email: "eltonjohn@gmail.com".to_string(),
@@ -267,10 +221,11 @@ async fn test_signin_signout() {
         name: "theretreat".to_string(),
     };
 
-    let (token, user) = helper::initialize_user(&db, &client, &user).await.unwrap();
-    cleanup.resources.user_id = Some(user.id);
-    let session = Session::from_token(&db, token).await.unwrap();
-    cleanup.resources.session_id = Some(session.id);
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+
+    let session = Session::from_token(db.pool(), token).await.unwrap();
 
     assert_eq!(user.username, "candleinthewind");
     assert_eq!(user.password, "tinydancer");
@@ -281,38 +236,26 @@ async fn test_signin_signout() {
     assert_eq!(session.user_id, user.id);
     assert_eq!(session.token, token);
 
-    helper::signout_user(&db, &client, &session).await.unwrap();
-    cleanup.resources.session_id = None;
+    helper::signout_user(db.pool(), &client, &session)
+        .await
+        .unwrap();
 
-    let sessions = Session::filter_user_id(&db, user.id).await.unwrap();
+    let sessions = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(sessions.len(), 0);
 
-    let token = helper::signin_user(&db, &client, &user).await.unwrap();
-    let session = Session::from_token(&db, token).await.unwrap();
-    cleanup.resources.session_id = Some(session.id);
+    let token = helper::signin_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    let session = Session::from_token(db.pool(), token).await.unwrap();
+
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 }
 
 #[tokio::test]
 async fn test_change_email() {
-    let (db, client) = start_server().await;
-
-    let mut cleanup = cleanup!({
-        pub confirmation_id: Option<i32>,
-        pub session_id: Option<i32>,
-        pub user_id: Option<i32>,
-    }, |db, resources| {
-        if let Some(id) = resources.confirmation_id {
-            sqlx::query("DELETE FROM confirmation WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-        if let Some(id) = resources.session_id {
-            sqlx::query("DELETE FROM session_token WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-        if let Some(id) = resources.user_id {
-            sqlx::query("DELETE FROM \"user\" WHERE id = $1").bind(id).execute(&db).await.unwrap();
-        }
-    });
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
 
     let user = CreateUser {
         email: "emailtest@gmail.com".to_string(),
@@ -321,10 +264,12 @@ async fn test_change_email() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (token, user) = helper::initialize_user(&db, &client, &user).await.unwrap();
-    cleanup.resources.user_id = Some(user.id);
-    let session = Session::from_token(&db, token).await.unwrap();
-    cleanup.resources.session_id = Some(session.id);
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+
+    let session = Session::from_token(db.pool(), token).await.unwrap();
+
     assert_eq!(user.username, "emailtestusername");
     assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
@@ -338,9 +283,12 @@ async fn test_change_email() {
         session_token: token.to_string(),
         new_email: "newtest@gmail.com".to_string(),
     };
-    let link_id = helper::change_email(&db, &client, &change).await.unwrap();
-    let confirmation = Confirmation::from_link_id(&db, link_id).await.unwrap();
-    cleanup.resources.confirmation_id = Some(confirmation.id);
+    let link_id = helper::change_email(db.pool(), &client, &change)
+        .await
+        .unwrap();
+    let confirmation = Confirmation::from_link_id(db.pool(), link_id)
+        .await
+        .unwrap();
     assert_eq!(confirmation.user_id, user.id);
     assert_eq!(confirmation.link_id, link_id);
     assert_eq!(confirmation.email, change.new_email);
@@ -348,13 +296,11 @@ async fn test_change_email() {
     let confirm = Confirm {
         link_id: link_id.to_string(),
     };
-    let (user, token) = helper::change_email_confirm(&db, &client, &confirm)
+    let (user, token) = helper::change_email_confirm(db.pool(), &client, &confirm)
         .await
         .unwrap();
     println!("token2: {:?}", token);
-    cleanup.resources.confirmation_id = None;
-    let session = Session::from_token(&db, token).await.unwrap();
-    cleanup.resources.session_id = Some(session.id);
+    let session = Session::from_token(db.pool(), token).await.unwrap();
 
     assert_eq!(user.username, "emailtestusername");
     assert_eq!(user.password, "testpassword");

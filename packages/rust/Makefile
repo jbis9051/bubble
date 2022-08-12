@@ -20,9 +20,7 @@ test_db_ci: stop_ci start_ci
 
 test_server_ci: stop_ci start_ci
 	docker build db --tag db
-	docker run --rm --network="host" -e DATABASE_URL=postgres://user:pass@localhost:5433/db db migrate
-	cd server && DB_URL=postgres://user:pass@localhost:5433/db cargo test --tests && cd ..
-	cd db && ./cleanup_test.sh && cd ..
+	cd server && DB_URL=postgres://user:pass@localhost:5433 cargo test --tests && cd ..
 
 fmt_ci:
 	cargo fmt --all -- --check
