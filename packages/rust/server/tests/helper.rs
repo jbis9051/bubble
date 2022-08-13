@@ -1,4 +1,5 @@
 use axum_test_helper::{TestClient, TestResponse};
+use std::borrow::Borrow;
 use std::env;
 
 use bubble::models::user::User;
@@ -150,6 +151,7 @@ pub async fn change_email(
         .fetch_one(db)
         .await
         .unwrap()
+        .borrow()
         .into();
 
     Ok(confirmation.link_id)

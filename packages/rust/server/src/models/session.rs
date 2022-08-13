@@ -1,6 +1,7 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
+use std::borrow::Borrow;
 
 use uuid::Uuid;
 
@@ -11,17 +12,6 @@ pub struct Session {
     pub user_id: i32,
     pub token: Uuid,
     pub created: NaiveDateTime,
-}
-
-impl From<PgRow> for Session {
-    fn from(row: PgRow) -> Session {
-        Session {
-            id: row.get("id"),
-            user_id: row.get("user_id"),
-            token: row.get("token"),
-            created: row.get("created"),
-        }
-    }
 }
 
 impl From<&PgRow> for Session {
@@ -43,6 +33,7 @@ impl Session {
                 .bind(&self.token)
                 .fetch_one(db)
                 .await?
+                .borrow()
                 .into(),
         )
     }
@@ -62,6 +53,7 @@ impl Session {
             .bind(token)
             .fetch_one(db)
             .await?
+            .borrow()
             .into())
     }
 

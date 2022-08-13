@@ -1,6 +1,7 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
+use std::borrow::Borrow;
 use uuid::Uuid;
 
 use crate::types::DbPool;
@@ -11,18 +12,6 @@ pub struct Confirmation {
     pub link_id: Uuid,
     pub email: String,
     pub created: NaiveDateTime,
-}
-
-impl From<PgRow> for Confirmation {
-    fn from(row: PgRow) -> Self {
-        Confirmation {
-            id: row.get("id"),
-            user_id: row.get("user_id"),
-            link_id: row.get("link_id"),
-            email: row.get("email"),
-            created: row.get("created"),
-        }
-    }
 }
 
 impl From<&PgRow> for Confirmation {
@@ -48,6 +37,7 @@ impl Confirmation {
         .bind(&self.email)
         .fetch_one(db)
         .await?
+        .borrow()
         .into())
     }
 
@@ -72,6 +62,7 @@ impl Confirmation {
                 .bind(link_id)
                 .fetch_one(db)
                 .await?
+                .borrow()
                 .into(),
         )
     }

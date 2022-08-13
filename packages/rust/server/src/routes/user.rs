@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
     Router::new()
+        .route("/", delete(delete_user))
         .route("/signup", post(signup))
         .route("/signup-confirm", post(signup_confirm))
         .route("/signin", post(signin))
@@ -30,7 +31,6 @@ pub fn router() -> Router {
         .route("/forgot-confirm", post(forgot_confirm))
         .route("/change-email", post(change_email))
         .route("/change-email-confirm", post(change_email_confirm))
-        .route("/delete", delete(delete_user))
 }
 
 #[derive(Deserialize, Serialize)]

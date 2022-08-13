@@ -1,6 +1,7 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::{Acquire, Row};
+use std::borrow::Borrow;
 
 use crate::models::group::Group;
 
@@ -26,8 +27,8 @@ pub struct User {
     pub deleted: Option<NaiveDateTime>,
 }
 
-impl From<PgRow> for User {
-    fn from(row: PgRow) -> Self {
+impl From<&PgRow> for User {
+    fn from(row: &PgRow) -> Self {
         User {
             id: row.get("id"),
             uuid: row.get("uuid"),
@@ -80,7 +81,9 @@ impl User {
         .bind(Some(email))
         .fetch_one(&mut tx)
         .await?
+        .borrow()
         .into();
+
         tx.commit().await?;
 
         Ok(user)
@@ -90,8 +93,8 @@ impl User {
         Ok(sqlx::query("SELECT * FROM \"user\" WHERE id = $1;")
             .bind(id)
             .fetch_one(db)
-            .await
-            .unwrap()
+            .await?
+            .borrow()
             .into())
     }
 
@@ -100,6 +103,7 @@ impl User {
             .bind(username)
             .fetch_one(db)
             .await?
+            .borrow()
             .into())
     }
 
@@ -115,6 +119,7 @@ impl User {
         .bind(uuid)
         .fetch_one(db)
         .await?
+        .borrow()
         .into())
     }
 
@@ -123,6 +128,7 @@ impl User {
             .bind(email)
             .fetch_one(db)
             .await?
+            .borrow()
             .into())
     }
 
@@ -131,6 +137,7 @@ impl User {
             .bind(uuid)
             .fetch_one(db)
             .await?
+            .borrow()
             .into())
     }
 

@@ -2,6 +2,7 @@ use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::Row;
+use std::borrow::Borrow;
 
 use crate::types::DbPool;
 
@@ -12,8 +13,8 @@ pub struct Forgot {
     pub created: NaiveDateTime,
 }
 
-impl From<PgRow> for Forgot {
-    fn from(row: PgRow) -> Self {
+impl From<&PgRow> for Forgot {
+    fn from(row: &PgRow) -> Self {
         Forgot {
             id: row.get("id"),
             user_id: row.get("user_id"),
@@ -32,6 +33,7 @@ impl Forgot {
                 .bind(uuid)
                 .fetch_one(db)
                 .await?
+                .borrow()
                 .into(),
         )
     }
@@ -44,6 +46,7 @@ impl Forgot {
         .bind(&self.forgot_id)
         .fetch_one(db)
         .await?
+        .borrow()
         .into())
     }
 

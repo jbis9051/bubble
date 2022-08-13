@@ -3,6 +3,7 @@ use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, DeleteJson, Email, ForgotConfirm};
+use std::borrow::Borrow;
 
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
@@ -346,6 +347,7 @@ async fn test_forgot_password() {
         .fetch_one(db.pool())
         .await
         .unwrap()
+        .borrow()
         .into();
 
     assert_eq!(forgot.user_id, user.id);
@@ -465,7 +467,7 @@ async fn test_delete_user() {
     };
 
     let res = client
-        .delete("/user/delete")
+        .delete("/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete_in).unwrap())
         .send()
