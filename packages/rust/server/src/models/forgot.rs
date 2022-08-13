@@ -12,8 +12,8 @@ pub struct Forgot {
     pub created: NaiveDateTime,
 }
 
-impl Forgot {
-    fn from_row(row: &PgRow) -> Forgot {
+impl From<PgRow> for Forgot {
+    fn from(row: PgRow) -> Self {
         Forgot {
             id: row.get("id"),
             user_id: row.get("user_id"),
@@ -21,32 +21,30 @@ impl Forgot {
             created: row.get("created"),
         }
     }
+}
 
+impl Forgot {
     pub async fn from_uuid(db: &DbPool, uuid: &str) -> Result<Forgot, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
-            .bind(uuid)
-            .fetch_one(db)
-            .await?;
+        let uuid = Uuid::parse_str(uuid).unwrap();
 
-        Ok(Forgot {
-            id: row.get("id"),
-            user_id: row.get("user_id"),
-            forgot_id: row.get("forgot_id"),
-            created: row.get("created"),
-        })
+        Ok(
+            sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
+                .bind(uuid)
+                .fetch_one(db)
+                .await?
+                .into(),
+        )
     }
 
     pub async fn create(&self, db: &DbPool) -> Result<Forgot, sqlx::Error> {
-        let row = sqlx::query(
+        Ok(sqlx::query(
             "INSERT INTO forgot_password (user_id, forgot_id) VALUES ($1, $2) RETURNING *;",
         )
         .bind(&self.user_id)
         .bind(&self.forgot_id)
         .fetch_one(db)
-        .await?;
-
-        let forgot = Forgot::from_row(&row);
-        Ok(forgot)
+        .await?
+        .into())
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {

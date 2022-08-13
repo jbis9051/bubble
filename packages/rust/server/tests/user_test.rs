@@ -2,12 +2,13 @@ use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser};
+use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Email, ForgotConfirm};
 
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
 };
+use bubble::models::forgot::Forgot;
 
 use bubble::models::session::Session;
 
@@ -296,6 +297,75 @@ async fn test_signin_signout() {
     let session = Session::from_token(db.pool(), token).await.unwrap();
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
+}
+
+#[tokio::test]
+async fn test_forgot_password() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "emailtest@gmail.com".to_string(),
+        username: "emailtestusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    let session = Session::from_token(db.pool(), token).await.unwrap();
+
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
+    assert_eq!(user.username, "emailtestusername");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(session.token, token);
+    assert_eq!(session.user_id, user.id);
+
+    let email_in = Email {
+        email: "emailtest@gmail.com".to_string(),
+    };
+    let res = client
+        .post("/user/forgot")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email_in).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let forgot: Forgot = sqlx::query("SELECT * FROM forgot_password WHERE user_id = $1;")
+        .bind(user.id)
+        .fetch_one(db.pool())
+        .await
+        .unwrap()
+        .into();
+
+    assert_eq!(forgot.user_id, user.id);
+    let confirm = ForgotConfirm {
+        password: "newtestpassword".to_string(),
+        forgot_code: forgot.forgot_id.to_string(),
+    };
+
+    let res = client
+        .post("/user/forgot-confirm")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&confirm).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    user.password = "newtestpassword".to_string();
+    let _token = helper::signin_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]

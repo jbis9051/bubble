@@ -178,9 +178,9 @@ async fn signout(
     Ok(StatusCode::OK)
 }
 
-#[derive(Deserialize)]
-struct Email {
-    email: String,
+#[derive(Serialize, Deserialize)]
+pub struct Email {
+    pub email: String,
 }
 
 async fn forgot(
@@ -205,10 +205,10 @@ async fn forgot(
     Ok(StatusCode::CREATED)
 }
 
-#[derive(Deserialize)]
-struct ForgotConfirm {
-    password: String,
-    forgot_code: String,
+#[derive(Serialize, Deserialize)]
+pub struct ForgotConfirm {
+    pub password: String,
+    pub forgot_code: String,
 }
 
 async fn forgot_confirm(
