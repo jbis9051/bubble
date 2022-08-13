@@ -9,7 +9,7 @@ CREATE TABLE "user"
     phone           VARCHAR(11) UNIQUE NULL,
     name            VARCHAR(255)        NOT NULL,
     created         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted         TIMESTAMP NULL,
+    deleted         TIMESTAMP NULL
 );
 
 CREATE TABLE location

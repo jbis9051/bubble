@@ -52,13 +52,12 @@ impl User {
         self.password = argon2.hash_password(password, &salt).unwrap().to_string();
 
         Ok(sqlx::query(
-            "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
-                             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
+            "INSERT INTO \"user\" (uuid, username, password, phone, name)
+                             VALUES ($1, $2, $3, $4, $5) RETURNING *;",
         )
         .bind(&self.uuid)
         .bind(&self.username)
         .bind(&self.password)
-        .bind(&self.profile_picture)
         .bind(&self.phone)
         .bind(&self.name)
         .fetch_one(db)
@@ -149,7 +148,7 @@ impl User {
             .bind(self.id)
             .execute(&mut tx)
             .await?;
-        sqlx::query("DELETE FROM session_token WHERE user_id = $1;")
+        sqlx::query("DELETE FROM session WHERE user_id = $1;")
             .bind(self.id)
             .execute(&mut tx)
             .await?;

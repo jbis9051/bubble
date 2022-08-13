@@ -5,7 +5,7 @@ use bubble::models::user::User;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser};
 
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
 };
 
