@@ -58,9 +58,8 @@ async fn signup(
         created: NaiveDateTime::from_timestamp(0, 0),
         deleted: None,
     };
-    //TODO add verification that email being used to create "confirmation" table is not in "user" table (transaction?)
     let user = user
-        .create(&db.0, &payload.password)
+        .create(&db.0, &payload.email, &payload.password)
         .await
         .map_err(map_sqlx_err)?;
 

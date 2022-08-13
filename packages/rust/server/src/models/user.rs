@@ -1,6 +1,6 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
-use sqlx::Row;
+use sqlx::{Acquire, Row};
 
 use crate::models::group::Group;
 
@@ -44,25 +44,46 @@ impl From<PgRow> for User {
 }
 
 impl User {
-    pub async fn create(&mut self, db: &DbPool, password: &str) -> Result<User, sqlx::Error> {
+    pub async fn create(
+        &mut self,
+        db: &DbPool,
+        email: &str,
+        password: &str,
+    ) -> Result<User, sqlx::Error> {
         let password = password.as_bytes();
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
 
         self.password = argon2.hash_password(password, &salt).unwrap().to_string();
+        let mut tx = db.begin().await?;
 
-        Ok(sqlx::query(
-            "INSERT INTO \"user\" (uuid, username, password, phone, name)
-                             VALUES ($1, $2, $3, $4, $5) RETURNING *;",
+        sqlx::query(
+            "INSERT INTO \"user\" (uuid, username, password, email, phone, name)
+                             VALUES ($1, $2, $3, $4, $5, $6);",
         )
         .bind(&self.uuid)
         .bind(&self.username)
         .bind(&self.password)
+        .bind(Some(email))
         .bind(&self.phone)
         .bind(&self.name)
-        .fetch_one(db)
+        .execute(&mut tx)
+        .await?;
+
+        let user = sqlx::query(
+            "UPDATE \"user\"
+                  SET email = $1
+                  WHERE email = $2
+                  RETURNING *;",
+        )
+        .bind(&self.email)
+        .bind(Some(email))
+        .fetch_one(&mut tx)
         .await?
-        .into())
+        .into();
+        tx.commit().await?;
+
+        Ok(user)
     }
 
     pub async fn from_id(db: &DbPool, id: i32) -> Result<User, sqlx::Error> {
@@ -98,7 +119,7 @@ impl User {
     }
 
     pub async fn from_email(db: &DbPool, email: &str) -> Result<User, sqlx::Error> {
-        Ok(sqlx::query("SELECT * FROM \"user\" WHERE email = $1")
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE email = $1;")
             .bind(email)
             .fetch_one(db)
             .await?
@@ -122,7 +143,7 @@ impl User {
                       email = $4,
                       phone = $5,
                       name = $6
-                  WHERE id = $7",
+                  WHERE id = $7;",
         )
         .bind(&self.username)
         .bind(&self.password)
