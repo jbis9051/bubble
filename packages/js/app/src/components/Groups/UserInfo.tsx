@@ -35,11 +35,7 @@ const UserInfo: React.FunctionComponent<{
             >
                 <Text style={{ fontSize: 24 }}>{user.name ?? 'Anonymous'}</Text>
                 <Text>Last Updated: Now</Text>
-                {user.location && (
-                    <Text>
-                        {user.location.longitude} {user.location.latitude}
-                    </Text>
-                )}
+                {user.location && <Text>United States of America, USA</Text>}
             </View>
         </View>
     </TouchableWithoutFeedback>
