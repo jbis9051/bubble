@@ -13,8 +13,8 @@ pub struct Confirmation {
     pub created: NaiveDateTime,
 }
 
-impl Confirmation {
-    pub fn from_row(row: &PgRow) -> Confirmation {
+impl From<PgRow> for Confirmation {
+    fn from(row: PgRow) -> Self {
         Confirmation {
             id: row.get("id"),
             user_id: row.get("user_id"),
@@ -23,9 +23,23 @@ impl Confirmation {
             created: row.get("created"),
         }
     }
+}
 
+impl From<&PgRow> for Confirmation {
+    fn from(row: &PgRow) -> Self {
+        Confirmation {
+            id: row.get("id"),
+            user_id: row.get("user_id"),
+            link_id: row.get("link_id"),
+            email: row.get("email"),
+            created: row.get("created"),
+        }
+    }
+}
+
+impl Confirmation {
     pub async fn create(&self, db: &DbPool) -> Result<Confirmation, sqlx::Error> {
-        let row = sqlx::query(
+        Ok(sqlx::query(
             "INSERT INTO confirmation (user_id, link_id, email)
                              VALUES ($1, $2, $3) RETURNING *;",
         )
@@ -33,10 +47,8 @@ impl Confirmation {
         .bind(&self.link_id)
         .bind(&self.email)
         .fetch_one(db)
-        .await?;
-
-        let conf = Confirmation::from_row(&row);
-        Ok(conf)
+        .await?
+        .into())
     }
 
     pub async fn filter_user_id(
@@ -49,19 +61,19 @@ impl Confirmation {
                 .fetch_all(db)
                 .await?
                 .iter()
-                .map(Self::from_row)
+                .map(|row| row.into())
                 .collect(),
         )
     }
 
     pub async fn from_link_id(db: &DbPool, link_id: Uuid) -> Result<Confirmation, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
-            .bind(link_id)
-            .fetch_one(db)
-            .await?;
-
-        let confirmation = Confirmation::from_row(&row);
-        Ok(confirmation)
+        Ok(
+            sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
+                .bind(link_id)
+                .fetch_one(db)
+                .await?
+                .into(),
+        )
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {

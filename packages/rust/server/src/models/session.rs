@@ -1,6 +1,7 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
+
 use uuid::Uuid;
 
 use crate::types::DbPool;
@@ -12,8 +13,8 @@ pub struct Session {
     pub created: NaiveDateTime,
 }
 
-impl Session {
-    fn from_row(row: &PgRow) -> Session {
+impl From<PgRow> for Session {
+    fn from(row: PgRow) -> Session {
         Session {
             id: row.get("id"),
             user_id: row.get("user_id"),
@@ -21,15 +22,29 @@ impl Session {
             created: row.get("created"),
         }
     }
+}
 
+impl From<&PgRow> for Session {
+    fn from(row: &PgRow) -> Self {
+        Session {
+            id: row.get("id"),
+            user_id: row.get("user_id"),
+            token: row.get("token"),
+            created: row.get("created"),
+        }
+    }
+}
+
+impl Session {
     pub async fn create(&self, db: &DbPool) -> Result<Session, sqlx::Error> {
-        let row = sqlx::query("INSERT INTO session (user_id, token) VALUES ($1, $2) RETURNING *;")
-            .bind(&self.user_id)
-            .bind(&self.token)
-            .fetch_one(db)
-            .await?;
-        let session = Session::from_row(&row);
-        Ok(session)
+        Ok(
+            sqlx::query("INSERT INTO session (user_id, token) VALUES ($1, $2) RETURNING *;")
+                .bind(&self.user_id)
+                .bind(&self.token)
+                .fetch_one(db)
+                .await?
+                .into(),
+        )
     }
 
     pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Session>, sqlx::Error> {
@@ -38,17 +53,16 @@ impl Session {
             .fetch_all(db)
             .await?
             .iter()
-            .map(Self::from_row)
+            .map(|row| row.into())
             .collect())
     }
 
     pub async fn from_token(db: &DbPool, token: Uuid) -> Result<Session, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM session WHERE token = $1;")
+        Ok(sqlx::query("SELECT * FROM session WHERE token = $1;")
             .bind(token)
             .fetch_one(db)
-            .await?;
-        let session = Session::from_row(&row);
-        Ok(session)
+            .await?
+            .into())
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {

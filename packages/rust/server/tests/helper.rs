@@ -145,12 +145,12 @@ pub async fn change_email(
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let row = sqlx::query("SELECT * FROM confirmation WHERE email = $1;")
+    let confirmation: Confirmation = sqlx::query("SELECT * FROM confirmation WHERE email = $1;")
         .bind(&change.new_email)
         .fetch_one(db)
         .await
-        .unwrap();
-    let confirmation = Confirmation::from_row(&row);
+        .unwrap()
+        .into();
 
     Ok(confirmation.link_id)
 }
