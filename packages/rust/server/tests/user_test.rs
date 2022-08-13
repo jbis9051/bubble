@@ -2,7 +2,7 @@ use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Email, ForgotConfirm};
+use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, DeleteJson, Email, ForgotConfirm};
 
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
@@ -305,8 +305,8 @@ async fn test_forgot_password() {
     let client = start_server(db.pool().clone()).await;
 
     let user = CreateUser {
-        email: "emailtest@gmail.com".to_string(),
-        username: "emailtestusername".to_string(),
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
         password: "testpassword".to_string(),
         phone: None,
         name: "testname".to_string(),
@@ -322,16 +322,16 @@ async fn test_forgot_password() {
         .verify_password(password, &parsed_hash)
         .unwrap();
 
-    assert_eq!(user.username, "emailtestusername");
+    assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
-    assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
+    assert_eq!(user.email, Some("test@gmail.com".to_string()));
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "testname");
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 
     let email_in = Email {
-        email: "emailtest@gmail.com".to_string(),
+        email: "test@gmail.com".to_string(),
     };
     let res = client
         .post("/user/forgot")
@@ -431,4 +431,60 @@ async fn test_change_email() {
     assert_eq!(user.name, "testname");
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
+}
+
+#[tokio::test]
+async fn test_delete_user() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    let session = Session::from_token(db.pool(), token).await.unwrap();
+
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
+    assert_eq!(session.token, token);
+    assert_eq!(session.user_id, user.id);
+
+    let delete_in = DeleteJson {
+        token: token.to_string(),
+        password: "testpassword".to_string(),
+    };
+
+    let res = client
+        .delete("/user/delete")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&delete_in).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let user = User::from_id(db.pool(), user.id).await.unwrap();
+
+    assert_eq!(user.password, "".to_string());
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, None);
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "".to_string());
+    assert!(user.deleted.is_some());
+
+    let rows = sqlx::query("SELECT * FROM session WHERE user_id = $1;")
+        .bind(user.id)
+        .execute(db.pool())
+        .await
+        .unwrap();
+    assert_eq!(rows.rows_affected(), 0);
 }

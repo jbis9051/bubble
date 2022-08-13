@@ -11,7 +11,7 @@ use argon2::{
 
 use crate::types::DbPool;
 
-use sqlx::types::chrono::NaiveDateTime;
+use sqlx::types::chrono::{NaiveDateTime, Utc};
 
 pub struct User {
     pub id: i32,
@@ -157,7 +157,7 @@ impl User {
                           SET deleted = $1
                          WHERE id = $2;",
         )
-        .bind("CURRENT_TIMESTAMP")
+        .bind(Utc::now())
         .bind(self.id)
         .execute(&mut tx)
         .await?;

@@ -301,8 +301,8 @@ async fn change_email_confirm(
 
 #[derive(Serialize, Deserialize)]
 pub struct DeleteJson {
-    token: String,
-    password: String,
+    pub token: String,
+    pub password: String,
 }
 async fn delete_user(
     db: Extension<DbPool>,
@@ -319,5 +319,5 @@ async fn delete_user(
         .unwrap();
 
     user.delete(&db.0).await.map_err(map_sqlx_err)?;
-    todo!()
+    Ok(StatusCode::OK)
 }
