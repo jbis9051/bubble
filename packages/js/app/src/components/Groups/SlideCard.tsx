@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, PanResponder, Dimensions } from 'react-native';
+import { View, Text, PanResponder, Dimensions, Alert } from 'react-native';
 import { Region } from 'react-native-maps';
 import SlideCardTemplate from '../SlideCardTemplate';
 import UserInfo from './UserInfo';
+import DividerLine from '../Misc/DividerLine';
+import styles from './styles';
 
 const heightProps = {
-    startingHeight: 100,
-    minHeight: 100,
+    startingHeight: 70,
+    minHeight: 70,
     marginTopHeight: 200,
 };
 
@@ -33,7 +35,8 @@ const SlideCard: React.FunctionComponent<{
     const { startingHeight, minHeight, marginTopHeight } = heightProps;
     const [bottomHeight, setBottomHeight] = useState(startingHeight);
     const prevHeight = useRef(startingHeight);
-    const deviceHeight = Dimensions.get('window').height;
+    const maxHeight = useRef(startingHeight);
+    const newHeight = useRef(startingHeight);
 
     useEffect(() => {
         setBottomHeight(startingHeight);
@@ -46,13 +49,14 @@ const SlideCard: React.FunctionComponent<{
             onMoveShouldSetPanResponderCapture: () => true,
             onPanResponderMove: (_e, gestureState) => {
                 const newDeviceHeight = Math.min(
-                    deviceHeight - marginTopHeight,
+                    maxHeight.current,
                     Math.max(prevHeight.current - gestureState.dy, minHeight)
                 );
+                newHeight.current = newDeviceHeight;
                 setBottomHeight(newDeviceHeight);
             },
             onPanResponderRelease(_e, gestureState) {
-                prevHeight.current -= gestureState.dy;
+                prevHeight.current = newHeight.current;
             },
         })
     ).current;
@@ -69,7 +73,14 @@ const SlideCard: React.FunctionComponent<{
                 }}
                 panResponder={panResponder}
             >
-                <View>
+                <View
+                    onLayout={(event) => {
+                        maxHeight.current =
+                            event.nativeEvent.layout.height + 20;
+                    }}
+                >
+                    <Text style={styles.peopleHeading}>Group 1</Text>
+                    <DividerLine />
                     {userGroup.map((user, key) => (
                         <UserInfo
                             user={user}
