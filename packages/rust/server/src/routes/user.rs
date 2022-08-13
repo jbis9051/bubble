@@ -56,6 +56,7 @@ async fn signup(
         phone: payload.phone,
         name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
+        deleted: None,
     };
     //TODO add verification that email being used to create "confirmation" table is not in "user" table (transaction?)
     let user = user
@@ -307,9 +308,15 @@ async fn delete_user(
     db: Extension<DbPool>,
     Json(payload): Json<DeleteJson>,
 ) -> Result<StatusCode, StatusCode> {
-    let user = User::from_session(&db.0, &payload.token)
+    let mut user = User::from_session(&db.0, &payload.token)
         .await
         .map_err(map_sqlx_err)?;
+
+    let password = payload.password.as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
 
     user.delete(&db.0).await.map_err(map_sqlx_err)?;
     todo!()

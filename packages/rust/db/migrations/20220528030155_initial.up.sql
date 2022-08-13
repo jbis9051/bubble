@@ -4,11 +4,12 @@ CREATE TABLE "user"
     uuid            UUID UNIQUE         NOT NULL,
     username        VARCHAR(255) UNIQUE NOT NULL,
     password        VARCHAR(255)        NOT NULL,
-    profile_picture VARCHAR(255)        NULL,
+    profile_picture VARCHAR(255) NULL,
     email           VARCHAR(255) UNIQUE NULL,
-    phone           VARCHAR(11) UNIQUE  NULL,
+    phone           VARCHAR(11) UNIQUE NULL,
     name            VARCHAR(255)        NOT NULL,
-    created         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted         TIMESTAMP NULL,
 );
 
 CREATE TABLE location
@@ -58,9 +59,9 @@ CREATE TABLE message
 (
     id            serial PRIMARY KEY,
     attachment_id INT REFERENCES attachment (id) NULL,
-    group_id      INT REFERENCES "group" (id)    NOT NULL,
-    user_id       INT REFERENCES "user" (id)     NOT NULL,
-    content       VARCHAR(255)                   NULL,
+    group_id      INT REFERENCES "group" (id) NOT NULL,
+    user_id       INT REFERENCES "user" (id)  NOT NULL,
+    content       VARCHAR(255) NULL,
     created       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -85,7 +86,7 @@ CREATE TABLE session
 (
     id      SERIAL PRIMARY KEY,
     user_id INT REFERENCES "user" (id) NOT NULL,
-    token   UUID UNIQUE         NOT NULL,
+    token   UUID UNIQUE                NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 

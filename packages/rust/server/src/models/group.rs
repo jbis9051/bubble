@@ -113,7 +113,7 @@ impl Group {
         Ok(users_in_group)
     }
 
-    fn from_row(row: &PgRow) -> Group {
+    pub fn from_row(row: &PgRow) -> Group {
         Group {
             id: row.get("id"),
             uuid: row.get("uuid"),
@@ -172,7 +172,11 @@ impl Group {
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM \"user_group\" WHERE group_id = $1")
+        sqlx::query("DELETE FROM user_group WHERE group_id = $1")
+            .bind(self.id)
+            .execute(db)
+            .await?;
+        sqlx::query("DELETE FROM location_group WHERE group_id = $1")
             .bind(self.id)
             .execute(db)
             .await?;
@@ -194,6 +198,34 @@ impl Group {
         .execute(db)
         .await?;
         self.members.push(user.uuid);
+        Ok(())
+    }
+
+    pub async fn delete_user_by_user_id(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+        let mut tx = db.begin().await?;
+
+        let rows = sqlx::query("DELETE FROM user_group WHERE user_id = $1 RETURNING *;")
+            .bind(user_id)
+            .fetch_all(&mut tx)
+            .await?;
+        for row in rows {
+            let group_id: i32 = row.get("group_id");
+            let groups = sqlx::query("SELECT * FROM user_group WHERE group_id = $1;")
+                .bind(group_id)
+                .fetch_all(&mut tx)
+                .await?;
+            if groups.is_empty() {
+                sqlx::query("DELETE * FROM location_group WHERE group_id = $1;")
+                    .bind(group_id)
+                    .execute(&mut tx)
+                    .await?;
+                sqlx::query("DELETE * FROM \"group\" id = $1;")
+                    .bind(group_id)
+                    .execute(&mut tx)
+                    .await?;
+            }
+        }
+        tx.commit().await?;
         Ok(())
     }
 

@@ -2,6 +2,8 @@ use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
+use crate::models::group::Group;
+
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
@@ -21,6 +23,7 @@ pub struct User {
     pub phone: Option<String>,
     pub name: String,
     pub created: NaiveDateTime,
+    pub deleted: Option<NaiveDateTime>,
 }
 
 impl From<PgRow> for User {
@@ -35,6 +38,7 @@ impl From<PgRow> for User {
             phone: row.get("phone"),
             name: row.get("name"),
             created: row.get("created"),
+            deleted: row.get("deleted"),
         }
     }
 }
@@ -49,13 +53,12 @@ impl User {
 
         Ok(sqlx::query(
             "INSERT INTO \"user\" (uuid, username, password, profile_picture, email, phone, name)
-                             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;",
+                             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
         )
         .bind(&self.uuid)
         .bind(&self.username)
         .bind(&self.password)
         .bind(&self.profile_picture)
-        .bind(&self.email)
         .bind(&self.phone)
         .bind(&self.name)
         .fetch_one(db)
@@ -134,12 +137,41 @@ impl User {
         Ok(())
     }
 
-    //TODO
-    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM \"user\" WHERE id = $1;")
+    pub async fn delete(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        let mut tx = db.begin().await?;
+
+        Group::delete_user_by_user_id(db, self.id).await?;
+        sqlx::query("DELETE FROM confirmation WHERE user_id = $1;")
             .bind(self.id)
-            .execute(db)
+            .execute(&mut tx)
             .await?;
+        sqlx::query("DELETE FROM forgot_password WHERE user_id = $1;")
+            .bind(self.id)
+            .execute(&mut tx)
+            .await?;
+        sqlx::query("DELETE FROM session_token WHERE user_id = $1;")
+            .bind(self.id)
+            .execute(&mut tx)
+            .await?;
+        sqlx::query(
+            "UPDATE \"user\"
+                          SET deleted = $1
+                         WHERE id = $2;",
+        )
+        .bind("CURRENT_TIMESTAMP")
+        .bind(self.id)
+        .execute(&mut tx)
+        .await?;
+        tx.commit().await?;
+
+        self.username = format!("DELETED_USER_{}", Uuid::new_v4());
+        self.password = "".to_string();
+        self.profile_picture = None;
+        self.email = None;
+        self.phone = None;
+        self.name = "".to_string();
+        self.update(db).await?;
+
         Ok(())
     }
 }
