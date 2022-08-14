@@ -64,4 +64,12 @@ impl Session {
             .await?;
         Ok(())
     }
+
+    pub async fn delete_all(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM session WHERE user_id = $1;")
+            .bind(user_id)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
 }

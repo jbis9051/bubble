@@ -220,7 +220,6 @@ async fn forgot_confirm(
     let mut user = User::from_id(&db.0, forgot.user_id)
         .await
         .map_err(map_sqlx_err)?;
-    forgot.delete(&db.0).await.map_err(map_sqlx_err)?;
 
     let password = payload.password.as_bytes();
     let salt = SaltString::generate(&mut OsRng);
@@ -230,8 +229,12 @@ async fn forgot_confirm(
         .hash_password(password, &salt)
         .map_err(|_| StatusCode::BAD_REQUEST)?
         .to_string();
+    forgot.delete_all(&db.0).await.map_err(map_sqlx_err)?;
+    Session::delete_all(&db.0, user.id)
+        .await
+        .map_err(map_sqlx_err)?;
     user.update(&db.0).await.map_err(map_sqlx_err)?;
-    Ok(StatusCode::CREATED)
+    Ok(StatusCode::OK)
 }
 
 #[derive(Serialize, Deserialize)]

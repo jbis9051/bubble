@@ -698,3 +698,102 @@ async fn test_negative_signin_signout() {
         .await;
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn test_negative_forgot() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+
+    let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    user.password = "testpassword".to_string();
+
+    let email = Email {
+        email: user.email.clone().unwrap(),
+    };
+    let res = client
+        .post("/user/forgot")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let res = client
+        .post("/user/forgot")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let res = client
+        .post("/user/forgot")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let forgots = Forgot::filter_user_id(db.pool(), user.id).await.unwrap();
+    assert_eq!(forgots.len(), 3);
+    let forgot = &forgots[2];
+
+    let session = Session::from_token(db.pool(), token).await.unwrap();
+    assert_eq!(session.user_id, user.id);
+
+    let confirm = ForgotConfirm {
+        password: "newtestpassword".to_string(),
+        forgot_code: forgot.forgot_id.to_string(),
+    };
+    let res = client
+        .post("/user/forgot-confirm")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&confirm).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let user = User::from_id(db.pool(), user.id).await.unwrap();
+    let password = "newtestpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
+    let vec = Session::filter_user_id(db.pool(), user.id).await.unwrap();
+    assert_eq!(vec.len(), 0);
+
+    let signin = SignInJson {
+        email: user.email.clone().unwrap(),
+        password: "testpassword".to_string(),
+    };
+    let res = client
+        .post("/user/signin")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&signin).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let signin = SignInJson {
+        email: user.email.unwrap(),
+        password: "newtestpassword".to_string(),
+    };
+    let res = client
+        .post("/user/signin")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&signin).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let session = Session::filter_user_id(db.pool(), user.id).await.unwrap();
+    assert_eq!(session.len(), 1);
+}

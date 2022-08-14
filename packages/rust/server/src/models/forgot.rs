@@ -38,6 +38,18 @@ impl Forgot {
         )
     }
 
+    pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Forgot>, sqlx::Error> {
+        Ok(
+            sqlx::query("SELECT * FROM forgot_password WHERE user_id = $1;")
+                .bind(user_id)
+                .fetch_all(db)
+                .await?
+                .iter()
+                .map(|row| row.into())
+                .collect(),
+        )
+    }
+
     pub async fn create(&self, db: &DbPool) -> Result<Forgot, sqlx::Error> {
         Ok(sqlx::query(
             "INSERT INTO forgot_password (user_id, forgot_id) VALUES ($1, $2) RETURNING *;",
@@ -50,9 +62,9 @@ impl Forgot {
         .into())
     }
 
-    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM forgot_password WHERE forgot_id = $1")
-            .bind(&self.forgot_id)
+    pub async fn delete_all(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM forgot_password WHERE user_id = $1")
+            .bind(&self.user_id)
             .execute(db)
             .await?;
 
