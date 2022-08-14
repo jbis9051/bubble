@@ -2,9 +2,15 @@ fmt:
 	cargo fmt --all
 	cargo clippy --fix --allow-dirty --allow-staged
 
+# For usage when developing server
 dev:
 	docker compose -f docker-compose-dev.yml down
 	docker compose -f docker-compose-dev.yml up --build
+
+# For usage when developing frontend
+start_dev:
+	docker compose -f docker-compose-start-dev.yml down
+	docker compose -f docker-compose-start-dev.yml up --build
 
 test_ci: fmt_ci test_db_ci test_server_ci stop_ci
 

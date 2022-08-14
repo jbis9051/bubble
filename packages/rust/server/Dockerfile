@@ -9,4 +9,4 @@ RUN cargo build --release
 
 COPY . .
 RUN cargo build --release
-ENTRYPOINT ["target/release/server"]
+ENTRYPOINT ["/server/target/release/bubble"]
