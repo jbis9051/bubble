@@ -143,10 +143,10 @@ async fn signin(
 
     let password = payload.password.as_bytes();
 
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    let parsed_hash = PasswordHash::new(&user.password).map_err(|_| StatusCode::BAD_REQUEST)?;
     Argon2::default()
         .verify_password(password, &parsed_hash)
-        .unwrap();
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     let session = Session {
         id: 0,
@@ -226,7 +226,10 @@ async fn forgot_confirm(
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
 
-    user.password = argon2.hash_password(password, &salt).unwrap().to_string();
+    user.password = argon2
+        .hash_password(password, &salt)
+        .map_err(|_| StatusCode::BAD_REQUEST)?
+        .to_string();
     user.update(&db.0).await.map_err(map_sqlx_err)?;
     Ok(StatusCode::CREATED)
 }
@@ -312,10 +315,10 @@ async fn delete_user(
         .map_err(map_sqlx_err)?;
 
     let password = payload.password.as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    let parsed_hash = PasswordHash::new(&user.password).map_err(|_| StatusCode::BAD_REQUEST)?;
     Argon2::default()
         .verify_password(password, &parsed_hash)
-        .unwrap();
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     user.delete(&db.0).await.map_err(map_sqlx_err)?;
     Ok(StatusCode::OK)

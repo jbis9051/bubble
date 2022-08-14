@@ -2,7 +2,9 @@ use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, DeleteJson, Email, ForgotConfirm};
+use bubble::routes::user::{
+    ChangeEmail, Confirm, CreateUser, DeleteJson, Email, ForgotConfirm, SessionToken, SignInJson,
+};
 use std::borrow::Borrow;
 
 use argon2::{
@@ -51,6 +53,7 @@ async fn create_user() {
     assert_eq!(user.email, None);
     assert_eq!(user.phone, created_user.phone);
     assert_eq!(user.name, created_user.name);
+    assert_eq!(user.deleted, None);
 
     let confirmations = Confirmation::filter_user_id(db.pool(), user.id)
         .await
@@ -91,6 +94,7 @@ async fn create_user() {
     assert_eq!(user.email, Some(created_user.email));
     assert_eq!(user.phone, created_user.phone);
     assert_eq!(user.name, created_user.name);
+    assert_eq!(user.deleted, None);
 }
 
 #[tokio::test]
@@ -123,6 +127,7 @@ async fn create_multiple_user() {
     assert_eq!(brian.email, None);
     assert_eq!(brian.phone, None);
     assert_eq!(brian.name, "Brian");
+    assert_eq!(brian.deleted, None);
     assert_eq!(brian_confirmation.user_id, brian.id);
     assert_eq!(brian_confirmation.email, "python@gmail.com");
 
@@ -151,6 +156,7 @@ async fn create_multiple_user() {
     assert_eq!(timmy.email, None);
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
     assert_eq!(timmy.name, "Little Timmy III");
+    assert_eq!(timmy.deleted, None);
     assert_eq!(timmy_confirmation.user_id, timmy.id);
     assert_eq!(timmy_confirmation.email, "javascript@gmail.com");
 
@@ -174,6 +180,7 @@ async fn create_multiple_user() {
     assert_eq!(brian.email, Some("python@gmail.com".to_string()));
     assert_eq!(brian.phone, None);
     assert_eq!(brian.name, "Brian");
+    assert_eq!(brian.deleted, None);
     assert_eq!(brian_session.user_id, brian.id);
     assert_eq!(brian_session.token, brian_token);
 
@@ -202,6 +209,7 @@ async fn create_multiple_user() {
     assert_eq!(bill.email, None);
     assert_eq!(bill.phone, Some("18004321234".to_string()));
     assert_eq!(bill.name, "bill");
+    assert_eq!(bill.deleted, None);
     assert_eq!(bill_confirmation.user_id, bill.id);
     assert_eq!(bill_confirmation.email, "rust@gmail.com");
 
@@ -225,6 +233,7 @@ async fn create_multiple_user() {
     assert_eq!(bill.email, Some("rust@gmail.com".to_string()));
     assert_eq!(bill.phone, Some("18004321234".to_string()));
     assert_eq!(bill.name, "bill");
+    assert_eq!(bill.deleted, None);
     assert_eq!(bill_session.user_id, bill.id);
     assert_eq!(bill_session.token, bill_token);
 
@@ -248,6 +257,7 @@ async fn create_multiple_user() {
     assert_eq!(timmy.email, Some("javascript@gmail.com".to_string()));
     assert_eq!(timmy.phone, Some("66260701534".to_string()));
     assert_eq!(timmy.name, "Little Timmy III");
+    assert_eq!(timmy.deleted, None);
     assert_eq!(timmy_session.user_id, timmy.id);
     assert_eq!(timmy_session.token, timmy_token);
 }
@@ -281,6 +291,7 @@ async fn test_signin_signout() {
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
     assert_eq!(session.user_id, user.id);
     assert_eq!(session.token, token);
 
@@ -328,6 +339,7 @@ async fn test_forgot_password() {
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 
@@ -398,6 +410,7 @@ async fn test_change_email() {
     assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 
@@ -424,13 +437,18 @@ async fn test_change_email() {
     println!("token2: {:?}", token);
     let session = Session::from_token(db.pool(), token).await.unwrap();
 
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+
     assert_eq!(user.username, "emailtestusername");
-    println!("password = {}", user.password);
-    //assert_eq!(user.password, "testpassword");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("newtest@gmail.com".to_string()));
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 }
@@ -451,6 +469,12 @@ async fn test_delete_user() {
         .await
         .unwrap();
     let session = Session::from_token(db.pool(), token).await.unwrap();
+
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
 
     assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
@@ -481,12 +505,196 @@ async fn test_delete_user() {
     assert_eq!(user.email, None);
     assert_eq!(user.phone, None);
     assert_eq!(user.name, "".to_string());
-    assert!(user.deleted.is_some());
+    assert_eq!(user.deleted.is_some(), true);
 
-    let rows = sqlx::query("SELECT * FROM session WHERE user_id = $1;")
-        .bind(user.id)
-        .execute(db.pool())
+    let vec = Session::filter_user_id(db.pool(), user.id).await.unwrap();
+    assert_eq!(vec.len(), 0);
+}
+
+#[tokio::test]
+async fn test_negative_user_signup() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (user, link_id) = helper::signup_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    assert_eq!(rows.rows_affected(), 0);
+
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, None);
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
+
+    let confirmation = Confirmation::from_link_id(db.pool(), link_id)
+        .await
+        .unwrap();
+    assert_eq!(confirmation.user_id, user.id);
+    assert_eq!(confirmation.link_id, link_id);
+    assert_eq!("test@gmail.com".to_string(), confirmation.email);
+
+    let test = Session::filter_user_id(db.pool(), user.id).await.unwrap();
+    assert_eq!(test.len(), 0);
+
+    let signin = SignInJson {
+        email: "test@gmail".to_string(),
+        password: "testpassword".to_string(),
+    };
+    let test = client
+        .post("/user/signin")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&signin).unwrap())
+        .send()
+        .await;
+    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+
+    let email_in = Email {
+        email: "test@gmail.com".to_string(),
+    };
+    let test = client
+        .post("/user/forgot")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email_in).unwrap())
+        .send()
+        .await;
+    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+
+    let confirm = Confirm {
+        link_id: link_id.to_string(),
+    };
+    let (user, token) = helper::signup_confirm_user(db.pool(), &client, &confirm, &user)
+        .await
+        .unwrap();
+    let password = "testpassword".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
+
+    let test = Confirmation::filter_user_id(db.pool(), user.id)
+        .await
+        .unwrap();
+    assert_eq!(test.len(), 0);
+
+    let session = Session::from_token(db.pool(), token).await.unwrap();
+    assert_eq!(session.user_id, user.id);
+    assert_eq!(session.token, token);
+}
+
+#[tokio::test]
+async fn test_negative_signin_signout() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+
+    let (token_1, mut user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    user.password = "testpassword".to_string();
+    let session_1 = Session::from_token(db.pool(), token_1).await.unwrap();
+    assert_eq!(session_1.user_id, user.id);
+    assert_eq!(session_1.token, token_1);
+
+    let token_2 = helper::signin_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    let session_2 = Session::from_token(db.pool(), token_2).await.unwrap();
+    assert_eq!(session_2.user_id, user.id);
+    assert_eq!(session_2.token, token_2);
+
+    let signin = SignInJson {
+        email: "test@gmail.com".to_string(),
+        password: "faketestpassword".to_string(),
+    };
+    let test = client
+        .post("/user/signin")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&signin).unwrap())
+        .send()
+        .await;
+    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+
+    let signin = SignInJson {
+        email: "faketest@gmail.com".to_string(),
+        password: "testpassword".to_string(),
+    };
+    let test = client
+        .post("/user/signin")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&signin).unwrap())
+        .send()
+        .await;
+    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+
+    let token = SessionToken {
+        token: session_1.token.to_string(),
+    };
+    let res = client
+        .delete("/user/signout")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&token).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let test = Session::from_token(db.pool(), session_1.token).await;
+    assert_eq!(test.is_err(), true);
+
+    let token_3 = helper::signin_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+    let session_3 = Session::from_token(db.pool(), token_3).await.unwrap();
+    assert_eq!(session_3.user_id, user.id);
+    assert_eq!(session_3.token, token_3);
+
+    let token = SessionToken {
+        token: session_3.token.to_string(),
+    };
+    let res = client
+        .delete("/user/signout")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&token).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let test = Session::from_token(db.pool(), session_3.token).await;
+    assert_eq!(test.is_err(), true);
+
+    let token = SessionToken {
+        token: session_3.token.to_string(),
+    };
+    let res = client
+        .delete("/user/signout")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&token).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
