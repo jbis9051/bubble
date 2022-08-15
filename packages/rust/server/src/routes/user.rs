@@ -167,7 +167,7 @@ async fn signout(
     Json(payload): Json<SessionToken>,
 ) -> Result<StatusCode, StatusCode> {
     let token = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let session = Session::from_token(&db.0, token)
+    let session = Session::from_token(&db.0, &token)
         .await
         .map_err(map_sqlx_err)?;
     session.delete(&db.0).await.map_err(map_sqlx_err)?;
@@ -212,12 +212,16 @@ async fn forgot_confirm(
     Json(payload): Json<ForgotConfirm>,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&payload.forgot_code).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let forgot = Forgot::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
+    let forgot = Forgot::from_uuid(&db.0, &uuid)
+        .await
+        .map_err(map_sqlx_err)?;
     let mut user = User::from_id(&db.0, forgot.user_id)
         .await
         .map_err(map_sqlx_err)?;
 
-    forgot.delete_all(&db.0).await.map_err(map_sqlx_err)?;
+    Forgot::delete_all(&db.0, user.id)
+        .await
+        .map_err(map_sqlx_err)?;
     Session::delete_all(&db.0, user.id)
         .await
         .map_err(map_sqlx_err)?;

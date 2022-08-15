@@ -279,7 +279,7 @@ async fn test_signin_signout() {
     let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
 
     let password = "testpassword".as_bytes();
     let parsed_hash = PasswordHash::new(&user.password).unwrap();
@@ -307,7 +307,7 @@ async fn test_signin_signout() {
     let token = helper::signin_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 }
@@ -327,7 +327,7 @@ async fn test_forgot_password() {
     let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
 
     let password = "testpassword".as_bytes();
     let parsed_hash = PasswordHash::new(&user.password).unwrap();
@@ -398,7 +398,7 @@ async fn test_change_email() {
     let (token, user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
 
     let password = "testpassword".as_bytes();
     let parsed_hash = PasswordHash::new(&user.password).unwrap();
@@ -436,7 +436,7 @@ async fn test_change_email() {
         .await
         .unwrap();
     println!("token2: {:?}", token);
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
 
     let password = "testpassword".as_bytes();
     let parsed_hash = PasswordHash::new(&user.password).unwrap();
@@ -469,7 +469,7 @@ async fn test_delete_user() {
     let (token, user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
 
     let password = "testpassword".as_bytes();
     let parsed_hash = PasswordHash::new(&user.password).unwrap();
@@ -600,7 +600,7 @@ async fn test_negative_user_signup() {
         .unwrap();
     assert_eq!(test.len(), 0);
 
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
     assert_eq!(session.user_id, user.id);
     assert_eq!(session.token, token);
 }
@@ -622,14 +622,14 @@ async fn test_negative_signin_signout() {
         .await
         .unwrap();
     user.password = "testpassword".to_string();
-    let session_1 = Session::from_token(db.pool(), token_1).await.unwrap();
+    let session_1 = Session::from_token(db.pool(), &token_1).await.unwrap();
     assert_eq!(session_1.user_id, user.id);
     assert_eq!(session_1.token, token_1);
 
     let token_2 = helper::signin_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session_2 = Session::from_token(db.pool(), token_2).await.unwrap();
+    let session_2 = Session::from_token(db.pool(), &token_2).await.unwrap();
     assert_eq!(session_2.user_id, user.id);
     assert_eq!(session_2.token, token_2);
 
@@ -668,13 +668,13 @@ async fn test_negative_signin_signout() {
         .await;
     assert_eq!(res.status(), StatusCode::OK);
 
-    let test = Session::from_token(db.pool(), session_1.token).await;
+    let test = Session::from_token(db.pool(), &session_1.token).await;
     assert_eq!(test.is_err(), true);
 
     let token_3 = helper::signin_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    let session_3 = Session::from_token(db.pool(), token_3).await.unwrap();
+    let session_3 = Session::from_token(db.pool(), &token_3).await.unwrap();
     assert_eq!(session_3.user_id, user.id);
     assert_eq!(session_3.token, token_3);
 
@@ -689,7 +689,7 @@ async fn test_negative_signin_signout() {
         .await;
     assert_eq!(res.status(), StatusCode::OK);
 
-    let test = Session::from_token(db.pool(), session_3.token).await;
+    let test = Session::from_token(db.pool(), &session_3.token).await;
     assert_eq!(test.is_err(), true);
 
     let token = SessionToken {
@@ -751,7 +751,7 @@ async fn test_negative_forgot() {
     assert_eq!(forgots.len(), 3);
     let forgot = &forgots[2];
 
-    let session = Session::from_token(db.pool(), token).await.unwrap();
+    let session = Session::from_token(db.pool(), &token).await.unwrap();
     assert_eq!(session.user_id, user.id);
 
     let confirm = ForgotConfirm {

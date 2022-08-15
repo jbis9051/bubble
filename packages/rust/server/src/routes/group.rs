@@ -103,7 +103,7 @@ async fn add_users(
 
     for i in &payload.users {
         let user_id: Uuid = Uuid::parse_str(i).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-        let user = User::from_uuid(&db.0, user_id)
+        let user = User::from_uuid(&db.0, &user_id)
             .await
             .map_err(map_sqlx_err)?;
         group.add_user(&db.0, &user).await.map_err(map_sqlx_err)?;
@@ -155,7 +155,7 @@ async fn delete_users(
 
     for member_uuid in &payload.users {
         let user_id = Uuid::parse_str(member_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
-        let user = User::from_uuid(&db.0, user_id)
+        let user = User::from_uuid(&db.0, &user_id)
             .await
             .map_err(map_sqlx_err)?;
         let user_role = group

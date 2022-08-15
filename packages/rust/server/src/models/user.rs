@@ -131,7 +131,7 @@ impl User {
             .into())
     }
 
-    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<User, sqlx::Error> {
+    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<User, sqlx::Error> {
         Ok(sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)

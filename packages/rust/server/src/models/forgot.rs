@@ -25,7 +25,7 @@ impl From<&PgRow> for Forgot {
 }
 
 impl Forgot {
-    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Forgot, sqlx::Error> {
+    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Forgot, sqlx::Error> {
         Ok(
             sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
                 .bind(uuid)
@@ -60,9 +60,9 @@ impl Forgot {
         .into())
     }
 
-    pub async fn delete_all(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+    pub async fn delete_all(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM forgot_password WHERE user_id = $1")
-            .bind(&self.user_id)
+            .bind(user_id)
             .execute(db)
             .await?;
 
