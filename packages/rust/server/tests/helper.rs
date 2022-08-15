@@ -223,7 +223,7 @@ pub async fn create_group(
     bearer: String,
 ) -> Result<TestResponse, sqlx::Error> {
     let res = client
-        .post("/group/create")
+        .post("/group")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&GroupName { name: group_name }).unwrap())
         .header("Authorization", bearer)

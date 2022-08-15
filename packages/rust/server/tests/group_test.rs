@@ -108,7 +108,7 @@ async fn negative_create_group_no_json() {
         .unwrap();
     let bearer = format!("Bearer {}", token);
     let res = client
-        .post("/group/create")
+        .post("/group")
         .header("Authorization", bearer)
         .send()
         .await;
@@ -121,7 +121,7 @@ async fn negative_create_group_no_user() {
     let client = start_server(db.pool().clone()).await;
     let group_name_in_duplicate = "test_group_1".to_owned();
     let res = client
-        .post("/group/create")
+        .post("/group")
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&GroupName {
@@ -141,7 +141,7 @@ async fn negative_create_group_not_authorized() {
 
     let bearer = format!("Bearer {}", Uuid::new_v4());
     let res = client
-        .post("/group/create")
+        .post("/group")
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&GroupName {
@@ -167,7 +167,7 @@ async fn negative_create_group_not_json() {
     let bearer = format!("Bearer {}", token);
     let group_name_in_duplicate = "test_group_1".to_owned();
     let res = client
-        .post("/group/create")
+        .post("/group")
         .header("Content-Type", "application/json")
         .body(group_name_in_duplicate)
         .header("Authorization", bearer)
@@ -532,7 +532,7 @@ async fn delete_user() {
     let read_route = format!("/group/{}/delete_users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
-        .post(read_route.borrow())
+        .delete(read_route.borrow())
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
         .header("Authorization", bearer)
@@ -567,7 +567,7 @@ async fn delete_user() {
     let read_route = format!("/group/{}/delete_users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
-        .post(read_route.borrow())
+        .delete(read_route.borrow())
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
         .header("Authorization", bearer)
@@ -602,7 +602,7 @@ async fn negative_delete_user_delete_admin() {
     let read_route = format!("/group/{}/delete_users", group_uuid);
     let bearer = format!("Bearer {}", token_admin);
     let res = client
-        .post(read_route.borrow())
+        .delete(read_route.borrow())
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
         .header("Authorization", bearer)
@@ -626,7 +626,7 @@ async fn negative_delete_user_not_authorized() {
     let unauthorized_user = Uuid::new_v4();
     let bearer = format!("Bearer {}", unauthorized_user);
     let res = client
-        .post(read_route.borrow())
+        .delete(read_route.borrow())
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
         .header("Authorization", bearer)
@@ -644,7 +644,7 @@ async fn negative_delete_user_to_delete_nonexisitant() {
     let read_route = format!("/group/{}/delete_users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
-        .post(read_route.borrow())
+        .delete(read_route.borrow())
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
         .header("Authorization", bearer)

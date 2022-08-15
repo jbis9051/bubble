@@ -15,10 +15,10 @@ use sqlx::types::Uuid;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/create", post(create))
+        .route("/", post(create))
         .route("/:id", get(read))
         .route("/:id/new_users", post(add_users))
-        .route("/:id/delete_users", post(delete_users))
+        .route("/:id/delete_users", delete(delete_users))
         .route("/:id/name", patch(change_name))
         .route("/:id", delete(delete_group))
         .route("/:id/members", get(members))
