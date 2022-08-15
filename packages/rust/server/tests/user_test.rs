@@ -422,7 +422,7 @@ async fn test_change_email() {
     let link_id = helper::change_email(db.pool(), &client, &change)
         .await
         .unwrap();
-    let confirmation = Confirmation::from_link_id(db.pool(), link_id)
+    let confirmation = Confirmation::from_link_id(db.pool(), &link_id)
         .await
         .unwrap();
     assert_eq!(confirmation.user_id, user.id);
@@ -544,7 +544,7 @@ async fn test_negative_user_signup() {
     assert_eq!(user.name, "testname");
     assert_eq!(user.deleted, None);
 
-    let confirmation = Confirmation::from_link_id(db.pool(), link_id)
+    let confirmation = Confirmation::from_link_id(db.pool(), &link_id)
         .await
         .unwrap();
     assert_eq!(confirmation.user_id, user.id);

@@ -56,7 +56,7 @@ impl Confirmation {
         )
     }
 
-    pub async fn from_link_id(db: &DbPool, link_id: Uuid) -> Result<Confirmation, sqlx::Error> {
+    pub async fn from_link_id(db: &DbPool, link_id: &Uuid) -> Result<Confirmation, sqlx::Error> {
         Ok(
             sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
                 .bind(link_id)

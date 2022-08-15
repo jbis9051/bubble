@@ -95,7 +95,7 @@ async fn signup_confirm(
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
     let conf = Confirmation::from_link_id(
         &db.0,
-        Uuid::parse_str(&payload.link_id).map_err(|_| StatusCode::BAD_REQUEST)?,
+        &Uuid::parse_str(&payload.link_id).map_err(|_| StatusCode::BAD_REQUEST)?,
     )
     .await
     .map_err(map_sqlx_err)?;
@@ -262,7 +262,7 @@ async fn change_email_confirm(
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
     let confirmation = Confirmation::from_link_id(
         &db.0,
-        Uuid::parse_str(&payload.link_id).map_err(|_| StatusCode::BAD_REQUEST)?,
+        &Uuid::parse_str(&payload.link_id).map_err(|_| StatusCode::BAD_REQUEST)?,
     )
     .await
     .map_err(map_sqlx_err)?;
