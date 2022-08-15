@@ -8,3 +8,4 @@ cargo clippy --all --all-features
 cd ../../
 
 cd packages/js || exit 1
+yarn lint:check
