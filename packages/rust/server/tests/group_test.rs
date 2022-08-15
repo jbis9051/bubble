@@ -344,7 +344,7 @@ async fn add_user() {
     assert_eq!(kanye_west_role, Role::Member);
 
     let bearer = format!("Bearer {}", token_admin);
-    let read_route = format!("/group/{}/members", group_uuid);
+    let read_route = format!("/group/{}/users", group_uuid);
     let res = client
         .get(read_route.borrow())
         .header("Authorization", bearer)
@@ -582,6 +582,19 @@ async fn delete_user() {
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
     assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
+
+    let user_ids: Vec<String> = vec![artic_monkeys.uuid.to_string()];
+
+    let read_route = format!("/group/{}/users", group_uuid.0);
+    let bearer = format!("Bearer {}", group_uuid.1);
+    let res = client
+        .delete(read_route.borrow())
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
 }
 
 #[tokio::test]

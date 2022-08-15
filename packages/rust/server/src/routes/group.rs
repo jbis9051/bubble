@@ -21,7 +21,7 @@ pub fn router() -> Router {
         .route("/:id/users", delete(delete_users))
         .route("/:id/name", patch(change_name))
         .route("/:id", delete(delete_group))
-        .route("/:id/members", get(members))
+        .route("/:id/users", get(members))
 }
 
 #[derive(Default, Deserialize, Serialize)]
@@ -46,10 +46,9 @@ async fn create(
         uuid: Uuid::new_v4(),
         group_name: payload.name,
         created: NaiveDateTime::from_timestamp(0, 0),
-        members: vec![],
     };
 
-    group.create(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
+    group.create(&db.0, &user.0).await.map_err(map_sqlx_err)?;
 
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
@@ -107,7 +106,7 @@ async fn add_users(
         let user = User::from_uuid(&db.0, user_id)
             .await
             .map_err(map_sqlx_err)?;
-        group.add_user(&db.0, user).await.map_err(map_sqlx_err)?;
+        group.add_user(&db.0, &user).await.map_err(map_sqlx_err)?;
     }
     Ok(StatusCode::OK)
 }

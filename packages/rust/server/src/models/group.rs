@@ -1,11 +1,10 @@
 use crate::types::DbPool;
 use std::borrow::Borrow;
 
-use sqlx::postgres::PgRow;
-use sqlx::types::chrono;
-
 use crate::models::user::User;
+use sqlx::postgres::PgRow;
 
+use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::Row;
 
@@ -13,8 +12,7 @@ pub struct Group {
     pub id: i32,
     pub uuid: Uuid,
     pub group_name: String,
-    pub created: chrono::NaiveDateTime,
-    pub members: Vec<Uuid>,
+    pub created: NaiveDateTime,
 }
 
 pub struct UserGroup {
@@ -22,7 +20,7 @@ pub struct UserGroup {
     pub user_id: i32,
     pub group_id: i32,
     pub role_id: Role,
-    pub created: chrono::NaiveDateTime,
+    pub created: NaiveDateTime,
 }
 
 #[derive(Debug, PartialEq)]
@@ -61,7 +59,6 @@ impl From<&PgRow> for Group {
             uuid: row.get("uuid"),
             group_name: row.get("group_name"),
             created: row.get("created"),
-            members: Vec::new(),
         }
     }
 }
@@ -84,7 +81,11 @@ impl Group {
         let role_id: i32 = row.get("role_id");
         let role_enum = match Role::try_from(role_id as u8) {
             Ok(role_enum) => role_enum,
-            Err(_) => return Err(sqlx::Error::RowNotFound),
+            Err(_) => {
+                return Err(sqlx::Error::TypeNotFound {
+                    type_name: "Role".to_owned(),
+                })
+            }
         };
         Ok(role_enum)
     }
@@ -120,13 +121,13 @@ impl Group {
             .into())
     }
 
-    pub async fn create(&mut self, db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
-        let mut tx = db.begin().await?;
+    pub async fn create(&mut self, db: &DbPool, user: &User) -> Result<(), sqlx::Error> {
+        let tx = db.begin().await?;
         let row =
             sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2) RETURNING *;")
                 .bind(&self.uuid)
                 .bind(&self.group_name)
-                .fetch_one(&mut tx)
+                .fetch_one(db)
                 .await?;
         self.id = row.get("id");
         self.created = row.get("created");
@@ -134,10 +135,10 @@ impl Group {
             "INSERT INTO user_group (user_id, group_id, role_id)
                     VALUES ($1, $2, $3);",
         )
-        .bind(user_id)
+        .bind(user.id)
         .bind(self.id)
         .bind(Role::Admin as i32)
-        .execute(&mut tx)
+        .execute(db)
         .await?;
         tx.commit().await?;
         Ok(())
@@ -170,7 +171,7 @@ impl Group {
         Ok(())
     }
 
-    pub async fn add_user(&mut self, db: &DbPool, user: User) -> Result<(), sqlx::Error> {
+    pub async fn add_user(&mut self, db: &DbPool, user: &User) -> Result<(), sqlx::Error> {
         sqlx::query(
             "INSERT INTO user_group (user_id, group_id, role_id)
                     VALUES ($1, $2, $3);",
@@ -180,7 +181,6 @@ impl Group {
         .bind(Role::Member as i32)
         .execute(db)
         .await?;
-        self.members.push(user.uuid);
         Ok(())
     }
 
@@ -213,12 +213,21 @@ impl Group {
     }
 
     pub async fn delete_user(&mut self, db: &DbPool, user: User) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2")
-            .bind(user.id)
+        let table_size = sqlx::query("SELECT * FROM user_group WHERE group_id = $1")
             .bind(self.id)
-            .execute(db)
+            .fetch_all(db)
             .await?;
-        self.members.retain(|uuid| uuid != &user.uuid);
+
+        if table_size.len() == 1 {
+            Group::delete(self, db);
+        } else {
+            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2")
+                .bind(user.id)
+                .bind(self.id)
+                .execute(db)
+                .await?;
+        }
+
         Ok(())
     }
 }
