@@ -63,20 +63,13 @@ async fn create(
 async fn read(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
-    user: AuthenticatedUser,
+    _: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<GroupInfo>), StatusCode> {
-    let uuid_converted: Uuid =
-        Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let uuid_converted: Uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let group: Group = Group::from_uuid(&db.0, &uuid_converted)
         .await
         .map_err(map_sqlx_err)?;
-
-    let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
-
-    if user_role != Role::Admin {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
 
     let new_group = GroupInfo {
         uuid: group.uuid.to_string(),
@@ -97,8 +90,7 @@ async fn add_users(
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid_converted: Uuid =
-        Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let uuid_converted: Uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let mut group = Group::from_uuid(&db.0, &uuid_converted)
         .await
@@ -125,8 +117,7 @@ async fn members(
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<UserID>), StatusCode> {
-    let uuid_converted: Uuid =
-        Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let uuid_converted: Uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let group = Group::from_uuid(&db.0, &uuid_converted)
         .await
@@ -153,7 +144,7 @@ async fn delete_users(
     Json(payload): Json<UserID>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let mut group = Group::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 
@@ -192,7 +183,7 @@ async fn change_name(
     Json(payload): Json<NameChange>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let mut group = Group::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 
@@ -216,7 +207,7 @@ async fn delete_group(
     Path(uuid): Path<String>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let group = Group::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 

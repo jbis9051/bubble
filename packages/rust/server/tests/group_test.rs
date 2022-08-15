@@ -286,7 +286,7 @@ async fn negative_read_group_incorrect_route() {
         .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
