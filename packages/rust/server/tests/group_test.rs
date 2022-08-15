@@ -610,6 +610,7 @@ async fn negative_delete_user_delete_admin() {
         .await;
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 }
+
 #[tokio::test]
 async fn negative_delete_user_not_authorized() {
     let db = TempDatabase::new().await;
