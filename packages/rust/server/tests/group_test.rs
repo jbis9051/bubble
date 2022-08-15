@@ -39,7 +39,7 @@ async fn create_group() {
     assert_eq!(status, StatusCode::CREATED);
 
     let group_uuid = group_info.uuid;
-    let group = Group::from_uuid(db.pool(), Uuid::parse_str(&group_uuid).unwrap())
+    let group = Group::from_uuid(db.pool(), &Uuid::parse_str(&group_uuid).unwrap())
         .await
         .expect("No group exists in database.");
 
@@ -241,7 +241,7 @@ async fn add_user() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let group_uuid_ref: &str = &*group_uuid;
-    let new_group = Group::from_uuid(db.pool(), Uuid::parse_str(group_uuid_ref).unwrap())
+    let new_group = Group::from_uuid(db.pool(), &Uuid::parse_str(group_uuid_ref).unwrap())
         .await
         .unwrap();
 
@@ -394,7 +394,7 @@ async fn delete_user() {
         .await;
 
     let group_uuid_ref: &str = &*group_uuid;
-    let new_group = Group::from_uuid(db.pool(), Uuid::parse_str(group_uuid_ref).unwrap())
+    let new_group = Group::from_uuid(db.pool(), &Uuid::parse_str(group_uuid_ref).unwrap())
         .await
         .unwrap();
 
@@ -555,7 +555,7 @@ async fn change_name() {
         .send()
         .await;
     assert_eq!(res_change.status(), StatusCode::OK);
-    let changed_group = Group::from_uuid(db.pool(), Uuid::parse_str(&*group_uuid).unwrap())
+    let changed_group = Group::from_uuid(db.pool(), &Uuid::parse_str(&*group_uuid).unwrap())
         .await
         .unwrap();
 
@@ -678,7 +678,7 @@ async fn delete() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let delete_group =
-        match Group::from_uuid(db.pool(), Uuid::parse_str(&group_uuid_to_delete).unwrap()).await {
+        match Group::from_uuid(db.pool(), &Uuid::parse_str(&group_uuid_to_delete).unwrap()).await {
             Ok(_group) => StatusCode::OK,
             Err(_) => StatusCode::BAD_REQUEST,
         };

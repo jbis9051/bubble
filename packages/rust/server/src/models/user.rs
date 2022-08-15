@@ -1,6 +1,6 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
-use sqlx::{Acquire, Row};
+use sqlx::Row;
 use std::borrow::Borrow;
 
 use crate::models::group::Group;

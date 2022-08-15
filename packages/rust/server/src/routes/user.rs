@@ -125,8 +125,6 @@ async fn signup_confirm(
     ))
 }
 
-//get user
-
 #[derive(Serialize, Deserialize)]
 pub struct SignInJson {
     pub email: String,

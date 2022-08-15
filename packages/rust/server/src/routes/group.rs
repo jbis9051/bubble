@@ -68,7 +68,7 @@ async fn read(
     let uuid_converted: Uuid =
         Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let group: Group = Group::from_uuid(&db.0, uuid_converted)
+    let group: Group = Group::from_uuid(&db.0, &uuid_converted)
         .await
         .map_err(map_sqlx_err)?;
 
@@ -100,7 +100,7 @@ async fn add_users(
     let uuid_converted: Uuid =
         Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let mut group = Group::from_uuid(&db.0, uuid_converted)
+    let mut group = Group::from_uuid(&db.0, &uuid_converted)
         .await
         .map_err(map_sqlx_err)?;
 
@@ -128,7 +128,7 @@ async fn members(
     let uuid_converted: Uuid =
         Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let group = Group::from_uuid(&db.0, uuid_converted)
+    let group = Group::from_uuid(&db.0, &uuid_converted)
         .await
         .map_err(map_sqlx_err)?;
 
@@ -155,7 +155,7 @@ async fn delete_users(
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let mut group = Group::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
+    let mut group = Group::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
@@ -194,7 +194,7 @@ async fn change_name(
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let mut group = Group::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
+    let mut group = Group::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
 
@@ -218,7 +218,7 @@ async fn delete_group(
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let group = Group::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
+    let group = Group::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 
     let user_role = group.role(&db.0, user.0.id).await.map_err(map_sqlx_err)?;
     if user_role != Role::Admin {

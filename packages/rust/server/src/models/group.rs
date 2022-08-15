@@ -1,4 +1,5 @@
 use crate::types::DbPool;
+use std::borrow::Borrow;
 
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono;
@@ -53,28 +54,16 @@ pub struct GroupIDs {
     pub group_ids: Vec<UserGroup>,
 }
 
-pub async fn get_user_groups(db: &DbPool, user_id_in: i32) -> Result<Vec<UserGroup>, sqlx::Error> {
-    let mut user_groups: Vec<UserGroup> = vec![];
-    let row = sqlx::query("SELECT * FROM user_group WHERE user_id = $1")
-        .bind(user_id_in)
-        .fetch_all(db)
-        .await?;
-    for i in row {
-        let role_id: i32 = i.get("role_id");
-        let user_role = match Role::try_from(role_id as u8) {
-            Ok(user_role) => user_role,
-            Err(_) => return Err(sqlx::Error::RowNotFound),
-        };
-        let new_user_group = UserGroup {
-            id: i.get("id"),
-            user_id: user_id_in,
-            group_id: i.get("group_id"),
-            role_id: user_role,
-            created: i.get("created"),
-        };
-        user_groups.push(new_user_group);
+impl From<&PgRow> for Group {
+    fn from(row: &PgRow) -> Self {
+        Group {
+            id: row.get("id"),
+            uuid: row.get("uuid"),
+            group_name: row.get("group_name"),
+            created: row.get("created"),
+            members: Vec::new(),
+        }
     }
-    Ok(user_groups)
 }
 
 impl Group {
@@ -113,32 +102,22 @@ impl Group {
         Ok(users_in_group)
     }
 
-    pub fn from_impl(row: &PgRow) -> Group {
-        Group {
-            id: row.get("id"),
-            uuid: row.get("uuid"),
-            group_name: row.get("group_name"),
-            created: row.get("created"),
-            members: Vec::new(),
-        }
-    }
-
-    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Group, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
+    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Group, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
             .bind(uuid)
             .fetch_one(db)
-            .await?;
-        let group = Self::from_impl(&row);
-        Ok(group)
+            .await?
+            .borrow()
+            .into())
     }
 
     pub async fn from_id(db: &DbPool, id: i32) -> Result<Group, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM \"group\" WHERE id = $1")
+        Ok(sqlx::query("SELECT * FROM \"group\" WHERE id = $1")
             .bind(id)
             .fetch_one(db)
-            .await?;
-        let group = Self::from_impl(&row);
-        Ok(group)
+            .await?
+            .borrow()
+            .into())
     }
 
     pub async fn create(&mut self, db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
