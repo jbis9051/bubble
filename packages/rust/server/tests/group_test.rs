@@ -23,6 +23,7 @@ async fn create_user_struct() -> CreateUser {
         name: "chosenfamily".to_string(),
     }
 }
+
 async fn create_second_user_struct() -> CreateUser {
     CreateUser {
         email: "bj@gmail.com".to_string(),
@@ -596,6 +597,7 @@ async fn negative_delete_user_delete_admin() {
     let res = helper::create_group(db.pool(), &client, group_name_in, bearer)
         .await
         .unwrap();
+
     let user_ids: Vec<String> = vec![creator.uuid.to_string()];
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
@@ -634,6 +636,7 @@ async fn negative_delete_user_not_authorized() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
+
 #[tokio::test]
 async fn negative_delete_user_to_delete_nonexisitant() {
     let db = TempDatabase::new().await;
@@ -701,6 +704,7 @@ async fn change_name() {
     let group_name = changed_group.group_name;
     assert_eq!(group_name, "GroupNameTwo");
 }
+
 #[tokio::test]
 async fn negative_change_name_unauthorized() {
     let db = TempDatabase::new().await;
@@ -726,6 +730,7 @@ async fn negative_change_name_unauthorized() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
+
 #[tokio::test]
 async fn negative_change_name_by_non_member() {
     let db = TempDatabase::new().await;
@@ -755,6 +760,7 @@ async fn negative_change_name_by_non_member() {
         .await;
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
+
 #[tokio::test]
 async fn negative_change_name_by_non_admin() {
     let db = TempDatabase::new().await;
@@ -841,6 +847,7 @@ async fn negative_delete_unauthorized() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
+
 #[tokio::test]
 async fn negative_delete_non_admin() {
     let db = TempDatabase::new().await;
@@ -872,6 +879,7 @@ async fn negative_delete_non_admin() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }
+
 #[tokio::test]
 async fn negative_delete_group_does_not_exist() {
     let db = TempDatabase::new().await;
