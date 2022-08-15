@@ -7,6 +7,4 @@ cargo fmt --all -- --check
 cargo clippy --all --all-features
 cd ../../
 
-cd ../
-
 cd packages/js || exit 1
