@@ -53,14 +53,6 @@ pub struct GroupIDs {
     pub group_ids: Vec<UserGroup>,
 }
 
-pub async fn delete_user_groups(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM user_group WHERE user_id = $1")
-        .bind(user_id)
-        .execute(db)
-        .await?;
-    Ok(())
-}
-
 pub async fn get_user_groups(db: &DbPool, user_id_in: i32) -> Result<Vec<UserGroup>, sqlx::Error> {
     let mut user_groups: Vec<UserGroup> = vec![];
     let row = sqlx::query("SELECT * FROM user_group WHERE user_id = $1")
@@ -86,6 +78,14 @@ pub async fn get_user_groups(db: &DbPool, user_id_in: i32) -> Result<Vec<UserGro
 }
 
 impl Group {
+    pub async fn delete_user_groups(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM user_group WHERE user_id = $1")
+            .bind(user_id)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+
     pub async fn role(&self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
             .bind(self.id)
@@ -113,7 +113,7 @@ impl Group {
         Ok(users_in_group)
     }
 
-    pub fn from_row(row: &PgRow) -> Group {
+    pub fn from_impl(row: &PgRow) -> Group {
         Group {
             id: row.get("id"),
             uuid: row.get("uuid"),
@@ -128,7 +128,7 @@ impl Group {
             .bind(uuid)
             .fetch_one(db)
             .await?;
-        let group = Self::from_row(&row);
+        let group = Self::from_impl(&row);
         Ok(group)
     }
 
@@ -137,16 +137,17 @@ impl Group {
             .bind(id)
             .fetch_one(db)
             .await?;
-        let group = Self::from_row(&row);
+        let group = Self::from_impl(&row);
         Ok(group)
     }
 
     pub async fn create(&mut self, db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+        let mut tx = db.begin().await?;
         let row =
             sqlx::query("INSERT INTO \"group\" (uuid, group_name) VALUES ($1, $2) RETURNING *;")
                 .bind(&self.uuid)
                 .bind(&self.group_name)
-                .fetch_one(db)
+                .fetch_one(&mut tx)
                 .await?;
         self.id = row.get("id");
         self.created = row.get("created");
@@ -157,8 +158,9 @@ impl Group {
         .bind(user_id)
         .bind(self.id)
         .bind(Role::Admin as i32)
-        .execute(db)
+        .execute(&mut tx)
         .await?;
+        tx.commit().await?;
         Ok(())
     }
 
@@ -172,18 +174,20 @@ impl Group {
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        let mut tx = db.begin().await?;
         sqlx::query("DELETE FROM user_group WHERE group_id = $1")
             .bind(self.id)
-            .execute(db)
+            .execute(&mut tx)
             .await?;
         sqlx::query("DELETE FROM location_group WHERE group_id = $1")
             .bind(self.id)
-            .execute(db)
+            .execute(&mut tx)
             .await?;
         sqlx::query("DELETE FROM \"group\" WHERE id = $1")
             .bind(self.id)
-            .execute(db)
+            .execute(&mut tx)
             .await?;
+        tx.commit().await?;
         Ok(())
     }
 
