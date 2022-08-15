@@ -11,8 +11,8 @@ use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
 };
-use uuid::Uuid;
 use bubble::models::forgot::Forgot;
+use uuid::Uuid;
 
 use bubble::models::session::Session;
 
@@ -944,7 +944,7 @@ async fn test_negative_delete() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
+    let (token, _user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
 

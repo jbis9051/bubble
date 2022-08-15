@@ -110,9 +110,9 @@ impl User {
     pub async fn from_session(db: &DbPool, session_token: Uuid) -> Result<User, sqlx::Error> {
         Ok(sqlx::query(
             "SELECT *
-                 FROM session
-                 INNER JOIN \"user\"
-                 ON session.user_id = \"user\".id
+                 FROM \"user\"
+                 INNER JOIN session
+                 ON \"user\".id = session.user_id
                  WHERE session.token = $1;",
         )
         .bind(session_token)
