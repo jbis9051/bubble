@@ -100,7 +100,7 @@ async fn signup_confirm(
     .await
     .map_err(map_sqlx_err)?;
 
-    conf.delete(&db.0).await.map_err(map_sqlx_err)?;
+    conf.delete_all(&db.0).await.map_err(map_sqlx_err)?;
 
     let mut user = User::from_id(&db.0, conf.user_id)
         .await
@@ -272,7 +272,7 @@ async fn change_email_confirm(
 
     user.email = Some(confirmation.email.clone());
     user.update(&db.0).await.map_err(map_sqlx_err)?;
-    confirmation.delete(&db.0).await.map_err(map_sqlx_err)?;
+    confirmation.delete_all(&db.0).await.map_err(map_sqlx_err)?;
 
     let sessions = Session::filter_user_id(&db.0, user.id)
         .await

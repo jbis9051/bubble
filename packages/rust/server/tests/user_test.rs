@@ -11,6 +11,7 @@ use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
 };
+use uuid::Uuid;
 use bubble::models::forgot::Forgot;
 
 use bubble::models::session::Session;
@@ -800,4 +801,186 @@ async fn test_negative_forgot() {
     assert_eq!(res.status(), StatusCode::CREATED);
     let session = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(session.len(), 1);
+}
+
+#[tokio::test]
+async fn test_negative_change_email() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+
+    let change = ChangeEmail {
+        session_token: "37aa15e0-8a5f-4f75-8c95-bb1238755187".to_string(),
+        new_email: "newtestemail@gmail.com".to_string(),
+    };
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let change = ChangeEmail {
+        session_token: token.to_string(),
+        new_email: "newtestemail@gmail.com".to_string(),
+    };
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let change = ChangeEmail {
+        session_token: token.to_string(),
+        new_email: "difftestemail@gmail.com".to_string(),
+    };
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let change = ChangeEmail {
+        session_token: "incorrect_token".to_string(),
+        new_email: "difftestemail@gmail.com".to_string(),
+    };
+    let res = client
+        .post("/user/change-email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    let confirmations = Confirmation::filter_user_id(db.pool(), user.id)
+        .await
+        .unwrap();
+    assert_eq!(confirmations.len(), 4);
+
+    let bad_confirm = Confirm {
+        link_id: "incorrect".to_string(),
+    };
+    let res = client
+        .post("/user/change-email-confirm")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&bad_confirm).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    let bad_confirm = Confirm {
+        link_id: "9719ce93-4023-45ad-8d0b-dac9e48e04b8".to_string(),
+    };
+    let res = client
+        .post("/user/change-email-confirm")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&bad_confirm).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let confirm = Confirm {
+        link_id: confirmations[3].link_id.to_string(),
+    };
+    let res = client
+        .post("/user/change-email-confirm")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&confirm).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let token: SessionToken = res.json().await;
+
+    let confirmations = Confirmation::filter_user_id(db.pool(), user.id)
+        .await
+        .unwrap();
+    assert_eq!(confirmations.len(), 0);
+
+    let sessions = Session::filter_user_id(db.pool(), user.id).await.unwrap();
+    assert_eq!(sessions.len(), 1);
+
+    let user = User::from_session(db.pool(), Uuid::parse_str(&token.token).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(user.email, Some("difftestemail@gmail.com".to_string()));
+}
+
+#[tokio::test]
+async fn test_negative_delete() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        phone: None,
+        name: "testname".to_string(),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
+        .await
+        .unwrap();
+
+    let delete = DeleteJson {
+        token: "incorrect".to_string(),
+        password: "testpassword".to_string(),
+    };
+    let res = client
+        .delete("/user")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&delete).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    let delete = DeleteJson {
+        token: "37aa15e0-8a5f-4f75-8c95-bb1238755187".to_string(),
+        password: "testpassword".to_string(),
+    };
+    let res = client
+        .delete("/user")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&delete).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let delete = DeleteJson {
+        token: token.to_string(),
+        password: "incorrect_password".to_string(),
+    };
+    let res = client
+        .delete("/user")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&delete).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
