@@ -51,7 +51,8 @@ CREATE TABLE user_group
     user_id  INT REFERENCES "user" (id)  NOT NULL,
     group_id INT REFERENCES "group" (id) NOT NULL,
     role_id  INTEGER                     NOT NULL,
-    created  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, group_id)
 );
 
 

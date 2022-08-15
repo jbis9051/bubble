@@ -171,7 +171,7 @@ async fn delete_users(
         let user_role = group
             .role(&db, user.id)
             .await
-            .map_err(|_| StatusCode::BAD_REQUEST)?;
+            .map_err(|_| StatusCode::NOT_FOUND)?;
         if user_role == Role::Admin {
             return Err(StatusCode::BAD_REQUEST);
         }
