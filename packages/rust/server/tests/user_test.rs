@@ -374,7 +374,7 @@ async fn test_forgot_password() {
         .body(serde_json::to_string(&confirm).unwrap())
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::CREATED);
+    assert_eq!(res.status(), StatusCode::OK);
 
     user.password = "newtestpassword".to_string();
     let _token = helper::signin_user(db.pool(), &client, &user)
