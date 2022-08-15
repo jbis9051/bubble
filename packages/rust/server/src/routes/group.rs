@@ -1,4 +1,4 @@
-use crate::extractor::AuthenticatedUser::AuthenticatedUser;
+use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::group::{Group, Role};
 use crate::models::user::User;
 use crate::types::DbPool;

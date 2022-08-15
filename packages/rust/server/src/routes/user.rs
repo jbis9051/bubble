@@ -162,7 +162,6 @@ async fn signin(
     ))
 }
 
-// user must be signed in
 async fn signout(
     db: Extension<DbPool>,
     Json(payload): Json<SessionToken>,
@@ -234,7 +233,7 @@ pub struct ChangeEmail {
     pub session_token: String,
     pub new_email: String,
 }
-//User must be signed in
+
 async fn change_email(
     db: Extension<DbPool>,
     Json(payload): Json<ChangeEmail>,
