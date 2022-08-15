@@ -321,7 +321,7 @@ async fn add_user() {
 
     let user_ids: Vec<String> = vec![billy_joel.uuid.to_string(), kanye_west.uuid.to_string()];
 
-    let read_route = format!("/group/{}/new_users", group_uuid);
+    let read_route = format!("/group/{}/users", group_uuid);
 
     let bearer = format!("Bearer {}", token_admin);
     let res = client
@@ -371,7 +371,7 @@ async fn negative_add_user_not_authorized() {
         .unwrap();
 
     let user_ids: Vec<String> = vec![test_user.uuid.to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bad_token = Uuid::new_v4();
     let bearer = format!("Bearer {}", bad_token);
     let res = client
@@ -397,7 +397,7 @@ async fn negative_add_user_non_admin() {
         .unwrap();
 
     let user_ids: Vec<String> = vec![billy_joel.uuid.to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let _ = client
         .post(read_route.borrow())
@@ -412,7 +412,7 @@ async fn negative_add_user_non_admin() {
         .await
         .unwrap();
     let user_ids: Vec<String> = vec![kanye_west.uuid.to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", bad_token);
     let res = client
         .post(read_route.borrow())
@@ -443,7 +443,7 @@ async fn negative_add_user_violate_unique_constraints() {
 
     let user_ids: Vec<String> = vec![billy_joel.uuid.to_string(), kanye_west.uuid.to_string()];
 
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
 
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
@@ -456,7 +456,7 @@ async fn negative_add_user_violate_unique_constraints() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let user_ids: Vec<String> = vec![billy_joel.uuid.to_string(), kanye_west.uuid.to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .post(read_route.borrow())
@@ -476,7 +476,7 @@ async fn negative_add_user_users_do_not_exist() {
     let group_uuid = add_user_helper(&db, &client).await;
 
     let user_ids: Vec<String> = vec![Uuid::new_v4().to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .post(read_route.borrow())
@@ -510,7 +510,7 @@ async fn delete_user() {
         artic_monkeys.uuid.to_string(),
     ];
 
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
 
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
@@ -530,7 +530,7 @@ async fn delete_user() {
 
     let user_ids: Vec<String> = vec![dolly_parton.uuid.to_string()];
 
-    let read_route = format!("/group/{}/delete_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .delete(read_route.borrow())
@@ -565,7 +565,7 @@ async fn delete_user() {
 
     let user_ids: Vec<String> = vec![artic_monkeys.uuid.to_string()];
 
-    let read_route = format!("/group/{}/delete_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .delete(read_route.borrow())
@@ -601,7 +601,7 @@ async fn negative_delete_user_delete_admin() {
     let user_ids: Vec<String> = vec![creator.uuid.to_string()];
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
-    let read_route = format!("/group/{}/delete_users", group_uuid);
+    let read_route = format!("/group/{}/users", group_uuid);
     let bearer = format!("Bearer {}", token_admin);
     let res = client
         .delete(read_route.borrow())
@@ -624,7 +624,7 @@ async fn negative_delete_user_not_authorized() {
         .unwrap();
 
     let user_ids: Vec<String> = vec![the_police.uuid.to_string()];
-    let read_route = format!("/group/{}/delete_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let unauthorized_user = Uuid::new_v4();
     let bearer = format!("Bearer {}", unauthorized_user);
     let res = client
@@ -644,7 +644,7 @@ async fn negative_delete_user_to_delete_nonexisitant() {
     let group_uuid = add_user_helper(&db, &client).await;
 
     let user_ids: Vec<String> = vec![Uuid::new_v4().to_string()];
-    let read_route = format!("/group/{}/delete_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .delete(read_route.borrow())
@@ -773,7 +773,7 @@ async fn negative_change_name_by_non_admin() {
         .await
         .unwrap();
     let user_ids: Vec<String> = vec![thepolice.uuid.to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .post(read_route.borrow())
@@ -859,7 +859,7 @@ async fn negative_delete_non_admin() {
         .unwrap();
 
     let user_ids: Vec<String> = vec![cyndi.uuid.to_string()];
-    let read_route = format!("/group/{}/new_users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid.0);
     let bearer = format!("Bearer {}", group_uuid.1);
     let res = client
         .post(read_route.borrow())
