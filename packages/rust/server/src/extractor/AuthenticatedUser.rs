@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use uuid::Uuid;
 
 use crate::models::user::User;
 use crate::types::DbPool;
@@ -27,9 +28,13 @@ where
                 .await
                 .map_err(|err| err.into_response())?;
         Ok(AuthenticatedUser(
-            User::from_session(&db.0, token.token())
-                .await
-                .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?,
+            User::from_session(
+                &db.0,
+                Uuid::parse_str(token.token())
+                    .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?,
+            )
+            .await
+            .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?,
         ))
     }
 }

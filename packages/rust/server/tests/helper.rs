@@ -170,7 +170,8 @@ pub async fn change_email_confirm(
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
     let token: SessionToken = res.json().await;
-    let user = User::from_session(db, &token.token).await.unwrap();
+    let uuid = Uuid::parse_str(&token.token).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let user = User::from_session(db, uuid).await.unwrap();
 
     Ok((user, Uuid::parse_str(&token.token).unwrap()))
 }

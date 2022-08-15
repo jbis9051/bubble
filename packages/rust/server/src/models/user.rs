@@ -107,8 +107,7 @@ impl User {
             .into())
     }
 
-    pub async fn from_session(db: &DbPool, session_token: &str) -> Result<User, sqlx::Error> {
-        let uuid = Uuid::parse_str(session_token).unwrap();
+    pub async fn from_session(db: &DbPool, session_token: Uuid) -> Result<User, sqlx::Error> {
         Ok(sqlx::query(
             "SELECT *
                  FROM session
@@ -116,7 +115,7 @@ impl User {
                  ON session.user_id = \"user\".id
                  WHERE session.token = $1;",
         )
-        .bind(uuid)
+        .bind(session_token)
         .fetch_one(db)
         .await?
         .borrow()
@@ -145,15 +144,13 @@ impl User {
         sqlx::query(
             "UPDATE \"user\"
                   SET username = $1,
-                      password = $2,
-                      profile_picture = $3,
-                      email = $4,
-                      phone = $5,
-                      name = $6
-                  WHERE id = $7;",
+                      profile_picture = $2,
+                      email = $3,
+                      phone = $4,
+                      name = $5
+                  WHERE id = $6;",
         )
         .bind(&self.username)
-        .bind(&self.password)
         .bind(&self.profile_picture)
         .bind(&self.email)
         .bind(&self.phone)
@@ -161,6 +158,32 @@ impl User {
         .bind(&self.id)
         .execute(db)
         .await?;
+        Ok(())
+    }
+
+    pub async fn update_password(
+        &mut self,
+        db: &DbPool,
+        password: &str,
+    ) -> Result<(), sqlx::Error> {
+        let byte_password = password.as_bytes();
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+
+        let hashed_password = argon2
+            .hash_password(byte_password, &salt)
+            .unwrap()
+            .to_string();
+        sqlx::query(
+            "UPDATE \"user\"\
+                  SET password = $1
+                  WHERE id = $2;",
+        )
+        .bind(&hashed_password)
+        .bind(self.id)
+        .execute(db)
+        .await?;
+        self.password = hashed_password.to_string();
         Ok(())
     }
 
@@ -192,12 +215,12 @@ impl User {
         tx.commit().await?;
 
         self.username = format!("DELETED_USER_{}", Uuid::new_v4());
-        self.password = "".to_string();
         self.profile_picture = None;
         self.email = None;
         self.phone = None;
         self.name = "".to_string();
         self.update(db).await?;
+        self.update_password(db, "").await?;
 
         Ok(())
     }

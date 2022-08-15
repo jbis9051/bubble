@@ -500,7 +500,11 @@ async fn test_delete_user() {
 
     let user = User::from_id(db.pool(), user.id).await.unwrap();
 
-    assert_eq!(user.password, "".to_string());
+    let password = "".as_bytes();
+    let parsed_hash = PasswordHash::new(&user.password).unwrap();
+    Argon2::default()
+        .verify_password(password, &parsed_hash)
+        .unwrap();
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, None);
     assert_eq!(user.phone, None);
