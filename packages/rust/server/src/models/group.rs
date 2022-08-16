@@ -1,4 +1,5 @@
 use crate::types::DbPool;
+
 use std::borrow::Borrow;
 
 use crate::models::user::User;
@@ -15,7 +16,7 @@ pub struct Group {
     pub created: NaiveDateTime,
 }
 
-pub struct UserGroup {
+pub struct Members {
     pub id: i32,
     pub user_id: i32,
     pub group_id: i32,
@@ -49,7 +50,7 @@ pub struct UserIDs {
 
 #[derive(sqlx::FromRow)]
 pub struct GroupIDs {
-    pub group_ids: Vec<UserGroup>,
+    pub group_ids: Vec<Members>,
 }
 
 impl From<&PgRow> for Group {
@@ -64,8 +65,8 @@ impl From<&PgRow> for Group {
 }
 
 impl Group {
-    pub async fn delete_user_groups(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM user_group WHERE user_id = $1")
+    pub async fn delete_members(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM members WHERE user_id = $1")
             .bind(user_id)
             .execute(db)
             .await?;
@@ -73,25 +74,19 @@ impl Group {
     }
 
     pub async fn role(&self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
+        let row = sqlx::query("SELECT * FROM member WHERE group_id = $1 AND user_id = $2;")
             .bind(self.id)
             .bind(user_id)
             .fetch_one(db)
             .await?;
         let role_id: i32 = row.get("role_id");
-        let role_enum = match Role::try_from(role_id as u8) {
-            Ok(role_enum) => role_enum,
-            Err(_) => {
-                return Err(sqlx::Error::TypeNotFound {
-                    type_name: "Role".to_owned(),
-                })
-            }
-        };
+        //TODO
+        let role_enum = Role::try_from(role_id as u8).unwrap();
         Ok(role_enum)
     }
 
     pub async fn members(&self, db: &DbPool) -> Result<Vec<User>, sqlx::Error> {
-        let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 ")
+        let row = sqlx::query("SELECT * FROM member WHERE group_id = $1 ")
             .bind(self.id)
             .fetch_all(db)
             .await?;
@@ -132,7 +127,7 @@ impl Group {
         self.id = row.get("id");
         self.created = row.get("created");
         sqlx::query(
-            "INSERT INTO user_group (user_id, group_id, role_id)
+            "INSERT INTO member (user_id, group_id, role_id)
                     VALUES ($1, $2, $3);",
         )
         .bind(user.id)
@@ -155,7 +150,7 @@ impl Group {
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         let mut tx = db.begin().await?;
-        sqlx::query("DELETE FROM user_group WHERE group_id = $1")
+        sqlx::query("DELETE FROM member WHERE group_id = $1")
             .bind(self.id)
             .execute(&mut tx)
             .await?;
@@ -173,7 +168,7 @@ impl Group {
 
     pub async fn add_user(&mut self, db: &DbPool, user: &User) -> Result<(), sqlx::Error> {
         sqlx::query(
-            "INSERT INTO user_group (user_id, group_id, role_id)
+            "INSERT INTO member (user_id, group_id, role_id)
                     VALUES ($1, $2, $3);",
         )
         .bind(user.id)
@@ -187,13 +182,13 @@ impl Group {
     pub async fn delete_user_by_user_id(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
         let mut tx = db.begin().await?;
 
-        let rows = sqlx::query("DELETE FROM user_group WHERE user_id = $1 RETURNING *;")
+        let rows = sqlx::query("DELETE FROM member WHERE user_id = $1 RETURNING *;")
             .bind(user_id)
             .fetch_all(&mut tx)
             .await?;
         for row in rows {
             let group_id: i32 = row.get("group_id");
-            let groups = sqlx::query("SELECT * FROM user_group WHERE group_id = $1;")
+            let groups = sqlx::query("SELECT * FROM member WHERE group_id = $1;")
                 .bind(group_id)
                 .fetch_all(&mut tx)
                 .await?;
@@ -213,21 +208,38 @@ impl Group {
     }
 
     pub async fn delete_user(&mut self, db: &DbPool, user: User) -> Result<(), sqlx::Error> {
-        let table_size = sqlx::query("SELECT * FROM user_group WHERE group_id = $1")
+        let tx = db.begin().await?;
+
+        let members_size = sqlx::query("SELECT * FROM member WHERE group_id = $1")
             .bind(self.id)
             .fetch_all(db)
             .await?;
 
-        if table_size.len() == 1 {
-            Group::delete(self, db);
+        let admin_size =
+            sqlx::query("SELECT user_id FROM member WHERE group_id = $1 AND role_id = $2")
+                .bind(self.id)
+                .bind(Role::Admin as i32)
+                .fetch_all(db)
+                .await?;
+        if admin_size.len() == 1 {
+            let admin_id: i32 = admin_size[0].get("user_id");
+            if admin_id == user.id && members_size.len() != 1 {
+                return Err(sqlx::Error::Protocol(
+                    "There must be at least one Admin in the group.".to_string(),
+                ));
+            }
+        }
+
+        if members_size.len() == 1 {
+            Group::delete(self, db).await?;
         } else {
-            sqlx::query("DELETE FROM user_group WHERE user_id = $1 AND group_id = $2")
+            sqlx::query("DELETE FROM member WHERE user_id = $1 AND group_id = $2")
                 .bind(user.id)
                 .bind(self.id)
                 .execute(db)
                 .await?;
         }
-
+        tx.commit().await?;
         Ok(())
     }
 }

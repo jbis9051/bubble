@@ -237,7 +237,7 @@ pub async fn get_user_group(
     group_id: i32,
     user_id: i32,
 ) -> Result<PgRow, sqlx::Error> {
-    let row = sqlx::query("SELECT * FROM user_group WHERE group_id = $1 AND user_id = $2;")
+    let row = sqlx::query("SELECT * FROM member WHERE group_id = $1 AND user_id = $2;")
         .bind(group_id)
         .bind(user_id)
         .fetch_one(db)

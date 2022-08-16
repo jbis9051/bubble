@@ -493,7 +493,17 @@ async fn delete_user() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
 
-    let group_uuid = add_user_helper(&db, &client).await;
+    let first_user = create_user_struct().await;
+    let (token_admin, admin_user) = helper::initialize_user(db.pool(), &client, &first_user)
+        .await
+        .unwrap();
+    let bearer = format!("Bearer {}", token_admin);
+    let group_name_in = "test_group_1".to_owned();
+    let res = helper::create_group(db.pool(), &client, group_name_in, bearer)
+        .await
+        .unwrap();
+    let group_info: GroupInfo = res.json().await;
+    let group_uuid = group_info.uuid;
 
     let first_user = create_second_user_struct().await;
     let (_, dolly_parton) = helper::initialize_user(db.pool(), &client, &first_user)
@@ -510,9 +520,9 @@ async fn delete_user() {
         artic_monkeys.uuid.to_string(),
     ];
 
-    let read_route = format!("/group/{}/users", group_uuid.0);
+    let read_route = format!("/group/{}/users", group_uuid);
 
-    let bearer = format!("Bearer {}", group_uuid.1);
+    let bearer = format!("Bearer {}", token_admin);
     let res = client
         .post(read_route.borrow())
         .header("Content-Type", "application/json")
@@ -521,7 +531,7 @@ async fn delete_user() {
         .send()
         .await;
 
-    let group_uuid_ref: &str = &*group_uuid.0;
+    let group_uuid_ref: &str = &*group_uuid;
     let new_group = Group::from_uuid(db.pool(), &Uuid::parse_str(group_uuid_ref).unwrap())
         .await
         .unwrap();
@@ -530,8 +540,8 @@ async fn delete_user() {
 
     let user_ids: Vec<String> = vec![dolly_parton.uuid.to_string()];
 
-    let read_route = format!("/group/{}/users", group_uuid.0);
-    let bearer = format!("Bearer {}", group_uuid.1);
+    let read_route = format!("/group/{}/users", group_uuid);
+    let bearer = format!("Bearer {}", token_admin);
     let res = client
         .delete(read_route.borrow())
         .header("Content-Type", "application/json")
@@ -565,8 +575,8 @@ async fn delete_user() {
 
     let user_ids: Vec<String> = vec![artic_monkeys.uuid.to_string()];
 
-    let read_route = format!("/group/{}/users", group_uuid.0);
-    let bearer = format!("Bearer {}", group_uuid.1);
+    let read_route = format!("/group/{}/users", group_uuid);
+    let bearer = format!("Bearer {}", token_admin);
     let res = client
         .delete(read_route.borrow())
         .header("Content-Type", "application/json")
@@ -583,10 +593,10 @@ async fn delete_user() {
         };
     assert_eq!(deleted_user_error, StatusCode::INTERNAL_SERVER_ERROR);
 
-    let user_ids: Vec<String> = vec![artic_monkeys.uuid.to_string()];
+    let user_ids: Vec<String> = vec![admin_user.uuid.to_string()];
 
-    let read_route = format!("/group/{}/users", group_uuid.0);
-    let bearer = format!("Bearer {}", group_uuid.1);
+    let read_route = format!("/group/{}/users", group_uuid);
+    let bearer = format!("Bearer {}", token_admin);
     let res = client
         .delete(read_route.borrow())
         .header("Content-Type", "application/json")
@@ -595,10 +605,19 @@ async fn delete_user() {
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::OK);
+
+    let read_route = format!("/group/{}", group_uuid);
+    let bearer = format!("Bearer {}", token_admin);
+    let res = client
+        .get(read_route.borrow())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]
-async fn negative_delete_user_delete_admin() {
+async fn negative_delete_user_no_admin_left() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
     let first_user = create_user_struct().await;
@@ -610,10 +629,27 @@ async fn negative_delete_user_delete_admin() {
     let res = helper::create_group(db.pool(), &client, group_name_in, bearer)
         .await
         .unwrap();
-
-    let user_ids: Vec<String> = vec![creator.uuid.to_string()];
+    let first_user = create_second_user_struct().await;
+    let (_, billy_joel) = helper::initialize_user(db.pool(), &client, &first_user)
+        .await
+        .unwrap();
     let group_info: GroupInfo = res.json().await;
     let group_uuid = group_info.uuid;
+    let user_ids: Vec<String> = vec![billy_joel.uuid.to_string()];
+
+    let read_route = format!("/group/{}/users", group_uuid);
+
+    let bearer = format!("Bearer {}", token_admin);
+    let res = client
+        .post(read_route.borrow())
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&UserID { users: user_ids }).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let user_ids: Vec<String> = vec![creator.uuid.to_string()];
+
     let read_route = format!("/group/{}/users", group_uuid);
     let bearer = format!("Bearer {}", token_admin);
     let res = client
@@ -623,7 +659,7 @@ async fn negative_delete_user_delete_admin() {
         .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }
 
 #[tokio::test]

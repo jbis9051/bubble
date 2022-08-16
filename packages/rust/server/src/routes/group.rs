@@ -158,13 +158,6 @@ async fn delete_users(
         let user = User::from_uuid(&db.0, &user_id)
             .await
             .map_err(map_sqlx_err)?;
-        let user_role = group
-            .role(&db, user.id)
-            .await
-            .map_err(|_| StatusCode::NOT_FOUND)?;
-        if user_role == Role::Admin {
-            return Err(StatusCode::BAD_REQUEST);
-        }
         group.delete_user(&db.0, user).await.map_err(map_sqlx_err)?;
     }
 

@@ -45,7 +45,7 @@ CREATE TABLE attachment
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_group
+CREATE TABLE member
 (
     id       serial PRIMARY KEY,
     user_id  INT REFERENCES "user" (id)  NOT NULL,
