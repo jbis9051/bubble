@@ -184,6 +184,7 @@ impl User {
         .execute(db)
         .await?;
         self.password = hashed_password.to_string();
+
         Ok(())
     }
 
