@@ -1,0 +1,16 @@
+{
+  "Bob": {
+    "username": "BigBob",
+    "password": "12345",
+    "email": "bigbob@gmail.com",
+    "phone": "(123) 124-123",
+    "name": "Bob Baker"
+  },
+  "James": {
+    "username": "theRealJamesRob",
+    "password": "jr!@Password",
+    "email": "jamesRob123@sbcglobal.net",
+    "phone": "(824) 142-3146",
+    "name": "James Rob"
+  }
+}
