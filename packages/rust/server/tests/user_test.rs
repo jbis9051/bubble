@@ -7,7 +7,6 @@ use bubble::routes::user::{
 };
 use std::borrow::Borrow;
 
-
 use bubble::models::forgot::Forgot;
 use uuid::Uuid;
 

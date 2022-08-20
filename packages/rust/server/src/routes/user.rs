@@ -4,10 +4,7 @@ use axum::Router;
 use axum::{Extension, Json};
 
 use argon2::password_hash::SaltString;
-use argon2::{
-    password_hash::{PasswordVerifier},
-    Argon2, PasswordHasher,
-};
+use argon2::{Argon2, PasswordHasher};
 use rand_core::OsRng;
 
 use sqlx::types::chrono::NaiveDateTime;
