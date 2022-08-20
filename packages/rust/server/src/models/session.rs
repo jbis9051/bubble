@@ -26,16 +26,16 @@ impl From<&PgRow> for Session {
 }
 
 impl Session {
-    pub async fn create(&self, db: &DbPool) -> Result<Session, sqlx::Error> {
-        Ok(
-            sqlx::query("INSERT INTO session (user_id, token) VALUES ($1, $2) RETURNING *;")
-                .bind(&self.user_id)
-                .bind(&self.token)
-                .fetch_one(db)
-                .await?
-                .borrow()
-                .into(),
-        )
+    pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        *self = sqlx::query("INSERT INTO session (user_id, token) VALUES ($1, $2) RETURNING *;")
+            .bind(&self.user_id)
+            .bind(&self.token)
+            .fetch_one(db)
+            .await?
+            .borrow()
+            .into();
+
+        Ok(())
     }
 
     pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Session>, sqlx::Error> {

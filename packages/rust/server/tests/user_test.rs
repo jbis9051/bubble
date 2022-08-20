@@ -7,10 +7,7 @@ use bubble::routes::user::{
 };
 use std::borrow::Borrow;
 
-use argon2::{
-    password_hash::{PasswordHash, PasswordVerifier},
-    Argon2,
-};
+
 use bubble::models::forgot::Forgot;
 use uuid::Uuid;
 
@@ -43,12 +40,7 @@ async fn create_user() {
         .await
         .unwrap();
 
-    let password = "password".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "password"), true);
     assert_eq!(user.username, created_user.username);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, None);
@@ -84,12 +76,7 @@ async fn create_user() {
         .await
         .unwrap();
 
-    let password = "password".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "password"), true);
     assert_eq!(user.username, created_user.username);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some(created_user.email));
@@ -117,12 +104,7 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
-    let password = "lots_of_abstraction".as_bytes();
-    let parsed_hash = PasswordHash::new(&brian.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&brian, "lots_of_abstraction"), true);
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, None);
@@ -146,12 +128,7 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
-    let password = "html_rocks".as_bytes();
-    let parsed_hash = PasswordHash::new(&timmy.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&timmy, "html_rocks"), true);
     assert_eq!(timmy.username, "web_development_dude");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, None);
@@ -170,12 +147,7 @@ async fn create_multiple_user() {
             .unwrap();
     let brian_session = &Session::filter_user_id(db.pool(), brian.id).await.unwrap()[0];
 
-    let password = "lots_of_abstraction".as_bytes();
-    let parsed_hash = PasswordHash::new(&brian.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&brian, "lots_of_abstraction"), true);
     assert_eq!(brian.username, "machine_learning_man");
     assert_eq!(brian.profile_picture, None);
     assert_eq!(brian.email, Some("python@gmail.com".to_string()));
@@ -199,12 +171,7 @@ async fn create_multiple_user() {
         .await
         .unwrap()[0];
 
-    let password = "cool_crustacean".as_bytes();
-    let parsed_hash = PasswordHash::new(&bill.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&bill, "cool_crustacean"), true);
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, None);
@@ -223,12 +190,7 @@ async fn create_multiple_user() {
             .unwrap();
     let bill_session = &Session::filter_user_id(db.pool(), bill.id).await.unwrap()[0];
 
-    let password = "cool_crustacean".as_bytes();
-    let parsed_hash = PasswordHash::new(&bill.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&bill, "cool_crustacean"), true);
     assert_eq!(bill.username, "big_programmer_pro");
     assert_eq!(bill.profile_picture, None);
     assert_eq!(bill.email, Some("rust@gmail.com".to_string()));
@@ -247,12 +209,7 @@ async fn create_multiple_user() {
             .unwrap();
     let timmy_session = &Session::filter_user_id(db.pool(), timmy.id).await.unwrap()[0];
 
-    let password = "html_rocks".as_bytes();
-    let parsed_hash = PasswordHash::new(&timmy.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&timmy, "html_rocks"), true);
     assert_eq!(timmy.username, "web_development_dude");
     assert_eq!(timmy.profile_picture, None);
     assert_eq!(timmy.email, Some("javascript@gmail.com".to_string()));
@@ -281,12 +238,7 @@ async fn test_signin_signout() {
         .unwrap();
     let session = Session::from_token(db.pool(), &token).await.unwrap();
 
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
@@ -303,7 +255,7 @@ async fn test_signin_signout() {
     let sessions = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(sessions.len(), 0);
 
-    user.password = "testpassword".to_string();
+    user.password = Some("testpassword".to_string());
     let token = helper::signin_user(db.pool(), &client, &user)
         .await
         .unwrap();
@@ -324,17 +276,12 @@ async fn test_forgot_password() {
         phone: None,
         name: "testname".to_string(),
     };
-    let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
+    let (token, user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
     let session = Session::from_token(db.pool(), &token).await.unwrap();
 
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
@@ -377,10 +324,15 @@ async fn test_forgot_password() {
         .await;
     assert_eq!(res.status(), StatusCode::OK);
 
-    user.password = "newtestpassword".to_string();
-    let _token = helper::signin_user(db.pool(), &client, &user)
-        .await
-        .unwrap();
+    let user = User::from_id(db.pool(), user.id).await.unwrap();
+
+    assert_eq!(User::verify_password(&user, "newtestpassword"), true);
+    assert_eq!(user.username, "testusername");
+    assert_eq!(user.profile_picture, None);
+    assert_eq!(user.email, Some("test@gmail.com".to_string()));
+    assert_eq!(user.phone, None);
+    assert_eq!(user.name, "testname");
+    assert_eq!(user.deleted, None);
 }
 
 #[tokio::test]
@@ -400,12 +352,7 @@ async fn test_change_email() {
         .unwrap();
     let session = Session::from_token(db.pool(), &token).await.unwrap();
 
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "emailtestusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("emailtest@gmail.com".to_string()));
@@ -416,10 +363,10 @@ async fn test_change_email() {
     assert_eq!(session.user_id, user.id);
 
     let change = ChangeEmail {
-        session_token: token.to_string(),
         new_email: "newtest@gmail.com".to_string(),
+        password: "testpassword".to_string(),
     };
-    let link_id = helper::change_email(db.pool(), &client, &change)
+    let link_id = helper::change_email(db.pool(), &client, &change, &session)
         .await
         .unwrap();
     let confirmation = Confirmation::from_link_id(db.pool(), &link_id)
@@ -435,15 +382,9 @@ async fn test_change_email() {
     let (user, token) = helper::change_email_confirm(db.pool(), &client, &confirm)
         .await
         .unwrap();
-    println!("token2: {:?}", token);
     let session = Session::from_token(db.pool(), &token).await.unwrap();
 
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "emailtestusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("newtest@gmail.com".to_string()));
@@ -471,12 +412,7 @@ async fn test_delete_user() {
         .unwrap();
     let session = Session::from_token(db.pool(), &token).await.unwrap();
 
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
@@ -487,29 +423,26 @@ async fn test_delete_user() {
     assert_eq!(session.user_id, user.id);
 
     let delete_in = DeleteJson {
-        token: token.to_string(),
         password: "testpassword".to_string(),
     };
 
+    let bearer = format!("Bearer {}", token);
     let res = client
         .delete("/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete_in).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::OK);
 
     let user = User::from_id(db.pool(), user.id).await.unwrap();
 
-    let password = "".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
+    assert_eq!(user.password, None);
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, None);
     assert_eq!(user.phone, None);
-    assert_eq!(user.name, "".to_string());
+    assert_eq!(user.name, "Deleted Account".to_string());
     assert_eq!(user.deleted.is_some(), true);
 
     let vec = Session::filter_user_id(db.pool(), user.id).await.unwrap();
@@ -532,11 +465,7 @@ async fn test_negative_user_signup() {
         .await
         .unwrap();
 
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, None);
@@ -564,7 +493,7 @@ async fn test_negative_user_signup() {
         .body(serde_json::to_string(&signin).unwrap())
         .send()
         .await;
-    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+    assert_eq!(test.status(), StatusCode::UNAUTHORIZED);
 
     let email_in = Email {
         email: "test@gmail.com".to_string(),
@@ -583,11 +512,7 @@ async fn test_negative_user_signup() {
     let (user, token) = helper::signup_confirm_user(db.pool(), &client, &confirm, &user)
         .await
         .unwrap();
-    let password = "testpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
+    assert_eq!(User::verify_password(&user, "testpassword"), true);
     assert_eq!(user.username, "testusername");
     assert_eq!(user.profile_picture, None);
     assert_eq!(user.email, Some("test@gmail.com".to_string()));
@@ -621,7 +546,7 @@ async fn test_negative_signin_signout() {
     let (token_1, mut user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    user.password = "testpassword".to_string();
+    user.password = Some("testpassword".to_string());
     let session_1 = Session::from_token(db.pool(), &token_1).await.unwrap();
     assert_eq!(session_1.user_id, user.id);
     assert_eq!(session_1.token, token_1);
@@ -643,7 +568,7 @@ async fn test_negative_signin_signout() {
         .body(serde_json::to_string(&signin).unwrap())
         .send()
         .await;
-    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+    assert_eq!(test.status(), StatusCode::UNAUTHORIZED);
 
     let signin = SignInJson {
         email: "faketest@gmail.com".to_string(),
@@ -655,15 +580,17 @@ async fn test_negative_signin_signout() {
         .body(serde_json::to_string(&signin).unwrap())
         .send()
         .await;
-    assert_eq!(test.status(), StatusCode::NOT_FOUND);
+    assert_eq!(test.status(), StatusCode::UNAUTHORIZED);
 
     let token = SessionToken {
         token: session_1.token.to_string(),
     };
+    let bearer = format!("Bearer {}", token.token);
     let res = client
         .delete("/user/signout")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&token).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::OK);
@@ -681,10 +608,12 @@ async fn test_negative_signin_signout() {
     let token = SessionToken {
         token: session_3.token.to_string(),
     };
+    let bearer = format!("Bearer {}", token.token);
     let res = client
         .delete("/user/signout")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&token).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::OK);
@@ -701,7 +630,7 @@ async fn test_negative_signin_signout() {
         .body(serde_json::to_string(&token).unwrap())
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
@@ -720,7 +649,7 @@ async fn test_negative_forgot() {
     let (token, mut user) = helper::initialize_user(db.pool(), &client, &user)
         .await
         .unwrap();
-    user.password = "testpassword".to_string();
+    user.password = Some("testpassword".to_string());
 
     let email = Email {
         email: user.email.clone().unwrap(),
@@ -767,12 +696,7 @@ async fn test_negative_forgot() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let user = User::from_id(db.pool(), user.id).await.unwrap();
-    let password = "newtestpassword".as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).unwrap();
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .unwrap();
-
+    assert_eq!(User::verify_password(&user, "newtestpassword"), true);
     let vec = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(vec.len(), 0);
 
@@ -786,7 +710,7 @@ async fn test_negative_forgot() {
         .body(serde_json::to_string(&signin).unwrap())
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
     let signin = SignInJson {
         email: user.email.unwrap(),
@@ -820,65 +744,79 @@ async fn test_negative_change_email() {
         .unwrap();
 
     let change = ChangeEmail {
-        session_token: "37aa15e0-8a5f-4f75-8c95-bb1238755187".to_string(),
         new_email: "newtestemail@gmail.com".to_string(),
+        password: "testpassword".to_string(),
     };
+    let bearer = format!("Bearer {}", "37aa15e0-8a5f-4f75-8c95-bb1238755187");
     let res = client
-        .post("/user/change-email")
+        .post("/user/email")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
     let change = ChangeEmail {
-        session_token: token.to_string(),
+        password: "testpassword".to_string(),
         new_email: "newtestemail@gmail.com".to_string(),
     };
+    let bearer = format!("Bearer {}", token);
     let res = client
-        .post("/user/change-email")
+        .post("/user/email")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&change).unwrap())
-        .send()
-        .await;
-    assert_eq!(res.status(), StatusCode::CREATED);
-    let res = client
-        .post("/user/change-email")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&change).unwrap())
-        .send()
-        .await;
-    assert_eq!(res.status(), StatusCode::CREATED);
-    let change = ChangeEmail {
-        session_token: token.to_string(),
-        new_email: "difftestemail@gmail.com".to_string(),
-    };
-    let res = client
-        .post("/user/change-email")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&change).unwrap())
-        .send()
-        .await;
-    assert_eq!(res.status(), StatusCode::CREATED);
-    let res = client
-        .post("/user/change-email")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let change = ChangeEmail {
-        session_token: "incorrect_token".to_string(),
-        new_email: "difftestemail@gmail.com".to_string(),
-    };
+    let bearer = format!("Bearer {}", token);
     let res = client
-        .post("/user/change-email")
+        .post("/user/email")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let change = ChangeEmail {
+        new_email: "difftestemail@gmail.com".to_string(),
+        password: "testpassword".to_string(),
+    };
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .post("/user/email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .post("/user/email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let change = ChangeEmail {
+        new_email: "difftestemail@gmail.com".to_string(),
+        password: "testpassword".to_string(),
+    };
+    let bearer = format!("Bearer {}", "bad_token");
+    let res = client
+        .post("/user/email")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
     let confirmations = Confirmation::filter_user_id(db.pool(), user.id)
         .await
@@ -889,7 +827,7 @@ async fn test_negative_change_email() {
         link_id: "incorrect".to_string(),
     };
     let res = client
-        .post("/user/change-email-confirm")
+        .post("/user/email-confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&bad_confirm).unwrap())
         .send()
@@ -899,7 +837,7 @@ async fn test_negative_change_email() {
         link_id: "9719ce93-4023-45ad-8d0b-dac9e48e04b8".to_string(),
     };
     let res = client
-        .post("/user/change-email-confirm")
+        .post("/user/email-confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&bad_confirm).unwrap())
         .send()
@@ -910,7 +848,7 @@ async fn test_negative_change_email() {
         link_id: confirmations[3].link_id.to_string(),
     };
     let res = client
-        .post("/user/change-email-confirm")
+        .post("/user/email-confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&confirm).unwrap())
         .send()
@@ -949,38 +887,41 @@ async fn test_negative_delete() {
         .unwrap();
 
     let delete = DeleteJson {
-        token: "incorrect".to_string(),
         password: "testpassword".to_string(),
     };
+    let bearer = format!("Bearer {}", "bad_token");
     let res = client
         .delete("/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
     let delete = DeleteJson {
-        token: "37aa15e0-8a5f-4f75-8c95-bb1238755187".to_string(),
         password: "testpassword".to_string(),
     };
+    let bearer = format!("Bearer {}", "37aa15e0-8a5f-4f75-8c95-bb1238755187");
     let res = client
         .delete("/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
     let delete = DeleteJson {
-        token: token.to_string(),
         password: "incorrect_password".to_string(),
     };
+    let bearer = format!("Bearer {}", token);
     let res = client
         .delete("/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }

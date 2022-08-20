@@ -48,8 +48,8 @@ impl Forgot {
         )
     }
 
-    pub async fn create(&self, db: &DbPool) -> Result<Forgot, sqlx::Error> {
-        Ok(sqlx::query(
+    pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        *self = sqlx::query(
             "INSERT INTO forgot_password (user_id, forgot_id) VALUES ($1, $2) RETURNING *;",
         )
         .bind(&self.user_id)
@@ -57,7 +57,9 @@ impl Forgot {
         .fetch_one(db)
         .await?
         .borrow()
-        .into())
+        .into();
+
+        Ok(())
     }
 
     pub async fn delete_all(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {

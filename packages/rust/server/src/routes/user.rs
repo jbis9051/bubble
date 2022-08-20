@@ -3,16 +3,19 @@ use axum::routing::{delete, post};
 use axum::Router;
 use axum::{Extension, Json};
 
+use argon2::password_hash::SaltString;
 use argon2::{
-    password_hash::{PasswordHash, PasswordVerifier},
-    Argon2,
+    password_hash::{PasswordVerifier},
+    Argon2, PasswordHasher,
 };
+use rand_core::OsRng;
 
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 use crate::models::confirmation::Confirmation;
 
+use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
@@ -29,8 +32,8 @@ pub fn router() -> Router {
         .route("/signout", delete(signout))
         .route("/forgot", post(forgot))
         .route("/forgot-confirm", post(forgot_confirm))
-        .route("/change-email", post(change_email))
-        .route("/change-email-confirm", post(change_email_confirm))
+        .route("/email", post(change_email))
+        .route("/email-confirm", post(change_email_confirm))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -46,11 +49,19 @@ async fn signup(
     db: Extension<DbPool>,
     Json(payload): Json<CreateUser>,
 ) -> Result<StatusCode, StatusCode> {
+    let byte_password = payload.password.as_bytes();
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password = argon2
+        .hash_password(byte_password, &salt)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .to_string();
+
     let mut user = User {
         id: 0,
         uuid: Uuid::new_v4(),
         username: payload.username,
-        password: String::new(),
+        password: Some(password),
         profile_picture: None,
         email: None,
         phone: payload.phone,
@@ -58,24 +69,22 @@ async fn signup(
         created: NaiveDateTime::from_timestamp(0, 0),
         deleted: None,
     };
-    let user = user
-        .create(&db.0, &payload.email, &payload.password)
-        .await
-        .map_err(map_sqlx_err)?;
+    user.create(&db.0).await.map_err(map_sqlx_err)?;
 
-    let conf = Confirmation {
+    let mut conf = Confirmation {
         id: 0,
         user_id: user.id,
         link_id: Uuid::new_v4(),
         email: payload.email,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let conf = conf.create(&db.0).await.map_err(map_sqlx_err)?;
+    conf.create(&db.0).await.map_err(map_sqlx_err)?;
 
     println!(
         "Sending Email with link_id {:?} to {:?}",
         conf.link_id, conf.email
     );
+
     Ok(StatusCode::CREATED)
 }
 
@@ -100,22 +109,21 @@ async fn signup_confirm(
     .await
     .map_err(map_sqlx_err)?;
 
-    conf.delete_all(&db.0).await.map_err(map_sqlx_err)?;
-
     let mut user = User::from_id(&db.0, conf.user_id)
         .await
         .map_err(map_sqlx_err)?;
 
+    conf.delete_all(&db.0).await.map_err(map_sqlx_err)?;
     user.email = Some(conf.email);
     user.update(&db.0).await.map_err(map_sqlx_err)?;
 
-    let session = Session {
+    let mut session = Session {
         id: 0,
         user_id: user.id,
         token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
+    session.create(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok((
         StatusCode::CREATED,
@@ -137,22 +145,19 @@ async fn signin(
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
     let user = User::from_email(&db.0, &payload.email)
         .await
-        .map_err(map_sqlx_err)?;
+        .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    let password = payload.password.as_bytes();
+    if !user.verify_password(&payload.password) {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
 
-    let parsed_hash = PasswordHash::new(&user.password).map_err(|_| StatusCode::BAD_REQUEST)?;
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .map_err(|_| StatusCode::NOT_FOUND)?;
-
-    let session = Session {
+    let mut session = Session {
         id: 0,
         user_id: user.id,
         token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
+    session.create(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok((
         StatusCode::CREATED,
@@ -165,6 +170,7 @@ async fn signin(
 async fn signout(
     db: Extension<DbPool>,
     Json(payload): Json<SessionToken>,
+    _user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     let token = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
     let session = Session::from_token(&db.0, &token)
@@ -186,13 +192,13 @@ async fn forgot(
     let user = User::from_email(&db.0, &payload.email)
         .await
         .map_err(map_sqlx_err)?;
-    let forgot = Forgot {
+    let mut forgot = Forgot {
         id: 0,
         user_id: user.id,
         forgot_id: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let forgot = forgot.create(&db.0).await.map_err(map_sqlx_err)?;
+    forgot.create(&db.0).await.map_err(map_sqlx_err)?;
 
     println!(
         "Sending email with {:?} to {:?}",
@@ -215,6 +221,7 @@ async fn forgot_confirm(
     let forgot = Forgot::from_uuid(&db.0, &uuid)
         .await
         .map_err(map_sqlx_err)?;
+
     let mut user = User::from_id(&db.0, forgot.user_id)
         .await
         .map_err(map_sqlx_err)?;
@@ -222,41 +229,50 @@ async fn forgot_confirm(
     Forgot::delete_all(&db.0, user.id)
         .await
         .map_err(map_sqlx_err)?;
+
     Session::delete_all(&db.0, user.id)
         .await
         .map_err(map_sqlx_err)?;
-    user.update_password(&db.0, &payload.password)
-        .await
-        .map_err(map_sqlx_err)?;
+
+    let byte_password = payload.password.as_bytes();
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password = argon2
+        .hash_password(byte_password, &salt)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .to_string();
+    user.password = Some(password);
+    user.update_password(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ChangeEmail {
-    pub session_token: String,
     pub new_email: String,
+    pub password: String,
 }
 
 async fn change_email(
     db: Extension<DbPool>,
     Json(payload): Json<ChangeEmail>,
+    user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&payload.session_token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let user = User::from_session(&db.0, uuid)
-        .await
-        .map_err(map_sqlx_err)?;
+    if !user.0.verify_password(&payload.password) {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
 
-    let change = Confirmation {
+    let mut change = Confirmation {
         id: 0,
-        user_id: user.id,
+        user_id: user.0.id,
         link_id: Uuid::new_v4(),
         email: payload.new_email,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let change = change.create(&db.0).await.map_err(map_sqlx_err)?;
+    change.create(&db.0).await.map_err(map_sqlx_err)?;
 
     println!("Sending code {:?} to {:?}", change.link_id, change.email);
+
     Ok(StatusCode::CREATED)
 }
 
@@ -274,24 +290,20 @@ async fn change_email_confirm(
         .await
         .map_err(map_sqlx_err)?;
 
-    user.email = Some(confirmation.email.clone());
-    user.update(&db.0).await.map_err(map_sqlx_err)?;
     confirmation.delete_all(&db.0).await.map_err(map_sqlx_err)?;
-
-    let sessions = Session::filter_user_id(&db.0, user.id)
+    Session::delete_all(&db.0, user.id)
         .await
         .map_err(map_sqlx_err)?;
-    for session in sessions {
-        session.delete(&db.0).await.map_err(map_sqlx_err)?;
-    }
+    user.email = Some(confirmation.email.clone());
+    user.update(&db.0).await.map_err(map_sqlx_err)?;
 
-    let session = Session {
+    let mut session = Session {
         id: 0,
         user_id: user.id,
         token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    let session = session.create(&db.0).await.map_err(map_sqlx_err)?;
+    session.create(&db.0).await.map_err(map_sqlx_err)?;
     Ok((
         StatusCode::CREATED,
         Json(SessionToken {
@@ -302,24 +314,18 @@ async fn change_email_confirm(
 
 #[derive(Serialize, Deserialize)]
 pub struct DeleteJson {
-    pub token: String,
     pub password: String,
 }
+
 async fn delete_user(
     db: Extension<DbPool>,
     Json(payload): Json<DeleteJson>,
+    mut user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let mut user = User::from_session(&db.0, uuid)
-        .await
-        .map_err(map_sqlx_err)?;
+    if !user.0.verify_password(&payload.password) {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
 
-    let password = payload.password.as_bytes();
-    let parsed_hash = PasswordHash::new(&user.password).map_err(|_| StatusCode::BAD_REQUEST)?;
-    Argon2::default()
-        .verify_password(password, &parsed_hash)
-        .map_err(|_| StatusCode::NOT_FOUND)?;
-
-    user.delete(&db.0).await.map_err(map_sqlx_err)?;
+    user.0.delete(&db.0).await.map_err(map_sqlx_err)?;
     Ok(StatusCode::OK)
 }

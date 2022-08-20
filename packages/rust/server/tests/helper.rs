@@ -2,6 +2,7 @@ use axum_test_helper::{TestClient, TestResponse};
 use std::borrow::Borrow;
 use std::env;
 
+
 use bubble::models::user::User;
 use bubble::router;
 
@@ -100,7 +101,7 @@ pub async fn signin_user(
 ) -> Result<Uuid, StatusCode> {
     let signin = SignInJson {
         email: user.email.clone().unwrap(),
-        password: user.password.clone(),
+        password: user.password.clone().unwrap(),
     };
     let res = client
         .post("/user/signin")
@@ -122,10 +123,12 @@ pub async fn signout_user(
     let token = SessionToken {
         token: session.token.to_string(),
     };
+    let bearer = format!("Bearer {}", token.token);
     let res = client
         .delete("/user/signout")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&token).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::OK);
@@ -137,11 +140,14 @@ pub async fn change_email(
     db: &DbPool,
     client: &TestClient,
     change: &ChangeEmail,
+    session: &Session,
 ) -> Result<Uuid, StatusCode> {
+    let bearer = format!("Bearer {}", session.token);
     let res = client
-        .post("/user/change-email")
+        .post("/user/email")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&change).unwrap())
+        .header("Authorization", bearer)
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
@@ -163,7 +169,7 @@ pub async fn change_email_confirm(
     confirm: &Confirm,
 ) -> Result<(User, Uuid), StatusCode> {
     let res = client
-        .post("/user/change-email-confirm")
+        .post("/user/email-confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&confirm).unwrap())
         .send()
@@ -173,7 +179,7 @@ pub async fn change_email_confirm(
     let uuid = Uuid::parse_str(&token.token).map_err(|_| StatusCode::BAD_REQUEST)?;
     let user = User::from_session(db, uuid).await.unwrap();
 
-    Ok((user, Uuid::parse_str(&token.token).unwrap()))
+    Ok((user, uuid))
 }
 
 // Anyone testing should use this one

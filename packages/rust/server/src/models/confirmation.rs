@@ -27,8 +27,8 @@ impl From<&PgRow> for Confirmation {
 }
 
 impl Confirmation {
-    pub async fn create(&self, db: &DbPool) -> Result<Confirmation, sqlx::Error> {
-        Ok(sqlx::query(
+    pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        *self = sqlx::query(
             "INSERT INTO confirmation (user_id, link_id, email)
                              VALUES ($1, $2, $3) RETURNING *;",
         )
@@ -38,7 +38,8 @@ impl Confirmation {
         .fetch_one(db)
         .await?
         .borrow()
-        .into())
+        .into();
+        Ok(())
     }
 
     pub async fn filter_user_id(
