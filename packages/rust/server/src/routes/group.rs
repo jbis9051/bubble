@@ -1,10 +1,12 @@
 use crate::extractor::authenticated_user::AuthenticatedUser;
-use crate::models::group::{Group, Role};
+use crate::models::group::Group;
+use crate::models::member::Role;
 use crate::models::user::User;
 use crate::types::DbPool;
 use axum::extract::Path;
 use axum::http::StatusCode;
 
+use crate::models::member::Member;
 use crate::routes::map_sqlx_err;
 use axum::routing::{delete, get, patch, post};
 use axum::Extension;
@@ -91,7 +93,7 @@ async fn add_users(
 ) -> Result<StatusCode, StatusCode> {
     let uuid_converted: Uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let mut group = Group::from_uuid(&db.0, &uuid_converted)
+    let group = Group::from_uuid(&db.0, &uuid_converted)
         .await
         .map_err(map_sqlx_err)?;
 
@@ -106,7 +108,14 @@ async fn add_users(
         let user = User::from_uuid(&db.0, &user_id)
             .await
             .map_err(map_sqlx_err)?;
-        group.add_user(&db.0, &user).await.map_err(map_sqlx_err)?;
+        let mut member = Member {
+            id: 0,
+            user_id: user.id,
+            group_id: group.id,
+            role_id: Role::Member,
+            created: NaiveDateTime::from_timestamp(0, 0),
+        };
+        member.create(&db.0).await.map_err(map_sqlx_err)?;
     }
     Ok(StatusCode::OK)
 }

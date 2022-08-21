@@ -3,7 +3,8 @@ use axum::http::StatusCode;
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 
-use bubble::models::group::{Group, Role};
+use bubble::models::group::Group;
+use bubble::models::member::Role;
 use bubble::routes::group::{GroupInfo, GroupName, NameChange, UserID};
 
 use sqlx::Row;

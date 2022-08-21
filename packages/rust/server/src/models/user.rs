@@ -3,12 +3,11 @@ use sqlx::types::Uuid;
 use sqlx::Row;
 use std::borrow::Borrow;
 
-use crate::models::group::Group;
-
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 
 use crate::types::DbPool;
 
+use crate::models::member::Member;
 use sqlx::types::chrono::{NaiveDateTime, Utc};
 
 pub struct User {
@@ -155,7 +154,7 @@ impl User {
     pub async fn delete(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         let mut tx = db.begin().await?;
 
-        Group::delete_user_by_user_id(db, self.id).await?;
+        Member::delete_all_by_user_id(db, self.id).await?;
         sqlx::query("DELETE FROM confirmation WHERE user_id = $1;")
             .bind(self.id)
             .execute(&mut tx)

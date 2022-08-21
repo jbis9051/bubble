@@ -2,6 +2,7 @@ use crate::types::DbPool;
 
 use std::borrow::Borrow;
 
+use crate::models::member::Role;
 use crate::models::user::User;
 use sqlx::postgres::PgRow;
 
@@ -16,41 +17,9 @@ pub struct Group {
     pub created: NaiveDateTime,
 }
 
-pub struct Members {
-    pub id: i32,
-    pub user_id: i32,
-    pub group_id: i32,
-    pub role_id: Role,
-    pub created: NaiveDateTime,
-}
-
-#[derive(Debug, PartialEq)]
-#[repr(u8)]
-pub enum Role {
-    Admin = 0,
-    Member = 1,
-}
-
-impl TryFrom<u8> for Role {
-    type Error = ();
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Role::Admin),
-            1 => Ok(Role::Member),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(sqlx::FromRow)]
 pub struct UserIDs {
     pub user_ids: Vec<String>,
-}
-
-#[derive(sqlx::FromRow)]
-pub struct GroupIDs {
-    pub group_ids: Vec<Members>,
 }
 
 impl From<&PgRow> for Group {
@@ -65,14 +34,6 @@ impl From<&PgRow> for Group {
 }
 
 impl Group {
-    pub async fn delete_members(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM members WHERE user_id = $1")
-            .bind(user_id)
-            .execute(db)
-            .await?;
-        Ok(())
-    }
-
     pub async fn role(&self, db: &DbPool, user_id: i32) -> Result<Role, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM member WHERE group_id = $1 AND user_id = $2;")
             .bind(self.id)
@@ -80,11 +41,10 @@ impl Group {
             .fetch_one(db)
             .await?;
         let role_id: i32 = row.get("role_id");
-        //TODO
+        //TODO //? what is the todo? -Gannon
         let role_enum = Role::try_from(role_id as u8).unwrap();
         Ok(role_enum)
     }
-
     pub async fn members(&self, db: &DbPool) -> Result<Vec<User>, sqlx::Error> {
         let row = sqlx::query("SELECT * FROM member WHERE group_id = $1 ")
             .bind(self.id)
@@ -97,7 +57,6 @@ impl Group {
         }
         Ok(users_in_group)
     }
-
     pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Group, sqlx::Error> {
         Ok(sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
             .bind(uuid)
@@ -162,47 +121,6 @@ impl Group {
             .bind(self.id)
             .execute(&mut tx)
             .await?;
-        tx.commit().await?;
-        Ok(())
-    }
-
-    pub async fn add_user(&mut self, db: &DbPool, user: &User) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "INSERT INTO member (user_id, group_id, role_id)
-                    VALUES ($1, $2, $3);",
-        )
-        .bind(user.id)
-        .bind(self.id)
-        .bind(Role::Member as i32)
-        .execute(db)
-        .await?;
-        Ok(())
-    }
-
-    pub async fn delete_user_by_user_id(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
-        let mut tx = db.begin().await?;
-
-        let rows = sqlx::query("DELETE FROM member WHERE user_id = $1 RETURNING *;")
-            .bind(user_id)
-            .fetch_all(&mut tx)
-            .await?;
-        for row in rows {
-            let group_id: i32 = row.get("group_id");
-            let groups = sqlx::query("SELECT * FROM member WHERE group_id = $1;")
-                .bind(group_id)
-                .fetch_all(&mut tx)
-                .await?;
-            if groups.is_empty() {
-                sqlx::query("DELETE * FROM location_group WHERE group_id = $1;")
-                    .bind(group_id)
-                    .execute(&mut tx)
-                    .await?;
-                sqlx::query("DELETE * FROM \"group\" id = $1;")
-                    .bind(group_id)
-                    .execute(&mut tx)
-                    .await?;
-            }
-        }
         tx.commit().await?;
         Ok(())
     }
