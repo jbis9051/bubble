@@ -25,7 +25,7 @@ impl From<&PgRow> for Forgot {
 }
 
 impl Forgot {
-    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Forgot, sqlx::Error> {
+    pub async fn from_forgot_id(db: &DbPool, uuid: &Uuid) -> Result<Forgot, sqlx::Error> {
         Ok(
             sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
                 .bind(uuid)

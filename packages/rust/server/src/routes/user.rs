@@ -110,7 +110,9 @@ async fn signup_confirm(
         .await
         .map_err(map_sqlx_err)?;
 
-    conf.delete_all(&db.0).await.map_err(map_sqlx_err)?;
+    Confirmation::delete_all(&db.0, user.id)
+        .await
+        .map_err(map_sqlx_err)?;
     user.email = Some(conf.email);
     user.update(&db.0).await.map_err(map_sqlx_err)?;
 
@@ -215,7 +217,7 @@ async fn forgot_confirm(
     Json(payload): Json<ForgotConfirm>,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&payload.forgot_code).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let forgot = Forgot::from_uuid(&db.0, &uuid)
+    let forgot = Forgot::from_forgot_id(&db.0, &uuid)
         .await
         .map_err(map_sqlx_err)?;
 
@@ -287,7 +289,9 @@ async fn change_email_confirm(
         .await
         .map_err(map_sqlx_err)?;
 
-    confirmation.delete_all(&db.0).await.map_err(map_sqlx_err)?;
+    Confirmation::delete_all(&db.0, user.id)
+        .await
+        .map_err(map_sqlx_err)?;
     Session::delete_all(&db.0, user.id)
         .await
         .map_err(map_sqlx_err)?;

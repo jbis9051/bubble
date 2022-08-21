@@ -58,8 +58,8 @@ impl Session {
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM session WHERE token = $1;")
-            .bind(&self.token)
+        sqlx::query("DELETE FROM session WHERE id = $1;")
+            .bind(&self.id)
             .execute(db)
             .await?;
         Ok(())
