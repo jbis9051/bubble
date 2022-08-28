@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import { Share, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import {share, getAddPerson, getJoinGroup, getCreateGroup} from './GroupAPICalls';
+import * as data from './groupsList.json';
 import colors from '../../constants/Colors';
 
 const styles = StyleSheet.create({
@@ -24,6 +25,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
 })
+
+const groupList = data
+
+
 
 const GroupScreen = () => {
     const [open, setOpen] = useState(false)
@@ -49,6 +54,7 @@ const GroupScreen = () => {
             >
                 <Text style={styles.changeGroupText}>Create A Group</Text>
             </TouchableOpacity>
+            {groupList && groupList.groups.map(group => {return (<Text>{group.name}</Text>)})}
         </View>
     </View>
     )
