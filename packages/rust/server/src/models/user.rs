@@ -153,7 +153,6 @@ impl User {
 
     pub async fn delete(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         let mut tx = db.begin().await?;
-
         Member::delete_all_by_user_id(db, self.id).await?;
         sqlx::query("DELETE FROM confirmation WHERE user_id = $1;")
             .bind(self.id)

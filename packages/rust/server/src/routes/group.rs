@@ -137,11 +137,12 @@ async fn members(
         return Err(StatusCode::UNAUTHORIZED);
     }
     let users_in_group = group.members(&db).await.map_err(map_sqlx_err)?;
-    let mut user_uuids_in_group = UserID { users: vec![] };
-    user_uuids_in_group.users = users_in_group
-        .iter()
-        .map(|user| user.uuid.to_string())
-        .collect::<Vec<String>>();
+    let user_uuids_in_group = UserID {
+        users: users_in_group
+            .iter()
+            .map(|user| user.uuid.to_string())
+            .collect::<Vec<String>>(),
+    };
 
     Ok((StatusCode::OK, Json(user_uuids_in_group)))
 }
@@ -194,8 +195,9 @@ async fn change_name(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    let name_to_change: &str = &payload.name;
-    group.group_name = name_to_change
+    //let name_to_change: &str = &payload.name;
+    group.group_name = payload
+        .name
         .parse()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     group.update(&db).await.map_err(map_sqlx_err)?;

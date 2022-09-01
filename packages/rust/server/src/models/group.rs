@@ -143,7 +143,7 @@ impl Group {
             let admin_id: i32 = admin_size[0].get("user_id");
             if admin_id == user.id && members_size.len() != 1 {
                 return Err(sqlx::Error::Protocol(
-                    "There must be at least one Admin in the group.".to_string(),
+                    "There must be at least one Admin in group.".to_string(),
                 ));
             }
         }
