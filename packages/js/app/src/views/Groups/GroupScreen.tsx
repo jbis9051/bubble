@@ -38,7 +38,10 @@ const styles = StyleSheet.create({
     }, changeGroupText:{
         color: colors.white,
         fontSize: 14,
-    }, groupText:{
+    }, groupSelected:{
+        backgroundColor: colors.secondary,
+    },
+    groupText:{
         fontSize: 20,
         fontWeight: '200',
     }, groupDescriptorText:{
@@ -53,12 +56,12 @@ const styles = StyleSheet.create({
     }
 })
 
-const groupList = data
+const groupList = data;
 
 
 
 const GroupScreen = () => {
-    const [open, setOpen] = useState(false)
+    const [selected, setSelected] = useState(0);
 
     return (
     <View style={styles.container}>
@@ -86,9 +89,13 @@ const GroupScreen = () => {
             <View style={styles.groupsDescriptorContainer}>
                 <Text style={styles.groupDescriptorText}>Groups</Text>
             </View>
-            {groupList && groupList.groups.map(group => {
+            {
+                groupList && groupList.groups.map(group => {
                 return (
-                    <View key={JSON.stringify(group)} style={styles.groupContainer}>
+                    <View
+                        key={JSON.stringify(group)}
+                        style={[styles.groupContainer, selected===groupList.groups.findIndex(obj => obj.name===group.name) && styles.groupSelected]}
+                    >
                         <Image
                             style={styles.groupProfilePicture}
                             source={require('./tempGroupProfile.jpg')}
