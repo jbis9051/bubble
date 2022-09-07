@@ -1,5 +1,7 @@
 import React, {useState} from 'react';
 import { Image, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import {faPlus} from '@fortawesome/free-solid-svg-icons/faPlus';
 import {getAddPerson, getJoinGroup, getCreateGroup} from './GroupAPICalls';
 import * as data from './groupsList.json';
 import colors from '../../constants/Colors';
@@ -24,10 +26,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         margin: 5,
     }, groupsDescriptorContainer:{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         paddingBottom: 5,
         width: '100%',
         borderBottomWidth: 2,
-        borderBottomColor: colors.darkGrey,
+        borderBottomColor: colors.black,
     }, changeGroup:{
         flex: 1,
         backgroundColor: colors.primary,
@@ -39,14 +43,14 @@ const styles = StyleSheet.create({
         color: colors.white,
         fontSize: 14,
     }, groupSelected:{
-        backgroundColor: colors.secondary,
+        backgroundColor: colors.grey,
     },
     groupText:{
         fontSize: 20,
         fontWeight: '200',
     }, groupDescriptorText:{
         fontSize: 16,
-        fontWeight: '200',
+        fontWeight: '500',
     }, groupProfilePicture:{
         marginTop: 5,
         marginRight: 5,
@@ -88,22 +92,34 @@ const GroupScreen = () => {
         <View style={styles.groupListContainer}>
             <View style={styles.groupsDescriptorContainer}>
                 <Text style={styles.groupDescriptorText}>Groups</Text>
+                <TouchableOpacity onPress={getAddPerson}>
+                    <FontAwesomeIcon
+                        icon={faPlus}
+                        size={18}
+                    />
+                </TouchableOpacity>
             </View>
             {
                 groupList && groupList.groups.map(group => {
-                return (
-                    <View
-                        key={JSON.stringify(group)}
-                        style={[styles.groupContainer, selected===groupList.groups.findIndex(obj => obj.name===group.name) && styles.groupSelected]}
-                    >
-                        <Image
-                            style={styles.groupProfilePicture}
-                            source={require('./tempGroupProfile.jpg')}
-                        />
-                        <Text style={styles.groupText}>{group.name}</Text>
-                    </View>
-                )
-            })}
+                    const index = groupList.groups.findIndex(obj => obj.name===group.name)
+                    return (
+                        <View
+                            key={JSON.stringify(group)}
+                            style={[styles.groupContainer, selected===index && styles.groupSelected]}
+                        >
+                            <TouchableOpacity
+                                style={{width: '100%', height: '100%'}}
+                                onPress={() => {setSelected(index)}}
+                            >
+                                <Image
+                                    style={styles.groupProfilePicture}
+                                    source={require('./tempGroupProfile.jpg')}
+                                />
+                                <Text style={styles.groupText}>{group.name}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )
+                })}
         </View>
     </View>
     )
