@@ -42,11 +42,7 @@ const TabBar = () => (
             component={GroupScreen}
             options={{
                 tabBarIcon: ({ focused }) => (
-                    <TabIcon
-                        name="Groups"
-                        icon={groupIcon}
-                        focused={focused}
-                    />
+                    <TabIcon name="Groups" icon={groupIcon} focused={focused} />
                 ),
             }}
         />
