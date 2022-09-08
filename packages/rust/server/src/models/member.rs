@@ -3,7 +3,6 @@ use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
 
-use crate::models::group::Group;
 use std::borrow::Borrow;
 
 pub struct Member {
@@ -59,50 +58,45 @@ impl From<&PgRow> for Member {
 }
 
 impl Member {
-    pub async fn delete_all_by_user_id(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
+    //should return instead groups vec,
+    //one just gets group_ids and returns vector
+    //another gets just admin size
+    //members size
+
+    pub async fn group_id(db: &DbPool, user_id: i32) -> Result<Vec<PgRow>, sqlx::Error> {
         let groups = sqlx::query("SELECT group_id FROM member WHERE user_id = $1")
             .bind(user_id)
             .fetch_all(db)
             .await?;
+        Ok(groups)
+    }
 
-        //checking for edge cases
-        let members_size_len = groups.len();
-        for i in groups {
-            let group_id: i32 = i.get("group_id");
-
-            //cannot delete group if user to delete is only admin
-            let admin_size =
-                sqlx::query("SELECT user_id FROM member WHERE group_id = $1 AND role_id = $2")
-                    .bind(group_id)
-                    .bind(Role::Admin as i32)
-                    .fetch_all(db)
-                    .await?;
-            if admin_size.len() == 1 {
-                let admin_id: i32 = admin_size[0].get("user_id");
-                if admin_id == user_id && members_size_len != 1 {
-                    //TODO Preferable to return an error from routes, not models, that is not sqlx and includes the id of the groups in quesetion
-                    return Err(sqlx::Error::Protocol(
-                        "There must be at least one Admin in the group.".to_string(),
-                    ));
-                }
-            }
-
-            //deletes group if user is the only user in the group
-            let members_size = sqlx::query("SELECT * FROM member WHERE group_id = $1")
+    pub async fn admin_num(db: &DbPool, group_id: i32) -> Result<Vec<PgRow>, sqlx::Error> {
+        let admin_size =
+            sqlx::query("SELECT user_id FROM member WHERE group_id = $1 AND role_id = $2")
                 .bind(group_id)
+                .bind(Role::Admin as i32)
                 .fetch_all(db)
                 .await?;
-            if members_size.len() == 1 {
-                let group = Group::from_id(db, group_id).await?;
-                group.delete(db).await?;
-            }
-        }
+        Ok(admin_size)
+    }
 
+    pub async fn all_members_in_group(
+        db: &DbPool,
+        group_id: i32,
+    ) -> Result<Vec<PgRow>, sqlx::Error> {
+        let members_size = sqlx::query("SELECT * FROM member WHERE group_id = $1")
+            .bind(group_id)
+            .fetch_all(db)
+            .await?;
+        Ok(members_size)
+    }
+
+    pub async fn delete_all_by_user_id(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM member WHERE user_id = $1")
             .bind(user_id)
             .execute(db)
             .await?;
-
         Ok(())
     }
 

@@ -5,20 +5,24 @@ use axum::{Extension, Json};
 
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
+use axum::body::HttpBody;
 use rand_core::OsRng;
 
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 use crate::models::confirmation::Confirmation;
+use crate::models::member::Member;
 
 use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::forgot::Forgot;
+use crate::models::group::Group;
 use crate::models::session::Session;
 use crate::models::user::User;
-use crate::routes::map_sqlx_err;
+use crate::routes::{map_bad_group_err, map_sqlx_err};
 use crate::types::DbPool;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 
 pub fn router() -> Router {
     Router::new()
@@ -318,15 +322,62 @@ pub struct DeleteJson {
     pub password: String,
 }
 
+//If "group" is blank, then only consider the StatusCode error
+#[derive(Serialize, Deserialize)]
+pub struct BadGroup {
+    pub group: String,
+}
+
 async fn delete_user(
     db: Extension<DbPool>,
     Json(payload): Json<DeleteJson>,
     mut user: AuthenticatedUser,
-) -> Result<StatusCode, StatusCode> {
+) -> Result<StatusCode, (StatusCode, Json<BadGroup>)> {
     if !user.0.verify_password(&payload.password) {
-        return Err(StatusCode::UNAUTHORIZED);
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(BadGroup {
+                group: "".to_string(),
+            }),
+        ));
     }
 
-    user.0.delete(&db.0).await.map_err(map_sqlx_err)?;
+    //Checking if only one admin is in the group. If so, we return a B
+    let groups = Member::group_id(&db, user.0.id)
+        .await
+        .map_err(map_bad_group_err)?;
+    let members_size_len = groups.len();
+    for i in groups {
+        let group_id: i32 = i.get("group_id");
+        let admin_size = Member::admin_num(&db, group_id)
+            .await
+            .map_err(map_bad_group_err)?;
+        if admin_size.len() == 1 {
+            let admin_id: i32 = admin_size[0].get("user_id");
+            if admin_id == user.0.id && members_size_len != 1 {
+                let bad_group = Group::from_id(&db, group_id)
+                    .await
+                    .map_err(map_bad_group_err)?;
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(BadGroup {
+                        group: bad_group.group_name,
+                    }),
+                ));
+            }
+        }
+        //Checking if admin is last member in the group, if so the group will be deleted
+        let members = Member::all_members_in_group(&db, group_id)
+            .await
+            .map_err(map_bad_group_err)?;
+        if members.len() == 1 {
+            let group = Group::from_id(&db, group_id)
+                .await
+                .map_err(map_bad_group_err)?;
+            group.delete(&db).await.map_err(map_bad_group_err)?;
+        }
+    }
+
+    user.0.delete(&db.0).await.map_err(map_bad_group_err)?;
     Ok(StatusCode::OK)
 }
