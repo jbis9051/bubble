@@ -161,6 +161,7 @@ const SearchGroups: React.FunctionComponent<{
                         ))}
                 </View>
             </ScrollView>
+
         </BlurView>
     );
 };

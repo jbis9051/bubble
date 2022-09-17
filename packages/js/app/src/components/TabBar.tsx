@@ -8,9 +8,9 @@ import {
     faCircleUser as userIcon,
 } from '@fortawesome/free-solid-svg-icons';
 import HomeScreen from '../views/HomeScreen';
-import MapScreen from '../views/MapScreen';
+import GroupScreen from '../views/GroupScreen';
 import ProfileScreen from '../views/ProfileScreen';
-import GroupsScreen from '../views/GroupsScreen';
+import MapScreen from '../views/MapScreen';
 import TabIcon from './TabIcon';
 
 const Tab = createBottomTabNavigator();
@@ -38,7 +38,7 @@ const TabBar = () => (
         />
         <Tab.Screen
             name="Groups"
-            component={GroupsScreen}
+            component={GroupScreen}
             options={{
                 tabBarIcon: ({ focused }) => (
                     <TabIcon
