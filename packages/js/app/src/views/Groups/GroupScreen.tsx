@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import {Image, Text, View, StyleSheet, TouchableOpacity, ScrollView} from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { getAddPerson, getJoinGroup, getCreateGroup } from './GroupAPICalls';
@@ -28,8 +28,12 @@ const styles = StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         margin: 5,
-    },
-    groupsDescriptorContainer: {
+    },groupContainerTouchableNamePFP:{
+        width: '100%',
+        height: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+    }, groupsDescriptorContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingBottom: 5,
@@ -61,8 +65,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     groupProfilePicture: {
-        marginTop: 5,
-        marginRight: 5,
+        margin: 5,
         width: 50,
         height: 50,
         borderRadius: 25,
@@ -103,36 +106,38 @@ const GroupScreen = () => {
                         <FontAwesomeIcon icon={faPlus} size={18} />
                     </TouchableOpacity>
                 </View>
-                {groupList &&
-                    groupList.groups.map((group) => {
-                        const index = groupList.groups.findIndex(
-                            (obj) => obj.name === group.name
-                        );
-                        return (
-                            <View
-                                key={JSON.stringify(group)}
-                                style={[
-                                    styles.groupContainer,
-                                    selected === index && styles.groupSelected,
-                                ]}
-                            >
-                                <TouchableOpacity
-                                    style={{ width: '100%', height: '100%' }}
-                                    onPress={() => {
-                                        setSelected(index);
-                                    }}
+                <ScrollView bounces={false} style={{}}>
+                    {groupList &&
+                        groupList.groups.map((group) => {
+                            const index = groupList.groups.findIndex(
+                                (obj) => obj.name === group.name
+                            );
+                            return (
+                                <View
+                                    key={JSON.stringify(group)}
+                                    style={[
+                                        styles.groupContainer,
+                                        selected === index && styles.groupSelected,
+                                    ]}
                                 >
-                                    <Image
-                                        style={styles.groupProfilePicture}
-                                        source={require('./tempGroupProfile.jpg')}
-                                    />
-                                    <Text style={styles.groupText}>
-                                        {group.name}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    })}
+                                    <TouchableOpacity
+                                        style={styles.groupContainerTouchableNamePFP}
+                                        onPress={() => {
+                                            setSelected(index);
+                                        }}
+                                    >
+                                        <Image
+                                            style={styles.groupProfilePicture}
+                                            source={require('./tempGroupProfile.jpg')}
+                                        />
+                                        <Text style={styles.groupText}>
+                                            {group.name}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            );
+                        })}
+                </ScrollView>
             </View>
         </View>
     );
