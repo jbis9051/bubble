@@ -1,6 +1,5 @@
 {
     "groups": [
-        { "name": "Create Group" },
         { "name": "Group 1" },
         { "name": "Group 2" },
         { "name": "Group 3" },

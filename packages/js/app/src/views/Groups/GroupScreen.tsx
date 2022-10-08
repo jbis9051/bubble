@@ -10,6 +10,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { getAddPerson, getJoinGroup, getCreateGroup } from './GroupAPICalls';
 import * as data from './groupsList.json';
 import colors from '../../constants/Colors';
@@ -46,6 +47,12 @@ const GroupScreen = () => {
                     <Text style={styles.groupDescriptorText}>
                         Manage Groups
                     </Text>
+                    <TouchableOpacity onPress={getJoinGroup}>
+                        <FontAwesomeIcon
+                            icon={faPlus}
+                            style={styles.searchIcon}
+                        />
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.searchBar}>
                     <FontAwesomeIcon
@@ -61,6 +68,20 @@ const GroupScreen = () => {
                     bounces={true}
                     style={{ maxHeight: '82%', maxWidth: '100%' }}
                 >
+                    <View style={styles.groupContainer}>
+                        <TouchableOpacity
+                            style={styles.groupContainerTouchableNamePFP}
+                            onPress={() => {
+                                getCreateGroup();
+                            }}
+                        >
+                            <Image
+                                style={styles.groupProfilePicture}
+                                source={require('./tempGroupProfile.jpg')} // eslint-disable-line global-require
+                            />
+                            <Text style={styles.groupText}>Create Group</Text>
+                        </TouchableOpacity>
+                    </View>
                     {groupList &&
                         groupList.groups.map((group) => {
                             const index = groupList.groups.findIndex(
