@@ -1,85 +1,27 @@
 import React, { useState } from 'react';
-import {Image, Text, View, StyleSheet, TouchableOpacity, ScrollView} from 'react-native';
+import {
+    Image,
+    Text,
+    View,
+    TouchableOpacity,
+    ScrollView,
+    TextInput,
+} from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { getAddPerson, getJoinGroup, getCreateGroup } from './GroupAPICalls';
 import * as data from './groupsList.json';
 import colors from '../../constants/Colors';
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    changeGroupContainer: {
-        top: '10%',
-        width: '100%',
-        flex: 1.2,
-        flexDirection: 'column',
-    },
-    groupListContainer: {
-        width: '80%',
-        top: '10%',
-        flex: 3,
-        alignItems: 'center',
-    },
-    groupContainer: {
-        alignItems: 'center',
-        width: '100%',
-        flexDirection: 'row',
-        margin: 5,
-    },groupContainerTouchableNamePFP:{
-        width: '100%',
-        height: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-    }, groupsDescriptorContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingBottom: 5,
-        width: '100%',
-        borderBottomWidth: 2,
-        borderBottomColor: colors.black,
-    },
-    changeGroup: {
-        flex: 1,
-        backgroundColor: colors.primary,
-        borderRadius: 30,
-        margin: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    changeGroupText: {
-        color: colors.white,
-        fontSize: 14,
-    },
-    groupSelected: {
-        backgroundColor: colors.grey,
-    },
-    groupText: {
-        fontSize: 20,
-        fontWeight: '200',
-    },
-    groupDescriptorText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    groupProfilePicture: {
-        margin: 5,
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-    },
-});
+import styles from './styles';
 
 const groupList = data;
 
 const GroupScreen = () => {
     const [selected, setSelected] = useState(0);
-
     return (
         <View style={styles.container}>
-            <View style={styles.changeGroupContainer}>
+            {/* <View style={styles.changeGroupContainer}>
                 <TouchableOpacity
                     style={styles.changeGroup}
                     onPress={getJoinGroup}
@@ -98,15 +40,27 @@ const GroupScreen = () => {
                 >
                     <Text style={styles.changeGroupText}>Create A Group</Text>
                 </TouchableOpacity>
-            </View>
+            </View> */}
             <View style={styles.groupListContainer}>
                 <View style={styles.groupsDescriptorContainer}>
-                    <Text style={styles.groupDescriptorText}>Groups</Text>
-                    <TouchableOpacity onPress={getAddPerson}>
-                        <FontAwesomeIcon icon={faPlus} size={18} />
-                    </TouchableOpacity>
+                    <Text style={styles.groupDescriptorText}>
+                        Manage Groups
+                    </Text>
                 </View>
-                <ScrollView bounces={false} style={{}}>
+                <View style={styles.searchBar}>
+                    <FontAwesomeIcon
+                        icon={faMagnifyingGlass}
+                        style={styles.searchIcon}
+                    />
+                    <TextInput
+                        style={{ flex: 1 }}
+                        placeholder="Search groups"
+                    />
+                </View>
+                <ScrollView
+                    bounces={true}
+                    style={{ maxHeight: '82%', maxWidth: '100%' }}
+                >
                     {groupList &&
                         groupList.groups.map((group) => {
                             const index = groupList.groups.findIndex(
@@ -117,22 +71,37 @@ const GroupScreen = () => {
                                     key={JSON.stringify(group)}
                                     style={[
                                         styles.groupContainer,
-                                        selected === index && styles.groupSelected,
+                                        selected === index &&
+                                            styles.groupSelected,
                                     ]}
                                 >
                                     <TouchableOpacity
-                                        style={styles.groupContainerTouchableNamePFP}
+                                        style={
+                                            styles.groupContainerTouchableNamePFP
+                                        }
                                         onPress={() => {
                                             setSelected(index);
                                         }}
                                     >
                                         <Image
                                             style={styles.groupProfilePicture}
-                                            source={require('./tempGroupProfile.jpg')}
+                                            source={require('./tempGroupProfile.jpg')} // eslint-disable-line global-require
                                         />
                                         <Text style={styles.groupText}>
                                             {group.name}
                                         </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={{
+                                            height: '20%',
+                                            width: '10%',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faTrash}
+                                            style={{ color: colors.darkGrey }}
+                                        />
                                     </TouchableOpacity>
                                 </View>
                             );
