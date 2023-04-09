@@ -68,7 +68,7 @@ pub async fn signup_user(
     assert_eq!(res.status(), StatusCode::CREATED);
 
     let user = User::from_username(db, &user_in.username).await.unwrap();
-    let link_id = Confirmation::filter_user_id(db, user.id).await.unwrap()[0].link_id;
+    let link_id = Confirmation::filter_user_id(db, user.id).await.unwrap()[0].token;
 
     Ok((user, link_id))
 }
@@ -159,7 +159,7 @@ pub async fn change_email(
         .borrow()
         .into();
 
-    Ok(confirmation.link_id)
+    Ok(confirmation.token)
 }
 
 pub async fn change_email_confirm(
@@ -204,7 +204,7 @@ pub async fn initialize_user(
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&Confirm {
-                link_id: confirmation.link_id.to_string(),
+                link_id: confirmation.token.to_string(),
             })
             .unwrap(),
         )

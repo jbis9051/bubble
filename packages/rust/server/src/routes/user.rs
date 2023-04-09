@@ -75,7 +75,7 @@ async fn signup(
     let mut conf = Confirmation {
         id: 0,
         user_id: user.id,
-        link_id: Uuid::new_v4(),
+        token: Uuid::new_v4(),
         email: payload.email,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
@@ -83,7 +83,7 @@ async fn signup(
 
     println!(
         "Sending Email with link_id {:?} to {:?}",
-        conf.link_id, conf.email
+        conf.token, conf.email
     );
 
     Ok(StatusCode::CREATED)
@@ -198,15 +198,12 @@ async fn forgot(
     let mut forgot = Forgot {
         id: 0,
         user_id: user.id,
-        forgot_id: Uuid::new_v4(),
+        token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     forgot.create(&db.0).await.map_err(map_sqlx_err)?;
 
-    println!(
-        "Sending email with {:?} to {:?}",
-        forgot.forgot_id, user.email
-    );
+    println!("Sending email with {:?} to {:?}", forgot.token, user.email);
     Ok(StatusCode::CREATED)
 }
 
@@ -221,7 +218,7 @@ async fn forgot_confirm(
     Json(payload): Json<ForgotConfirm>,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&payload.forgot_code).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let forgot = Forgot::from_forgot_id(&db.0, &uuid)
+    let forgot = Forgot::from_token(&db.0, &uuid)
         .await
         .map_err(map_sqlx_err)?;
 
@@ -268,13 +265,13 @@ async fn change_email(
     let mut change = Confirmation {
         id: 0,
         user_id: user.0.id,
-        link_id: Uuid::new_v4(),
+        token: Uuid::new_v4(),
         email: payload.new_email,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     change.create(&db.0).await.map_err(map_sqlx_err)?;
 
-    println!("Sending code {:?} to {:?}", change.link_id, change.email);
+    println!("Sending code {:?} to {:?}", change.token, change.email);
 
     Ok(StatusCode::CREATED)
 }

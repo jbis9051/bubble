@@ -9,7 +9,7 @@ use crate::types::DbPool;
 pub struct Forgot {
     pub id: i32,
     pub user_id: i32,
-    pub forgot_id: Uuid,
+    pub token: Uuid,
     pub created: NaiveDateTime,
 }
 
@@ -18,16 +18,16 @@ impl From<&PgRow> for Forgot {
         Forgot {
             id: row.get("id"),
             user_id: row.get("user_id"),
-            forgot_id: row.get("forgot_id"),
+            token: row.get("token"),
             created: row.get("created"),
         }
     }
 }
 
 impl Forgot {
-    pub async fn from_forgot_id(db: &DbPool, uuid: &Uuid) -> Result<Forgot, sqlx::Error> {
+    pub async fn from_token(db: &DbPool, uuid: &Uuid) -> Result<Forgot, sqlx::Error> {
         Ok(
-            sqlx::query("SELECT * FROM forgot_password WHERE forgot_id = $1;")
+            sqlx::query("SELECT * FROM forgot_password WHERE token = $1;")
                 .bind(uuid)
                 .fetch_one(db)
                 .await?
@@ -50,10 +50,10 @@ impl Forgot {
 
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = sqlx::query(
-            "INSERT INTO forgot_password (user_id, forgot_id) VALUES ($1, $2) RETURNING *;",
+            "INSERT INTO forgot_password (user_id, token) VALUES ($1, $2) RETURNING *;",
         )
         .bind(&self.user_id)
-        .bind(&self.forgot_id)
+        .bind(&self.token)
         .fetch_one(db)
         .await?
         .borrow()

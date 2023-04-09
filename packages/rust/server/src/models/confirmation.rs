@@ -9,7 +9,7 @@ use crate::types::DbPool;
 pub struct Confirmation {
     pub id: i32,
     pub user_id: i32,
-    pub link_id: Uuid,
+    pub token: Uuid,
     pub email: String,
     pub created: NaiveDateTime,
 }
@@ -19,7 +19,7 @@ impl From<&PgRow> for Confirmation {
         Confirmation {
             id: row.get("id"),
             user_id: row.get("user_id"),
-            link_id: row.get("link_id"),
+            token: row.get("token"),
             email: row.get("email"),
             created: row.get("created"),
         }
@@ -29,11 +29,11 @@ impl From<&PgRow> for Confirmation {
 impl Confirmation {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = sqlx::query(
-            "INSERT INTO confirmation (user_id, link_id, email)
+            "INSERT INTO confirmation (user_id, token, email)
                              VALUES ($1, $2, $3) RETURNING *;",
         )
         .bind(&self.user_id)
-        .bind(&self.link_id)
+        .bind(&self.token)
         .bind(&self.email)
         .fetch_one(db)
         .await?
@@ -57,15 +57,13 @@ impl Confirmation {
         )
     }
 
-    pub async fn from_link_id(db: &DbPool, link_id: &Uuid) -> Result<Confirmation, sqlx::Error> {
-        Ok(
-            sqlx::query("SELECT * FROM confirmation WHERE link_id = $1;")
-                .bind(link_id)
-                .fetch_one(db)
-                .await?
-                .borrow()
-                .into(),
-        )
+    pub async fn from_token(db: &DbPool, token: &Uuid) -> Result<Confirmation, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM confirmation WHERE token = $1;")
+            .bind(token)
+            .fetch_one(db)
+            .await?
+            .borrow()
+            .into())
     }
 
     pub async fn delete_all(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {

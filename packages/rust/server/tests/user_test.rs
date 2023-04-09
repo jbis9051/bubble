@@ -62,7 +62,7 @@ async fn create_user() {
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&Confirm {
-                link_id: confirmation.link_id.to_string(),
+                link_id: confirmation.token.to_string(),
             })
             .unwrap(),
         )
@@ -177,7 +177,7 @@ async fn test_forgot_password() {
     assert_eq!(forgot.user_id, user.id);
     let confirm = ForgotConfirm {
         password: "newtestpassword".to_string(),
-        forgot_code: forgot.forgot_id.to_string(),
+        forgot_code: forgot.token.to_string(),
     };
 
     let res = client
@@ -237,7 +237,7 @@ async fn test_change_email() {
         .await
         .unwrap();
     assert_eq!(confirmation.user_id, user.id);
-    assert_eq!(confirmation.link_id, link_id);
+    assert_eq!(confirmation.token, link_id);
     assert_eq!(confirmation.email, change.new_email);
 
     let confirm = Confirm {
@@ -341,7 +341,7 @@ async fn test_negative_user_signup() {
         .await
         .unwrap();
     assert_eq!(confirmation.user_id, user.id);
-    assert_eq!(confirmation.link_id, link_id);
+    assert_eq!(confirmation.token, link_id);
     assert_eq!("test@gmail.com".to_string(), confirmation.email);
 
     let test = Session::filter_user_id(db.pool(), user.id).await.unwrap();
@@ -549,7 +549,7 @@ async fn test_negative_forgot() {
 
     let confirm = ForgotConfirm {
         password: "newtestpassword".to_string(),
-        forgot_code: forgot.forgot_id.to_string(),
+        forgot_code: forgot.token.to_string(),
     };
     let res = client
         .post("/user/forgot-confirm")
@@ -709,7 +709,7 @@ async fn test_negative_change_email() {
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
     let confirm = Confirm {
-        link_id: confirmations[3].link_id.to_string(),
+        link_id: confirmations[3].token.to_string(),
     };
     let res = client
         .post("/user/email-confirm")

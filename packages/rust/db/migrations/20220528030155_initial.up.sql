@@ -4,7 +4,6 @@ CREATE TABLE "user"
     uuid            UUID UNIQUE         NOT NULL,
     username        VARCHAR(255) UNIQUE NOT NULL,
     password        VARCHAR(255)        NOT NULL,
-    profile_picture VARCHAR(255)        NULL,
     email           VARCHAR(255) UNIQUE NULL,
     name            VARCHAR(255)        NOT NULL,
     created         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
