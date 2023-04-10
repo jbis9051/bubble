@@ -1,6 +1,6 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::types::Uuid;
+
 use sqlx::Row;
 use std::borrow::Borrow;
 
@@ -29,8 +29,8 @@ impl Recipient {
         *self = sqlx::query(
             "INSERT INTO recipient (client_id, message_id) VALUES ($1,$2) RETURNING *;",
         )
-        .bind(&self.client_id)
-        .bind(&self.message_id)
+        .bind(self.client_id)
+        .bind(self.message_id)
         .fetch_one(db)
         .await?
         .borrow()

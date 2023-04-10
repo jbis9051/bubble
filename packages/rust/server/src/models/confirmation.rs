@@ -32,8 +32,8 @@ impl Confirmation {
             "INSERT INTO confirmation (user_id, token, email)
                              VALUES ($1, $2, $3) RETURNING *;",
         )
-        .bind(&self.user_id)
-        .bind(&self.token)
+        .bind(self.user_id)
+        .bind(self.token)
         .bind(&self.email)
         .fetch_one(db)
         .await?
@@ -76,7 +76,7 @@ impl Confirmation {
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM confirmation WHERE id = $1")
-            .bind(&self.id)
+            .bind(self.id)
             .execute(db)
             .await?;
         Ok(())

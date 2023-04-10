@@ -1,6 +1,4 @@
-use crate::routes::user::BadGroup;
 use axum::http::StatusCode;
-use axum::Json;
 pub mod user;
 
 pub fn map_sqlx_err(err: sqlx::Error) -> StatusCode {

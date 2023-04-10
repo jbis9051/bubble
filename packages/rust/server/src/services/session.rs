@@ -11,7 +11,7 @@ pub async fn create_session(db: &DbPool, user_id: i32) -> Result<Uuid, sqlx::Err
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
-    session.create(&db).await?;
+    session.create(db).await?;
 
     Ok(session.token)
 }

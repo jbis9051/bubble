@@ -23,7 +23,7 @@ pub fn router() -> Router {
     Router::new()
         .route("/", delete(delete_user))
         .route("/register", post(register))
-        .route("/confirm", post(confirm))
+        .route("/confirm", patch(confirm))
         .route("/session", post(login).delete(logout))
         .route("/forgot", post(forgot))
         .route("/reset", patch(reset))
@@ -45,14 +45,19 @@ async fn register(
 ) -> Result<StatusCode, (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
 
-    if let Ok(_) = User::from_username(&db.0, &payload.username).await {
+    if (User::from_username(&db.0, &payload.username).await).is_ok() {
         return Err((StatusCode::CONFLICT, "username".to_string()));
     }
-    if let Ok(_) = User::from_email(&db.0, &payload.email).await {
+    if (User::from_email(&db.0, &payload.email).await).is_ok() {
         return Err((StatusCode::CONFLICT, "email".to_string()));
     }
 
-    let hash = password::hash(&payload.password);
+    let hash = password::hash(&payload.password).map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "unable to hash password".to_string(),
+        )
+    })?;
 
     let mut user = User {
         id: 0,
@@ -122,7 +127,7 @@ async fn confirm(
     .await
     .map_err(map_sqlx_err)?;
 
-    confirmation.delete(&db.0);
+    confirmation.delete(&db.0).await.map_err(map_sqlx_err)?;
 
     let mut user = User::from_id(&db.0, confirmation.user_id)
         .await
@@ -139,7 +144,7 @@ async fn confirm(
     let token = create_session(&db.0, user.id).await.map_err(map_sqlx_err)?;
 
     Ok((
-        StatusCode::CREATED,
+        StatusCode::OK,
         Json(SessionToken {
             token: token.to_string(),
         }),
@@ -253,7 +258,8 @@ async fn reset(
         .await
         .map_err(map_sqlx_err)?;
 
-    user.password = password::hash(&payload.password);
+    user.password =
+        password::hash(&payload.password).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     user.update(&db.0).await.map_err(map_sqlx_err)?;
 
@@ -304,7 +310,7 @@ pub struct Delete {
 async fn delete_user(
     db: Extension<DbPool>,
     Json(payload): Json<Delete>,
-    mut user: AuthenticatedUser,
+    user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     if !password::verify(&user.password, &payload.password).map_err(|_| StatusCode::UNAUTHORIZED)? {
         return Err(StatusCode::UNAUTHORIZED);

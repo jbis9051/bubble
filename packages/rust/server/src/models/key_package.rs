@@ -1,6 +1,6 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::types::Uuid;
+
 use sqlx::Row;
 use std::borrow::Borrow;
 
@@ -29,7 +29,7 @@ impl KeyPackage {
         *self = sqlx::query(
             "INSERT INTO key_package (client_id, key_package) VALUES ($1,$2) RETURNING *;",
         )
-        .bind(&self.client_id)
+        .bind(self.client_id)
         .bind(&self.key_package)
         .fetch_one(db)
         .await?

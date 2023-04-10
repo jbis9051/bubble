@@ -1,13 +1,10 @@
+use crate::types::DbPool;
 use sqlx::postgres::PgRow;
 use sqlx::types::Uuid;
 use sqlx::Row;
 use std::borrow::Borrow;
 
-use argon2::{Argon2, PasswordHash, PasswordVerifier};
-
-use crate::types::DbPool;
-
-use sqlx::types::chrono::{NaiveDateTime, Utc};
+use sqlx::types::chrono::NaiveDateTime;
 
 pub struct User {
     pub id: i32,
@@ -39,7 +36,7 @@ impl User {
             "INSERT INTO \"user\" (uuid, username, password, email, name)
                              VALUES ($1, $2, $3, $4, $5) RETURNING *;",
         )
-        .bind(&self.uuid)
+        .bind(self.uuid)
         .bind(&self.username)
         .bind(&self.password)
         .bind(&self.email)
@@ -110,15 +107,15 @@ impl User {
                       username = $2,
                       password = $3,
                       email = $4,
-                      name = $5,
+                      name = $5
                   WHERE id = $6;",
         )
-        .bind(&self.uuid)
+        .bind(self.uuid)
         .bind(&self.username)
         .bind(&self.password)
         .bind(&self.email)
         .bind(&self.name)
-        .bind(&self.id)
+        .bind(self.id)
         .execute(db)
         .await?;
         Ok(())
@@ -126,7 +123,7 @@ impl User {
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM \"user\" WHERE id = $1;")
-            .bind(&self.id)
+            .bind(self.id)
             .execute(db)
             .await?;
         Ok(())

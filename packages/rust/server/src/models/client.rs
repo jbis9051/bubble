@@ -46,8 +46,8 @@ impl Client {
 
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = sqlx::query("INSERT INTO client (user_id, uuid) VALUES ($1, $2) RETURNING *;")
-            .bind(&self.user_id)
-            .bind(&self.uuid)
+            .bind(self.user_id)
+            .bind(self.uuid)
             .fetch_one(db)
             .await?
             .borrow()
