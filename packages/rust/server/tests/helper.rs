@@ -12,7 +12,7 @@ use sqlx::postgres::{PgPoolOptions, PgRow};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, SessionToken, SignInJson};
+use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
 
 use bubble::models::session::Session;
 use sqlx::migrate::MigrateDatabase;
@@ -98,7 +98,7 @@ pub async fn signin_user(
     client: &TestClient,
     user: &User,
 ) -> Result<Uuid, StatusCode> {
-    let signin = SignInJson {
+    let signin = Login {
         email: user.email.clone().unwrap(),
         password: user.password.clone().unwrap(),
     };
@@ -204,7 +204,7 @@ pub async fn initialize_user(
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&Confirm {
-                link_id: confirmation.token.to_string(),
+                token: confirmation.token.to_string(),
             })
             .unwrap(),
         )

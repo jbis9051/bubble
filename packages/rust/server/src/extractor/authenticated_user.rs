@@ -5,12 +5,21 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use std::ops::Deref;
 use uuid::Uuid;
 
 use crate::models::user::User;
 use crate::types::DbPool;
 
 pub struct AuthenticatedUser(pub(crate) User);
+
+impl Deref for AuthenticatedUser {
+    type Target = User;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[async_trait]
 impl<B> FromRequest<B> for AuthenticatedUser

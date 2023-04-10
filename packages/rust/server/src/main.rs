@@ -1,3 +1,4 @@
+use bubble::services::email::EmailService;
 use bubble::{config, router};
 use sqlx::postgres::PgPoolOptions;
 
@@ -9,7 +10,9 @@ async fn main() -> Result<(), ()> {
         .await
         .unwrap();
 
-    let router = router::router(pool);
+    let email_service = EmailService::default();
+
+    let router = router::router(pool, email_service);
 
     axum::Server::bind(&config::CONFIG.listen_addr.parse().unwrap())
         .serve(router.into_make_service())

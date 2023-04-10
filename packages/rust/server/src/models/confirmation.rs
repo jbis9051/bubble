@@ -73,4 +73,12 @@ impl Confirmation {
             .await?;
         Ok(())
     }
+
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM confirmation WHERE id = $1")
+            .bind(&self.id)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
 }

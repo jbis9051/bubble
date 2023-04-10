@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::user::User;
 use bubble::routes::user::{
-    ChangeEmail, Confirm, CreateUser, DeleteJson, Email, ForgotConfirm, SessionToken, SignInJson,
+    ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset, SessionToken,
 };
 use std::borrow::Borrow;
 
@@ -62,7 +62,7 @@ async fn create_user() {
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&Confirm {
-                link_id: confirmation.token.to_string(),
+                token: confirmation.token.to_string(),
             })
             .unwrap(),
         )
@@ -175,9 +175,9 @@ async fn test_forgot_password() {
         .into();
 
     assert_eq!(forgot.user_id, user.id);
-    let confirm = ForgotConfirm {
+    let confirm = PasswordReset {
         password: "newtestpassword".to_string(),
-        forgot_code: forgot.token.to_string(),
+        token: forgot.token.to_string(),
     };
 
     let res = client
@@ -241,7 +241,7 @@ async fn test_change_email() {
     assert_eq!(confirmation.email, change.new_email);
 
     let confirm = Confirm {
-        link_id: link_id.to_string(),
+        token: link_id.to_string(),
     };
     let (user, token) = helper::change_email_confirm(db.pool(), &client, &confirm)
         .await
@@ -286,7 +286,7 @@ async fn test_delete_user() {
     assert_eq!(session.token, token);
     assert_eq!(session.user_id, user.id);
 
-    let delete_in = DeleteJson {
+    let delete_in = Delete {
         password: "testpassword".to_string(),
     };
 
@@ -347,7 +347,7 @@ async fn test_negative_user_signup() {
     let test = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(test.len(), 0);
 
-    let signin = SignInJson {
+    let signin = Login {
         email: "test@gmail".to_string(),
         password: "testpassword".to_string(),
     };
@@ -371,7 +371,7 @@ async fn test_negative_user_signup() {
     assert_eq!(test.status(), StatusCode::NOT_FOUND);
 
     let confirm = Confirm {
-        link_id: link_id.to_string(),
+        token: link_id.to_string(),
     };
     let (user, token) = helper::signup_confirm_user(db.pool(), &client, &confirm, &user)
         .await
@@ -422,7 +422,7 @@ async fn test_negative_signin_signout() {
     assert_eq!(session_2.user_id, user.id);
     assert_eq!(session_2.token, token_2);
 
-    let signin = SignInJson {
+    let signin = Login {
         email: "test@gmail.com".to_string(),
         password: "faketestpassword".to_string(),
     };
@@ -434,7 +434,7 @@ async fn test_negative_signin_signout() {
         .await;
     assert_eq!(test.status(), StatusCode::UNAUTHORIZED);
 
-    let signin = SignInJson {
+    let signin = Login {
         email: "faketest@gmail.com".to_string(),
         password: "testpassword".to_string(),
     };
@@ -547,9 +547,9 @@ async fn test_negative_forgot() {
     let session = Session::from_token(db.pool(), &token).await.unwrap();
     assert_eq!(session.user_id, user.id);
 
-    let confirm = ForgotConfirm {
+    let confirm = PasswordReset {
         password: "newtestpassword".to_string(),
-        forgot_code: forgot.token.to_string(),
+        token: forgot.token.to_string(),
     };
     let res = client
         .post("/user/forgot-confirm")
@@ -564,7 +564,7 @@ async fn test_negative_forgot() {
     let vec = Session::filter_user_id(db.pool(), user.id).await.unwrap();
     assert_eq!(vec.len(), 0);
 
-    let signin = SignInJson {
+    let signin = Login {
         email: user.email.clone().unwrap(),
         password: "testpassword".to_string(),
     };
@@ -576,7 +576,7 @@ async fn test_negative_forgot() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
-    let signin = SignInJson {
+    let signin = Login {
         email: user.email.unwrap(),
         password: "newtestpassword".to_string(),
     };
@@ -688,7 +688,7 @@ async fn test_negative_change_email() {
     assert_eq!(confirmations.len(), 4);
 
     let bad_confirm = Confirm {
-        link_id: "incorrect".to_string(),
+        token: "incorrect".to_string(),
     };
     let res = client
         .post("/user/email-confirm")
@@ -698,7 +698,7 @@ async fn test_negative_change_email() {
         .await;
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
     let bad_confirm = Confirm {
-        link_id: "9719ce93-4023-45ad-8d0b-dac9e48e04b8".to_string(),
+        token: "9719ce93-4023-45ad-8d0b-dac9e48e04b8".to_string(),
     };
     let res = client
         .post("/user/email-confirm")
@@ -709,7 +709,7 @@ async fn test_negative_change_email() {
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
     let confirm = Confirm {
-        link_id: confirmations[3].token.to_string(),
+        token: confirmations[3].token.to_string(),
     };
     let res = client
         .post("/user/email-confirm")
@@ -750,7 +750,7 @@ async fn test_negative_delete() {
         .await
         .unwrap();
 
-    let delete = DeleteJson {
+    let delete = Delete {
         password: "testpassword".to_string(),
     };
     let bearer = format!("Bearer {}", "bad_token");
@@ -763,7 +763,7 @@ async fn test_negative_delete() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
-    let delete = DeleteJson {
+    let delete = Delete {
         password: "testpassword".to_string(),
     };
     let bearer = format!("Bearer {}", "37aa15e0-8a5f-4f75-8c95-bb1238755187");
@@ -776,7 +776,7 @@ async fn test_negative_delete() {
         .await;
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
-    let delete = DeleteJson {
+    let delete = Delete {
         password: "incorrect_password".to_string(),
     };
     let bearer = format!("Bearer {}", token);

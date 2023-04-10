@@ -1,15 +1,16 @@
 use crate::routes;
+use crate::services::email::EmailService;
 use crate::types::DbPool;
 use axum::routing::get;
 use axum::{Extension, Json, Router};
 use serde::Serialize;
 
-pub fn router(pool: DbPool) -> Router {
+pub fn router(pool: DbPool, email_service: EmailService) -> Router {
     Router::new()
         .route("/", get(hello))
         .nest("/user", routes::user::router())
-        .nest("/group", routes::group::router())
         .layer(Extension(pool))
+        .layer(Extension(email_service))
 }
 
 #[derive(Serialize)]

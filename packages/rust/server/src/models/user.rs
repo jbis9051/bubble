@@ -131,16 +131,4 @@ impl User {
             .await?;
         Ok(())
     }
-
-    pub fn verify_password(&self, password: &str) -> bool {
-        let correct = match PasswordHash::new(&self.password) {
-            Ok(pass) => pass,
-            Err(_) => return false,
-        };
-        let password = password.as_bytes();
-
-        Argon2::default()
-            .verify_password(password, &correct)
-            .is_ok()
-    }
 }
