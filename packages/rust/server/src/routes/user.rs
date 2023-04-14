@@ -1,5 +1,5 @@
 use axum::http::StatusCode;
-use axum::routing::{delete, patch, post};
+use axum::routing::{delete, get, patch, post};
 use axum::Router;
 use axum::{Extension, Json};
 
@@ -26,7 +26,7 @@ pub fn router() -> Router {
         .route("/confirm", patch(confirm))
         .route("/session", post(login).delete(logout))
         .route("/forgot", post(forgot))
-        .route("/reset", patch(reset))
+        .route("/reset", get(reset_check).patch(reset))
         .route("/email", post(change_email))
 }
 
@@ -125,7 +125,7 @@ async fn confirm(
         &Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?,
     )
     .await
-    .map_err(map_sqlx_err)?;
+    .map_err(|_| StatusCode::NOT_FOUND)?;
 
     confirmation.delete(&db.0).await.map_err(map_sqlx_err)?;
 
@@ -209,7 +209,7 @@ async fn forgot(
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db.0, &payload.email)
         .await
-        .map_err(map_sqlx_err)?;
+        .map_err(|_| StatusCode::OK)?;
 
     let mut forgot = Forgot {
         id: 0,
@@ -264,6 +264,23 @@ async fn reset(
     user.update(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PasswordResetCheck {
+    pub token: String,
+}
+
+async fn reset_confirm(
+    db: Extension<DbPool>,
+    Json(payload): Json<PasswordResetCheck>,
+) -> Result<StatusCode, StatusCode> {
+    let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
+    if Forgot::from_token(&db.0, &uuid).await.is_err() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    return Ok(StatusCode::OK);
 }
 
 #[derive(Serialize, Deserialize)]
