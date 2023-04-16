@@ -271,7 +271,7 @@ pub struct PasswordResetCheck {
     pub token: String,
 }
 
-async fn reset_confirm(
+async fn reset_check(
     db: Extension<DbPool>,
     Json(payload): Json<PasswordResetCheck>,
 ) -> Result<StatusCode, StatusCode> {
@@ -280,7 +280,7 @@ async fn reset_confirm(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    return Ok(StatusCode::OK);
+    Ok(StatusCode::OK)
 }
 
 #[derive(Serialize, Deserialize)]
