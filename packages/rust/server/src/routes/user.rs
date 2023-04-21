@@ -1,3 +1,4 @@
+use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::routing::{delete, get, patch, post};
 use axum::Router;
@@ -209,7 +210,7 @@ async fn forgot(
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db.0, &payload.email)
         .await
-        .map_err(|_| StatusCode::OK)?;
+        .map_err(|_| StatusCode::CREATED)?;
 
     let mut forgot = Forgot {
         id: 0,
@@ -273,7 +274,7 @@ pub struct PasswordResetCheck {
 
 async fn reset_check(
     db: Extension<DbPool>,
-    Json(payload): Json<PasswordResetCheck>,
+    Query(payload): Query<PasswordResetCheck>,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
     if Forgot::from_token(&db.0, &uuid).await.is_err() {

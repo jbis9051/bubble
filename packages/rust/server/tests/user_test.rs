@@ -2,10 +2,9 @@ use crate::helper::{start_server, TempDatabase};
 
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
+use bubble::models::forgot::Forgot;
 use bubble::models::user::User;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset};
-
-use bubble::models::forgot::Forgot;
 
 use bubble::models::session::Session;
 use bubble::services::password;
@@ -165,6 +164,15 @@ async fn test_forgot_password() {
 
     assert_eq!(forgot.user_id, user.id);
 
+    let res = client
+        .get(&format!("/user/reset?token={}", forgot.token))
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email_in).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
     let confirm = PasswordReset {
         password: "newtestpassword".to_string(),
         token: forgot.token.to_string(),
@@ -178,6 +186,15 @@ async fn test_forgot_password() {
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
+
+    let res = client
+        .get(&format!("/user/reset?token={}", forgot.token))
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&email_in).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
     // ensure the session is deleted
     assert!(Session::from_token(db.pool(), &token).await.is_err());
@@ -281,4 +298,139 @@ async fn test_delete_user() {
     assert!(User::from_email(db.pool(), &email).await.is_err());
 }
 
-// TODO: negative tests
+// negative tests
+
+#[tokio::test]
+async fn test_register_conflict() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+    };
+    let (_, _) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let mut register = CreateUser {
+        email: created_user.email,
+        username: "testusername2".to_string(),
+        password: "testpassword2".to_string(),
+        name: "testname2".to_string(),
+    };
+
+    let res = client
+        .post("/user/register")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&register).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::CONFLICT);
+
+    register.email = "test2@gmail.com".to_string();
+    register.username = created_user.username;
+
+    let res = client
+        .post("/user/register")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&register).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::CONFLICT);
+}
+
+#[tokio::test]
+async fn test_login_bad_credentials() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+    };
+    let (_, _) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let mut login = Login {
+        email: created_user.email,
+        password: "badpassword".to_string(),
+    };
+
+    let res = client
+        .post("/user/session")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&login).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+
+    login.email = "bad@gmail.com".to_string();
+
+    let res = client
+        .post("/user/session")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&login).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn test_forgot_bad_email() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let forgot = Email {
+        email: "forgot@gmail.com".to_string(),
+    };
+
+    let res = client
+        .post("/user/forgot")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&forgot).unwrap())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::CREATED);
+}
+
+#[tokio::test]
+async fn test_delete_bad_password() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+    };
+    let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let delete_user = Delete {
+        password: "badpassword".to_string(),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .delete("/user")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&delete_user).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+}
