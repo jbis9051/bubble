@@ -127,7 +127,7 @@ An email will be sent to the email address provided with a link to reset the pas
 # User Forgot Password Check
 
 ```http request
-GET /user/reset
+GET /user/reset?token=<token>
 ```
 ```http request
 200 OK
@@ -145,15 +145,3 @@ POST /user/reset
   "token": "token"
 }
 ```
-
-
-# Ignore Everything Below
-## User Forgot Password Confirm
-
-POST /user/change-email
-```
-
-### Delete User
-
-```
-DELETE /user/delete
