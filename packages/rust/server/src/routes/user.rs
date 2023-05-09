@@ -166,7 +166,9 @@ async fn login(
         .await
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    if !password::verify(&user.password, &payload.password).map_err(|_| StatusCode::UNAUTHORIZED)? {
+    if !password::verify(&user.password, &payload.password)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -296,7 +298,9 @@ async fn change_email(
     Json(payload): Json<ChangeEmail>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    if !password::verify(&user.password, &payload.password).map_err(|_| StatusCode::UNAUTHORIZED)? {
+    if !password::verify(&user.password, &payload.password)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
@@ -330,7 +334,9 @@ async fn delete_user(
     Json(payload): Json<Delete>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    if !password::verify(&user.password, &payload.password).map_err(|_| StatusCode::UNAUTHORIZED)? {
+    if !password::verify(&user.password, &payload.password)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
