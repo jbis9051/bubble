@@ -28,8 +28,8 @@ impl From<&PgRow> for Session {
 impl Session {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = sqlx::query("INSERT INTO session (user_id, token) VALUES ($1, $2) RETURNING *;")
-            .bind(&self.user_id)
-            .bind(&self.token)
+            .bind(self.user_id)
+            .bind(self.token)
             .fetch_one(db)
             .await?
             .borrow()
@@ -59,7 +59,7 @@ impl Session {
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM session WHERE id = $1;")
-            .bind(&self.id)
+            .bind(self.id)
             .execute(db)
             .await?;
         Ok(())

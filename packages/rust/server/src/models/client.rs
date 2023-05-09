@@ -6,27 +6,27 @@ use std::borrow::Borrow;
 
 use crate::types::DbPool;
 
-pub struct Forgot {
+pub struct Client {
     pub id: i32,
     pub user_id: i32,
-    pub token: Uuid,
+    pub uuid: Uuid,
     pub created: NaiveDateTime,
 }
 
-impl From<&PgRow> for Forgot {
+impl From<&PgRow> for Client {
     fn from(row: &PgRow) -> Self {
-        Forgot {
+        Client {
             id: row.get("id"),
             user_id: row.get("user_id"),
-            token: row.get("token"),
+            uuid: row.get("uuid"),
             created: row.get("created"),
         }
     }
 }
 
-impl Forgot {
-    pub async fn from_token(db: &DbPool, uuid: &Uuid) -> Result<Forgot, sqlx::Error> {
-        Ok(sqlx::query("SELECT * FROM forgot WHERE token = $1;")
+impl Client {
+    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Client, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM client WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)
             .await?
@@ -34,8 +34,8 @@ impl Forgot {
             .into())
     }
 
-    pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Forgot>, sqlx::Error> {
-        Ok(sqlx::query("SELECT * FROM forgot WHERE user_id = $1;")
+    pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Client>, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM client WHERE user_id = $1;")
             .bind(user_id)
             .fetch_all(db)
             .await?
@@ -45,9 +45,9 @@ impl Forgot {
     }
 
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
-        *self = sqlx::query("INSERT INTO forgot (user_id, token) VALUES ($1, $2) RETURNING *;")
+        *self = sqlx::query("INSERT INTO client (user_id, uuid) VALUES ($1, $2) RETURNING *;")
             .bind(self.user_id)
-            .bind(self.token)
+            .bind(self.uuid)
             .fetch_one(db)
             .await?
             .borrow()
@@ -57,7 +57,7 @@ impl Forgot {
     }
 
     pub async fn delete_all(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM forgot WHERE user_id = $1")
+        sqlx::query("DELETE FROM client WHERE user_id = $1")
             .bind(user_id)
             .execute(db)
             .await?;

@@ -1,170 +1,50 @@
 # API Routes
 
----
-
-## Group
-
-### Creating a Group
-
-```http request
-POST /group/<name>
-```
-
-Response:
-
-200 Success
-
-```json
-{
-  "uuid": 1,
-  "name": "<name>",
-  "created": "<timestamp>"
-}
-```
-
-### Get Information About Group
-
-```http request
-GET /group/<id>
-```
-
-Response:
-
-```json
-{
-  "uuid": 1,
-  "name": "<name>",
-  "created": "<date>"
-}
-```
-
-### Update Group Name
-
-```http request
-PATCH /group/<id>/name
-```
-
-Request:
-
-```json
-{
-  "name": "<name>"
-}
-```
-
-### Delete Group
-
-```http request
-DELETE /group/<id>
-```
-
-### Adding Users to Group
-
-```http request
-POST /group/<id>/new_users
-```
-
-Request Data:
-
-```json
-{
-  "users": [
-    1,
-    2,
-    4
-  ]
-}
-```
-
-### Remove Users From Group
-
-```http request
-DELETE /group/<id>/delete_users
-```
-
-Request Data:
-
-```json
-{
-  "users": [
-    1,
-    2,
-    4
-  ]
-}
-```
-
-### Get Users From Group
-#### Returns Uuids of all users in the specified group
-```http request
-GET /group/<id>/get_users
-```
-
-Response: 
-
-```json
-{
-  "UserID": [
-    2a680053-a824-44e0-9edf-9f5b7155a392,
-    0a784c65-ae55-45c1-a0c5-e5e013271b63,
-    b29fe319-94e1-4d80-8b61-51e4cd3ddb7e,
-  ]
-}
-```
-
----
-
-# User
-
-#### Flow:
-
-```mermaid
-flowchart TD
-    A[User Signs Up] --> B{{Application Sends Email Confirmaton}};
-    B --> C[User Responds?];
-    C -- Yes --> D[Confirms User];
-    C -- No --> E[Confirmation dies after x amount of time];
-    D --> F{{Application Responds with Token}};
-```
-
----
-
 ## User Signup
 
 ```http request
-POST /user/signup
+POST /user/register
 ```
 
 #### Request:
 
 ```json
 {
+  "email": "<email>",
   "username": "<username>",
   "password": "<password>",
-  "email": "<email",
-  "phone": "<phone>",
   "name": "<name>"
 }
 ```
 
+An email will be sent to the email address provided with a link to confirm the account.
+
 #### Response: 
 ```
-(Sends an email to user)
+201 Created
 ```
 
+#### Error:
+
+```
+409 Conflict
+<username|email>
+```
 ---
 
-## User Confirm
+## Email Confirm
 
 ```http request
-POST /user/signup-confirm
+POST /user/confirm
 ```
+
 #### Request:
 ```json
 {
-  "link_id": "<link_id>"
+  "token": "<token>"
 }
 ```
+
 #### Response:
 ```json
 {
@@ -172,12 +52,24 @@ POST /user/signup-confirm
 }
 ```
 
+
+#### Error:
+```
+404 Not Found
+```
+
+**Note:** This will invalidate all session tokens for the user (excluding the session token sent in response).
+
+
+
 ---
 
-## User Sign In
+## User Login
+
 ```http request
-POST /user/signin
+POST /user/session
 ```
+
 #### Request:
 ```json
 {
@@ -185,6 +77,7 @@ POST /user/signin
   "password": "<password>"
 }
 ```
+
 #### Response:
 ```json
 {
@@ -193,9 +86,9 @@ POST /user/signin
 ```
 
 ---
-## User Sign Out
+## User Logout
 ```http request
-DELETE /user/signout
+DELETE /user/session
 ```
 #### Request:
 ```json
@@ -203,11 +96,18 @@ DELETE /user/signout
   "token": "<token>"
 }
 ```
+
+#### Response:
+```
+200 OK
+``` 
 ---
 ## User Forgot Password
+
 ```http request
 POST /user/forgot
 ```
+
 #### Request:
 ```json
 {
@@ -216,23 +116,32 @@ POST /user/forgot
 ```
 #### Response:
 ```
-(sends email)
+200 OK
 ```
+
+An email will be sent to the email address provided with a link to reset the password.
+
 ---
-# Ignore Everything Below
-## User Forgot Password Confirm
+
+
+# User Forgot Password Check
+
 ```http request
-POST /user/forgot-confirm
+GET /user/reset?token=<token>
+```
+```http request
+200 OK
+404 Not Found
+```
+
+# User Forgot Password Confirm
+
+```http request
+POST /user/reset
 ```
 ```json
 {
-  
+  "password": "<password>",
+  "token": "token"
 }
 ```
-POST /user/change-email
-```
-
-### Delete User
-
-```
-DELETE /user/delete
