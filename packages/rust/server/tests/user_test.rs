@@ -311,7 +311,8 @@ async fn test_register_conflict() {
         password: "testpassword".to_string(),
         name: "testname".to_string(),
     };
-    let (_, _) = helper::initialize_user(db.pool(), &client, &created_user)
+
+    helper::initialize_user(db.pool(), &client, &created_user)
         .await
         .unwrap();
 
