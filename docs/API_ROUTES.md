@@ -10,7 +10,7 @@ POST /user/register
 
 ```json
 {
-  "email": "<email",
+  "email": "<email>",
   "username": "<username>",
   "password": "<password>",
   "name": "<name>"
@@ -28,7 +28,7 @@ An email will be sent to the email address provided with a link to confirm the a
 
 ```
 409 Conflict
-<usernae|email>
+<username|email>
 ```
 ---
 
