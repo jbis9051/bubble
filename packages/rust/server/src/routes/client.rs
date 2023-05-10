@@ -1,5 +1,5 @@
 use axum::body::HttpBody;
-use axum::extract::{Path};
+use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::Router;

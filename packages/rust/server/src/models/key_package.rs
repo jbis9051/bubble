@@ -1,10 +1,8 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 
-
 use sqlx::Row;
 use std::borrow::Borrow;
-
 
 use crate::types::DbPool;
 

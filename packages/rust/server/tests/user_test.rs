@@ -8,6 +8,16 @@ use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Delete, Email, Logi
 
 use bubble::models::session::Session;
 use bubble::services::password;
+use bubble::types::Base64;
+
+pub const PUBLIC: &[u8] = &[
+    185, 244, 25, 9, 115, 194, 167, 64, 181, 44, 148, 222, 61, 46, 254, 235, 42, 155, 163, 213,
+    124, 123, 34, 151, 245, 184, 6, 116, 111, 18, 97, 190,
+];
+pub const PRIVATE: &[u8] = &[
+    212, 139, 203, 143, 152, 23, 140, 184, 49, 125, 44, 89, 240, 71, 172, 95, 65, 11, 227, 156, 25,
+    116, 77, 0, 82, 26, 52, 35, 39, 21, 80, 84,
+];
 
 mod helper;
 
@@ -21,6 +31,7 @@ async fn test_register() {
         username: "test".to_string(),
         password: "password".to_string(),
         name: "John Doe".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     let res = client
@@ -85,6 +96,7 @@ async fn test_login_logout() {
         username: "testusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
@@ -134,6 +146,7 @@ async fn test_forgot_password() {
         username: "testusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     let (token, user) = helper::initialize_user(db.pool(), &client, &user)
@@ -214,6 +227,7 @@ async fn test_change_email() {
         username: "emailtestusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
@@ -271,6 +285,7 @@ async fn test_delete_user() {
         username: "testusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
     let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
@@ -310,6 +325,7 @@ async fn test_register_conflict() {
         username: "testusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     helper::initialize_user(db.pool(), &client, &created_user)
@@ -321,6 +337,7 @@ async fn test_register_conflict() {
         username: "testusername2".to_string(),
         password: "testpassword2".to_string(),
         name: "testname2".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     let res = client
@@ -355,6 +372,7 @@ async fn test_login_bad_credentials() {
         username: "testusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
 
     helper::initialize_user(db.pool(), &client, &created_user)
@@ -416,6 +434,7 @@ async fn test_delete_bad_password() {
         username: "testusername".to_string(),
         password: "testpassword".to_string(),
         name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
     let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
