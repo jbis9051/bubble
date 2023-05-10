@@ -1,10 +1,10 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 
-use axum::Extension;
+
 use sqlx::Row;
 use std::borrow::Borrow;
-use uuid::Uuid;
+
 
 use crate::types::DbPool;
 
@@ -49,14 +49,19 @@ impl KeyPackage {
         Ok(())
     }
 
-    pub async fn get_one(db: &DbPool, client_id: i32) -> Result<Option<Self>, sqlx::Error> {
-        Ok(
-            sqlx::query("SELECT * FROM key_package WHERE client_id = $1;")
-                .bind(client_id)
-                .fetch_optional(db)
-                .await?
-                .map(|row| row.borrow().into()),
-        )
+    pub async fn get_one_with_count(
+        db: &DbPool,
+        client_id: i32,
+    ) -> Result<(Option<Self>, i32), sqlx::Error> {
+        let res = sqlx::query("SELECT *, COUNT(*) as count FROM key_package WHERE client_id = $1;")
+            .bind(client_id)
+            .fetch_one(db)
+            .await?;
+        if res.get::<i32, _>("count") == 0i32 {
+            return Ok((None, 0));
+        }
+
+        Ok((Some(res.borrow().into()), res.get("count")))
     }
 
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {

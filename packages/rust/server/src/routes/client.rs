@@ -1,7 +1,7 @@
 use axum::body::HttpBody;
-use axum::extract::{Path, Query};
+use axum::extract::{Path};
 use axum::http::StatusCode;
-use axum::routing::{delete, get, patch, post, put};
+use axum::routing::{get, post};
 use axum::Router;
 use axum::{Extension, Json};
 use ed25519_dalek::{Digest, PublicKey, Signature, Verifier};
@@ -11,22 +11,19 @@ use sqlx::types::Uuid;
 use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::client::Client;
 use crate::models::key_package::KeyPackage as KeyPackageModel;
+use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::services::user::get_user_identity;
-use crate::types::DbPool;
+use crate::routes::user::PublicClient;
+use crate::types::{Base64, DbPool};
 use openmls::key_packages::KeyPackage;
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
     Router::new()
         .route("/", post(create))
-        .route("/:uuid", get(get_client).put(update))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct PublicClient {
-    pub signing_key: Vec<u8>,
-    pub signature: Vec<u8>,
+        .route("/:uuid", get(get_client).patch(update))
+        .route("/:uuid/key_packages", post(replace_key_packages))
+        .route("/:uuid/key_package", get(get_key_package))
 }
 
 pub async fn create(
@@ -34,9 +31,8 @@ pub async fn create(
     Json(payload): Json<PublicClient>,
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, String), StatusCode> {
-    let identity = get_user_identity(&user)
-        .ok_or(StatusCode::FAILED_DEPENDENCY)?
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?; // ensure the user has a valid identity key
+    let identity =
+        PublicKey::from_bytes(&user.identity).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?; // ensure the user has a valid identity key
 
     let signature =
         Signature::from_bytes(&payload.signature).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -49,8 +45,8 @@ pub async fn create(
         id: 0,
         user_id: user.id,
         uuid: Uuid::new_v4(),
-        signing_key: payload.signing_key,
-        signature: payload.signature,
+        signing_key: payload.signing_key.0,
+        signature: payload.signature.0,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
@@ -59,10 +55,16 @@ pub async fn create(
     Ok((StatusCode::CREATED, client.uuid.to_string()))
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct UpdateClient {
+    pub signing_key: Base64,
+    pub signature: Base64,
+}
+
 pub async fn update(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
-    Json(payload): Json<PublicClient>,
+    Json(payload): Json<UpdateClient>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -70,10 +72,8 @@ pub async fn update(
     if client.user_id != user.id {
         return Err(StatusCode::FORBIDDEN);
     }
-    let identity = get_user_identity(&user)
-        .ok_or(StatusCode::FAILED_DEPENDENCY)?
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
+    let identity =
+        PublicKey::from_bytes(&user.identity).map_err(|_| StatusCode::FAILED_DEPENDENCY)?;
     let signature =
         Signature::from_bytes(&payload.signature).map_err(|_| StatusCode::BAD_REQUEST)?;
 
@@ -81,8 +81,8 @@ pub async fn update(
         .verify(&payload.signing_key, &signature)
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    client.signing_key = payload.signing_key;
-    client.signature = payload.signature;
+    client.signing_key = payload.signing_key.0;
+    client.signature = payload.signature.0;
 
     client.update(&db).await.map_err(map_sqlx_err)?;
 
@@ -96,15 +96,38 @@ pub async fn get_client(
 ) -> Result<Json<PublicClient>, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
+    let user = User::from_id(&db, client.user_id)
+        .await
+        .map_err(map_sqlx_err)?;
+
     Ok(Json(PublicClient {
-        signing_key: client.signing_key,
-        signature: client.signature,
+        user_uuid: user.uuid.to_string(),
+        uuid: client.uuid.to_string(),
+        signing_key: Base64(client.signing_key),
+        signature: Base64(client.signature),
     }))
+}
+
+pub async fn delete_client(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    user: AuthenticatedUser,
+) -> Result<StatusCode, StatusCode> {
+    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
+
+    if client.user_id != user.id {
+        return Err(StatusCode::FORBIDDEN);
+    }
+
+    client.delete(&db).await.map_err(map_sqlx_err)?;
+
+    Ok(StatusCode::OK)
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplaceKeyPackages {
-    pub key_packages: Vec<Vec<u8>>,
+    pub key_packages: Vec<Base64>,
 }
 
 pub async fn replace_key_packages(
@@ -123,9 +146,9 @@ pub async fn replace_key_packages(
         let key_package =
             KeyPackage::try_from(package.as_slice()).map_err(|_| StatusCode::BAD_REQUEST)?;
         if key_package.credential().identity()
-            != format!("keypackage_{}_{}", client.uuid, user.uuid).as_bytes()
+            != format!("keypackage_{}_{}", user.uuid, client.uuid).as_bytes()
         {
-            // IMPORTANT: we validate that the key package is actually for this client. This identifier will be used on the client.
+            // IMPORTANT: we validate that the key package is actually for this client. This identifier will be used by other Clients to contact the Authentication Service (us)..
             return Err(StatusCode::BAD_REQUEST);
         }
     }
@@ -138,7 +161,7 @@ pub async fn replace_key_packages(
         let mut key_package = KeyPackageModel {
             id: 0,
             client_id: client.id,
-            key_package: package,
+            key_package: package.0,
             created: NaiveDateTime::from_timestamp(0, 0),
         };
         key_package.create(&db).await.map_err(map_sqlx_err)?;
@@ -149,7 +172,7 @@ pub async fn replace_key_packages(
 
 #[derive(Serialize, Deserialize)]
 pub struct KeyPackagePublic {
-    pub key_package: Vec<u8>,
+    pub key_package: Base64,
 }
 
 pub async fn get_key_package(
@@ -159,16 +182,23 @@ pub async fn get_key_package(
 ) -> Result<Json<KeyPackagePublic>, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
-    let key_package = KeyPackageModel::get_one(&db, client.id)
+    let (key_package, count) = KeyPackageModel::get_one_with_count(&db, client.id)
         .await
-        .map_err(map_sqlx_err)?
-        .ok_or(StatusCode::NOT_FOUND)?; // TODO better error
+        .map_err(map_sqlx_err)?;
 
-    // TODO handle case where key package is last one
+    if count == 0 {
+        return Err(StatusCode::NOT_FOUND);
+    }
 
-    key_package.delete(&db).await.map_err(map_sqlx_err)?; // these are one time use to we delete them
+    let key_package = key_package.unwrap(); // we know there is one because of the count
+
+    // TODO do we need to do anything if there is only one besides NOT delete it?
+
+    if count > 1 {
+        key_package.delete(&db).await.map_err(map_sqlx_err)?; // these are one time use to we delete them
+    }
 
     Ok(Json(KeyPackagePublic {
-        key_package: key_package.key_package,
+        key_package: Base64(key_package.key_package),
     }))
 }

@@ -13,7 +13,7 @@ pub struct User {
     pub password: String,
     pub email: Option<String>,
     pub name: String,
-    pub identity: Option<Vec<u8>>,
+    pub identity: Vec<u8>,
     pub created: NaiveDateTime,
 }
 

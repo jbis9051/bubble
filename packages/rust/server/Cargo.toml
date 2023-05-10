@@ -16,6 +16,7 @@ axum = { version = "0.5.10", features = ["headers"] }
 rand_core = "0.6.3"
 argon2 = "0.4.1"
 openmls = "0.4.1"
+base64 = "0.21.0"
 
 [dev-dependencies]
 axum-test-helper = "0.1.0"

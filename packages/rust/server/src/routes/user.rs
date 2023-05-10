@@ -15,12 +15,11 @@ use crate::models::client::Client;
 use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
-use crate::routes::client::create;
 use crate::routes::map_sqlx_err;
 use crate::services::email::EmailService;
 use crate::services::password;
 use crate::services::session::create_session;
-use crate::types::DbPool;
+use crate::types::{Base64, DbPool};
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
@@ -43,6 +42,7 @@ pub struct CreateUser {
     pub username: String,
     pub password: String,
     pub name: String,
+    pub identity: Base64,
 }
 
 async fn register(
@@ -66,6 +66,13 @@ async fn register(
         )
     })?;
 
+    PublicKey::from_bytes(&payload.identity).map_err(|_| {
+        (
+            StatusCode::BAD_REQUEST,
+            "unable to parse identity".to_string(),
+        )
+    })?;
+
     let mut user = User {
         id: 0,
         uuid: Uuid::new_v4(),
@@ -73,7 +80,7 @@ async fn register(
         password: hash,
         email: None,
         name: payload.name,
-        identity: None,
+        identity: payload.identity.0,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
@@ -354,7 +361,7 @@ async fn delete_user(
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateIdentity {
-    pub identity: Vec<u8>,
+    pub identity: Base64,
 }
 
 async fn update_identity(
@@ -365,7 +372,7 @@ async fn update_identity(
     if PublicKey::from_bytes(&payload.identity).is_err() {
         return Err(StatusCode::BAD_REQUEST);
     }
-    user.identity = Some(payload.identity);
+    user.identity = payload.identity.0;
     user.update(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
@@ -373,9 +380,10 @@ async fn update_identity(
 
 #[derive(Serialize, Deserialize)]
 pub struct PublicUser {
+    pub uuid: String,
     pub username: String,
     pub name: String,
-    pub identity: Option<Vec<u8>>,
+    pub identity: Base64,
 }
 
 async fn get_user(
@@ -387,15 +395,23 @@ async fn get_user(
     let user = User::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
 
     Ok(Json(PublicUser {
+        uuid: user.uuid.to_string(),
         username: user.username,
         name: user.name,
-        identity: user.identity,
+        identity: Base64(user.identity),
     }))
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct PublicClient {
+    pub user_uuid: String,
+    pub uuid: String,
+    pub signing_key: Base64,
+    pub signature: Base64,
+}
+#[derive(Serialize, Deserialize)]
 pub struct Clients {
-    pub clients: Vec<String>,
+    pub clients: Vec<PublicClient>,
 }
 
 async fn clients(
@@ -411,7 +427,15 @@ async fn clients(
         .map_err(map_sqlx_err)
         .map(|clients| {
             Json(Clients {
-                clients: clients.into_iter().map(|c| c.uuid.to_string()).collect(),
+                clients: clients
+                    .into_iter()
+                    .map(|c| PublicClient {
+                        user_uuid: user.uuid.to_string(),
+                        uuid: c.uuid.to_string(),
+                        signing_key: Base64(c.signing_key),
+                        signature: Base64(c.signature),
+                    })
+                    .collect(),
             })
         })
 }

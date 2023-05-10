@@ -79,6 +79,15 @@ impl Client {
         Ok(())
     }
 
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM client WHERE id = $1")
+            .bind(self.id)
+            .execute(db)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn delete_all(db: &DbPool, user_id: i32) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM client WHERE user_id = $1")
             .bind(user_id)
