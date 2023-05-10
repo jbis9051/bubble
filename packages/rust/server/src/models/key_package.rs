@@ -1,8 +1,10 @@
 use sqlx::postgres::PgRow;
 use sqlx::types::chrono::NaiveDateTime;
 
+use axum::Extension;
 use sqlx::Row;
 use std::borrow::Borrow;
+use uuid::Uuid;
 
 use crate::types::DbPool;
 
@@ -36,6 +38,32 @@ impl KeyPackage {
         .borrow()
         .into();
 
+        Ok(())
+    }
+
+    pub async fn delete_all_by_client_id(db: &DbPool, client_id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM key_package WHERE client_id = $1;")
+            .bind(client_id)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_one(db: &DbPool, client_id: i32) -> Result<Option<Self>, sqlx::Error> {
+        Ok(
+            sqlx::query("SELECT * FROM key_package WHERE client_id = $1;")
+                .bind(client_id)
+                .fetch_optional(db)
+                .await?
+                .map(|row| row.borrow().into()),
+        )
+    }
+
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM key_package WHERE id = $1;")
+            .bind(self.id)
+            .execute(db)
+            .await?;
         Ok(())
     }
 }

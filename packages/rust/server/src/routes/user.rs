@@ -1,8 +1,9 @@
-use axum::extract::Query;
+use axum::extract::{Path, Query};
 use axum::http::StatusCode;
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
 use axum::{Extension, Json};
+use ed25519_dalek::PublicKey;
 
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
@@ -10,9 +11,11 @@ use sqlx::types::Uuid;
 use crate::models::confirmation::Confirmation;
 
 use crate::extractor::authenticated_user::AuthenticatedUser;
+use crate::models::client::Client;
 use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
+use crate::routes::client::create;
 use crate::routes::map_sqlx_err;
 use crate::services::email::EmailService;
 use crate::services::password;
@@ -29,6 +32,9 @@ pub fn router() -> Router {
         .route("/forgot", post(forgot))
         .route("/reset", get(reset_check).patch(reset))
         .route("/email", post(change_email))
+        .route("/identity", put(update_identity))
+        .route("/:uuid", get(get_user))
+        .route("/:uuid/clients", get(clients))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -67,6 +73,7 @@ async fn register(
         password: hash,
         email: None,
         name: payload.name,
+        identity: None,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
@@ -343,4 +350,68 @@ async fn delete_user(
     user.delete(&db.0).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdateIdentity {
+    pub identity: Vec<u8>,
+}
+
+async fn update_identity(
+    db: Extension<DbPool>,
+    Json(payload): Json<UpdateIdentity>,
+    mut user: AuthenticatedUser,
+) -> Result<StatusCode, StatusCode> {
+    if PublicKey::from_bytes(&payload.identity).is_err() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+    user.identity = Some(payload.identity);
+    user.update(&db.0).await.map_err(map_sqlx_err)?;
+
+    Ok(StatusCode::OK)
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PublicUser {
+    pub username: String,
+    pub name: String,
+    pub identity: Option<Vec<u8>>,
+}
+
+async fn get_user(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    _: AuthenticatedUser,
+) -> Result<Json<PublicUser>, StatusCode> {
+    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let user = User::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
+
+    Ok(Json(PublicUser {
+        username: user.username,
+        name: user.name,
+        identity: user.identity,
+    }))
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Clients {
+    pub clients: Vec<String>,
+}
+
+async fn clients(
+    db: Extension<DbPool>,
+    Path(uuid): Path<String>,
+    _: AuthenticatedUser,
+) -> Result<Json<Clients>, StatusCode> {
+    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let user = User::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
+
+    Client::filter_user_id(&db.0, user.id)
+        .await
+        .map_err(map_sqlx_err)
+        .map(|clients| {
+            Json(Clients {
+                clients: clients.into_iter().map(|c| c.uuid.to_string()).collect(),
+            })
+        })
 }

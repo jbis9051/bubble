@@ -13,6 +13,7 @@ pub struct User {
     pub password: String,
     pub email: Option<String>,
     pub name: String,
+    pub identity: Option<Vec<u8>>,
     pub created: NaiveDateTime,
 }
 
@@ -25,6 +26,7 @@ impl From<&PgRow> for User {
             password: row.get("password"),
             email: row.get("email"),
             name: row.get("name"),
+            identity: row.get("identity"),
             created: row.get("created"),
         }
     }
@@ -33,14 +35,15 @@ impl From<&PgRow> for User {
 impl User {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = sqlx::query(
-            "INSERT INTO \"user\" (uuid, username, password, email, name)
-                             VALUES ($1, $2, $3, $4, $5) RETURNING *;",
+            "INSERT INTO \"user\" (uuid, username, password, email, name, identity)
+                             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
         )
         .bind(self.uuid)
         .bind(&self.username)
         .bind(&self.password)
         .bind(&self.email)
         .bind(&self.name)
+        .bind(&self.identity)
         .fetch_one(db)
         .await?
         .borrow()
