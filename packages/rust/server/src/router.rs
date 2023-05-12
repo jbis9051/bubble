@@ -9,6 +9,7 @@ pub fn router(pool: DbPool, email_service: EmailService) -> Router {
     Router::new()
         .route("/", get(hello))
         .nest("/user", routes::user::router())
+        .nest("/message", routes::message::router())
         .nest("/client", routes::client::router())
         .nest("/message", routes::message::router())
         .nest("/client", routes::client::router())
