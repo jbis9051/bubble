@@ -4,6 +4,7 @@ pub mod client;
 pub mod message;
 
 pub mod client;
+pub mod message;
 pub mod user;
 
 pub fn map_sqlx_err(err: sqlx::Error) -> StatusCode {
