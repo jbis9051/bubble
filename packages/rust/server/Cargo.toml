@@ -21,3 +21,5 @@ base64 = "0.21.0"
 [dev-dependencies]
 axum-test-helper = "0.1.0"
 serde_json = "1.0.82"
+openmls_rust_crypto="0.1.0"
+rand_core_2 = { package = "rand_core", version = "0.5.1" }

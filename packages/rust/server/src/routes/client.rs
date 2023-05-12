@@ -1,7 +1,7 @@
 use axum::body::HttpBody;
 use axum::extract::Path;
 use axum::http::StatusCode;
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use axum::Router;
 use axum::{Extension, Json};
 use ed25519_dalek::{Digest, PublicKey, Signature, Verifier};
@@ -21,14 +21,23 @@ use serde::{Deserialize, Serialize};
 pub fn router() -> Router {
     Router::new()
         .route("/", post(create))
-        .route("/:uuid", get(get_client).patch(update))
+        .route(
+            "/:uuid",
+            get(get_client).patch(update).delete(delete_client),
+        )
         .route("/:uuid/key_packages", post(replace_key_packages))
         .route("/:uuid/key_package", get(get_key_package))
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CreateClient {
+    pub signing_key: Base64,
+    pub signature: Base64,
+}
+
 pub async fn create(
     db: Extension<DbPool>,
-    Json(payload): Json<PublicClient>,
+    Json(payload): Json<CreateClient>,
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, String), StatusCode> {
     let identity =

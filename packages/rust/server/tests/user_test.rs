@@ -1,24 +1,19 @@
 use crate::helper::{start_server, TempDatabase};
-
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::forgot::Forgot;
 use bubble::models::user::User;
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset};
+use bubble::routes::user::{
+    ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset, UpdateIdentity,
+};
+use uuid::Uuid;
 
+use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
 use bubble::models::session::Session;
 use bubble::services::password;
 use bubble::types::Base64;
 
-pub const PUBLIC: &[u8] = &[
-    185, 244, 25, 9, 115, 194, 167, 64, 181, 44, 148, 222, 61, 46, 254, 235, 42, 155, 163, 213,
-    124, 123, 34, 151, 245, 184, 6, 116, 111, 18, 97, 190,
-];
-pub const PRIVATE: &[u8] = &[
-    212, 139, 203, 143, 152, 23, 140, 184, 49, 125, 44, 89, 240, 71, 172, 95, 65, 11, 227, 156, 25,
-    116, 77, 0, 82, 26, 52, 35, 39, 21, 80, 84,
-];
-
+mod crypto_helper;
 mod helper;
 
 #[tokio::test]
@@ -42,6 +37,7 @@ async fn test_register() {
         .await;
 
     assert_eq!(res.status(), StatusCode::CREATED);
+    assert!(Uuid::parse_str(&res.text().await).is_ok());
 
     let user = User::from_username(db.pool(), &created_user.username)
         .await
@@ -454,4 +450,41 @@ async fn test_delete_bad_password() {
         .await;
 
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn test_replace_identity() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let keypair = generate_ed25519_keypair();
+    let public_2 = keypair.public.as_bytes().to_vec();
+    let update_identity = UpdateIdentity {
+        identity: Base64(public_2.clone()),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .put("/user/identity")
+        .json(&update_identity)
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let user = User::from_uuid(db.pool(), &user.uuid).await.unwrap();
+
+    assert_eq!(user.identity, public_2);
 }

@@ -24,6 +24,7 @@ An email will be sent to the email address provided with a link to confirm the a
 
 ```
 201 Created
+<uuid>
 ```
 
 #### Error:
@@ -231,7 +232,7 @@ GET /user/<uuid>/clients
       "user_uuid": "<user_uuid>",
       "uuid": "<uuid>",
       "signing_key": "<signing_key>",
-      "signed_public_key": "<signed_public_key>"
+      "signature": "<signature>"
     }
   ]
 }

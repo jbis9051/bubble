@@ -50,7 +50,7 @@ impl Client {
 
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = sqlx::query(
-            "INSERT INTO client (user_id, uuid, signing_key) VALUES ($1, $2, $3, $4) RETURNING *;",
+            "INSERT INTO client (user_id, uuid, signing_key, signature) VALUES ($1, $2, $3, $4) RETURNING *;",
         )
         .bind(self.user_id)
         .bind(self.uuid)

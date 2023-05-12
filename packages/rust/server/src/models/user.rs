@@ -110,14 +110,16 @@ impl User {
                       username = $2,
                       password = $3,
                       email = $4,
-                      name = $5
-                  WHERE id = $6;",
+                      name = $5,
+                      identity = $6
+                  WHERE id = $7;",
         )
         .bind(self.uuid)
         .bind(&self.username)
         .bind(&self.password)
         .bind(&self.email)
         .bind(&self.name)
+        .bind(&self.identity)
         .bind(self.id)
         .execute(db)
         .await?;

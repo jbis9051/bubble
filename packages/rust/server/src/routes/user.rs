@@ -49,13 +49,13 @@ async fn register(
     db: Extension<DbPool>,
     email_service: Extension<EmailService>,
     Json(payload): Json<CreateUser>,
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> Result<(StatusCode, String), (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
 
-    if (User::from_username(&db.0, &payload.username).await).is_ok() {
+    if (User::from_username(&db, &payload.username).await).is_ok() {
         return Err((StatusCode::CONFLICT, "username".to_string()));
     }
-    if (User::from_email(&db.0, &payload.email).await).is_ok() {
+    if (User::from_email(&db, &payload.email).await).is_ok() {
         return Err((StatusCode::CONFLICT, "email".to_string()));
     }
 
@@ -84,7 +84,7 @@ async fn register(
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
-    user.create(&db.0).await.map_err(|_| {
+    user.create(&db).await.map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             "unable to create user".to_string(),
@@ -99,7 +99,7 @@ async fn register(
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
-    confirmation.create(&db.0).await.map_err(|_| {
+    confirmation.create(&db).await.map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             "unable to create confirmation".to_string(),
@@ -118,7 +118,7 @@ async fn register(
             )
         })?;
 
-    Ok(StatusCode::CREATED)
+    Ok((StatusCode::CREATED, user.uuid.to_string()))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -136,27 +136,27 @@ async fn confirm(
     Json(payload): Json<Confirm>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
     let confirmation = Confirmation::from_token(
-        &db.0,
+        &db,
         &Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?,
     )
     .await
     .map_err(|_| StatusCode::NOT_FOUND)?;
 
-    confirmation.delete(&db.0).await.map_err(map_sqlx_err)?;
+    confirmation.delete(&db).await.map_err(map_sqlx_err)?;
 
-    let mut user = User::from_id(&db.0, confirmation.user_id)
+    let mut user = User::from_id(&db, confirmation.user_id)
         .await
         .map_err(map_sqlx_err)?;
     user.email = Some(confirmation.email);
-    user.update(&db.0).await.map_err(map_sqlx_err)?;
+    user.update(&db).await.map_err(map_sqlx_err)?;
 
     // whenever we change a user's email we should invalidate all tokens
 
-    Session::delete_all(&db.0, user.id)
+    Session::delete_all(&db, user.id)
         .await
         .map_err(map_sqlx_err)?;
 
-    let token = create_session(&db.0, user.id).await.map_err(map_sqlx_err)?;
+    let token = create_session(&db, user.id).await.map_err(map_sqlx_err)?;
 
     Ok((
         StatusCode::OK,
@@ -176,7 +176,7 @@ async fn login(
     db: Extension<DbPool>,
     Json(payload): Json<Login>,
 ) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let user = User::from_email(&db.0, &payload.email)
+    let user = User::from_email(&db, &payload.email)
         .await
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
@@ -186,7 +186,7 @@ async fn login(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    let token = create_session(&db.0, user.id).await.map_err(map_sqlx_err)?;
+    let token = create_session(&db, user.id).await.map_err(map_sqlx_err)?;
 
     Ok((
         StatusCode::CREATED,
@@ -207,10 +207,10 @@ async fn logout(
     // and delete their session token anyway, so it's not really a problem
 
     let token = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let session = Session::from_token(&db.0, &token)
+    let session = Session::from_token(&db, &token)
         .await
         .map_err(map_sqlx_err)?;
-    session.delete(&db.0).await.map_err(map_sqlx_err)?;
+    session.delete(&db).await.map_err(map_sqlx_err)?;
     Ok(StatusCode::OK)
 }
 
@@ -224,7 +224,7 @@ async fn forgot(
     email_service: Extension<EmailService>,
     Json(payload): Json<Email>,
 ) -> Result<StatusCode, StatusCode> {
-    let user = User::from_email(&db.0, &payload.email)
+    let user = User::from_email(&db, &payload.email)
         .await
         .map_err(|_| StatusCode::CREATED)?;
 
@@ -234,7 +234,7 @@ async fn forgot(
         token: Uuid::new_v4(),
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    forgot.create(&db.0).await.map_err(map_sqlx_err)?;
+    forgot.create(&db).await.map_err(map_sqlx_err)?;
 
     email_service
         .send(&format!(
@@ -257,28 +257,26 @@ async fn reset(
     Json(payload): Json<PasswordReset>,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let forgot = Forgot::from_token(&db.0, &uuid)
-        .await
-        .map_err(map_sqlx_err)?;
+    let forgot = Forgot::from_token(&db, &uuid).await.map_err(map_sqlx_err)?;
 
-    let mut user = User::from_id(&db.0, forgot.user_id)
+    let mut user = User::from_id(&db, forgot.user_id)
         .await
         .map_err(map_sqlx_err)?;
 
     // invalidate all forgot's and session tokens when a user successfully resets their password
 
-    Forgot::delete_all(&db.0, user.id)
+    Forgot::delete_all(&db, user.id)
         .await
         .map_err(map_sqlx_err)?; // TODO: consider account hijacking attacks
 
-    Session::delete_all(&db.0, user.id)
+    Session::delete_all(&db, user.id)
         .await
         .map_err(map_sqlx_err)?;
 
     user.password =
         password::hash(&payload.password).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    user.update(&db.0).await.map_err(map_sqlx_err)?;
+    user.update(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
 }
@@ -293,7 +291,7 @@ async fn reset_check(
     Query(payload): Query<PasswordResetCheck>,
 ) -> Result<StatusCode, StatusCode> {
     let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    if Forgot::from_token(&db.0, &uuid).await.is_err() {
+    if Forgot::from_token(&db, &uuid).await.is_err() {
         return Err(StatusCode::NOT_FOUND);
     }
 
@@ -326,7 +324,7 @@ async fn change_email(
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
-    change.create(&db.0).await.map_err(map_sqlx_err)?;
+    change.create(&db).await.map_err(map_sqlx_err)?;
 
     email_service
         .send(&format!(
@@ -354,7 +352,7 @@ async fn delete_user(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    user.delete(&db.0).await.map_err(map_sqlx_err)?;
+    user.delete(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
 }
@@ -373,7 +371,7 @@ async fn update_identity(
         return Err(StatusCode::BAD_REQUEST);
     }
     user.identity = payload.identity.0;
-    user.update(&db.0).await.map_err(map_sqlx_err)?;
+    user.update(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
 }
@@ -392,7 +390,7 @@ async fn get_user(
     _: AuthenticatedUser,
 ) -> Result<Json<PublicUser>, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let user = User::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
+    let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
 
     Ok(Json(PublicUser {
         uuid: user.uuid.to_string(),
@@ -420,9 +418,9 @@ async fn clients(
     _: AuthenticatedUser,
 ) -> Result<Json<Clients>, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let user = User::from_uuid(&db.0, &uuid).await.map_err(map_sqlx_err)?;
+    let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
 
-    Client::filter_user_id(&db.0, user.id)
+    Client::filter_user_id(&db, user.id)
         .await
         .map_err(map_sqlx_err)
         .map(|clients| {
