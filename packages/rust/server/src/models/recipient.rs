@@ -38,4 +38,26 @@ impl Recipient {
 
         Ok(())
     }
+
+    pub async fn filter_client_id(
+        db: &DbPool,
+        client_id: i32,
+    ) -> Result<Vec<Recipient>, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM recipient WHERE client_id = $1;")
+            .bind(client_id)
+            .fetch_all(db)
+            .await?
+            .iter()
+            .map(|row| row.into())
+            .collect())
+    }
+
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM recipient WHERE id = $1")
+            .bind(self.id)
+            .execute(db)
+            .await?;
+
+        Ok(())
+    }
 }
