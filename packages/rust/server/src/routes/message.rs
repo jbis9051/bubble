@@ -75,7 +75,8 @@ async fn receive_message(
     Json(payload): Json<CheckMessages>,
     _user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
-    //TODO authenticated user??
+    //TODO authenticated user?
+
     // Get client
     let uuid = &Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
