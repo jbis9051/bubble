@@ -39,7 +39,6 @@ impl Recipient {
         Ok(())
     }
 
-
     pub async fn filter_client_id(
         db: &DbPool,
         client_id: i32,

@@ -13,8 +13,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 pub fn router() -> Router {
-    Router::new()
-        .route("/", get(receive_message).post(send_message))
+    Router::new().route("/", get(receive_message).post(send_message))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -73,14 +72,13 @@ async fn receive_message(
     Json(payload): Json<CheckMessages>,
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
-
     // Get client
     let uuid = &Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
 
     // Ensure client belongs to user
     if client.user_id != user.id {
-        return Err(StatusCode::UNAUTHORIZED)
+        return Err(StatusCode::UNAUTHORIZED);
     }
 
     // Get Recipients
@@ -90,7 +88,7 @@ async fn receive_message(
 
     // TODO O(n) -> O(1)
     // Get messages
-    let mut messages_to_return= Vec::new();
+    let mut messages_to_return = Vec::new();
     for recipient in recipients {
         let message_to_read = Message::from_id(&db.0, recipient.message_id)
             .await
