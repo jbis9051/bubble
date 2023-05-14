@@ -18,6 +18,9 @@ argon2 = "0.4.1"
 openmls = "0.4.1"
 base64 = "0.21.0"
 
+# SendGrid
+sendgrid = "0.18.1"
+
 [dev-dependencies]
 axum-test-helper = "0.1.0"
 serde_json = "1.0.82"
