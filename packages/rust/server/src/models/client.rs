@@ -38,11 +38,13 @@ impl Client {
             .into())
     }
 
-    pub async fn all_from_uuids(db: &DbPool, uuids: Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
+    pub async fn filter_uuids(db: &DbPool, uuids: Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
         // TODO better/cleaner way to get "$1, $2,...$n"
-        let dirty_params = format!("$?{}", ", $?", .repeat(uuids.len()-1));
-        let pre_format = params.replace("?", "{}");
-        let params = format!(dirty, (1..=uuids.len()).collect());
+        let mut params = format!("$1");
+        for i in 2..=uuids.len() {
+            params.push_str(&format!(", ${}", i));
+        }
+
         let query_string = format!("SELECT * FROM client WHERE uuid IN ({});", params);
 
         let mut query = sqlx::query(&query_string);

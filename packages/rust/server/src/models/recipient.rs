@@ -39,8 +39,28 @@ impl Recipient {
         Ok(())
     }
 
-    pub async fn create_all(db: &DbPool, client_ids: Vec<i32>, message_id: i32) -> Result<(), sqlx::Error> {
-        // TODO
+    pub async fn create_all(
+        db: &DbPool,
+        client_ids: Vec<i32>,
+        message_id: i32,
+    ) -> Result<(), sqlx::Error> {
+        let mut params = format!("($1, $2)");
+        for i in (3..=client_ids.len()).step_by(2) {
+            params.push_str(&format!(", (${}, ${})", i, i + 1));
+        }
+
+        let query_string = format!(
+            "INSERT INTO recipient (client_id, message_id) VALUES {};",
+            params
+        );
+
+        let mut query = sqlx::query(&query_string);
+        for client_id in client_ids {
+            query = query.bind(client_id);
+            query = query.bind(message_id);
+        }
+
+        query.fetch_all(db).await?;
 
         Ok(())
     }

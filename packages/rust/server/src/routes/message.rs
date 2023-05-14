@@ -35,31 +35,24 @@ async fn send_message(
     };
     message.create(&db.0).await.map_err(map_sqlx_err)?;
 
-    // TODO O(n) -> O(1)
-    let uuids = payload.client_uuids
+    let uuids = payload
+        .client_uuids
         .iter()
-        .map(|uuid| Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST))?;
+        .map(|uuid| {
+            Uuid::parse_str(uuid)
+                .map_err(|_| StatusCode::BAD_REQUEST)
+                .unwrap()
+        })
+        .collect();
 
-    let clients: Vec<Client> = Client::all_from_uuids(&db.0, uuids)
+    let clients: Vec<Client> = Client::filter_uuids(&db.0, uuids)
         .await
         .map_err(map_sqlx_err)?;
+    let client_ids = clients.iter().map(|client| client.id).collect();
 
-    for client_uuid in payload.client_uuids {
-        let client = Client::from_uuid(
-            &db.0,
-            Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?,
-        )
+    Recipient::create_all(&db.0, client_ids, message.id)
         .await
         .map_err(map_sqlx_err)?;
-
-        let mut recipient = Recipient {
-            id: Default::default(),
-            client_id: client.id,
-            message_id: message.id,
-            created: NaiveDateTime::from_timestamp(0, 0),
-        };
-        recipient.create(&db.0).await.map_err(map_sqlx_err)?;
-    }
 
     Ok(StatusCode::OK)
 }
