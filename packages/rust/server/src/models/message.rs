@@ -34,6 +34,7 @@ impl Message {
         Ok(())
     }
 
+
     pub async fn from_id(db: &DbPool, id: i32) -> Result<Message, sqlx::Error> {
         Ok(sqlx::query("SELECT * FROM message WHERE id = $1;")
             .bind(id)

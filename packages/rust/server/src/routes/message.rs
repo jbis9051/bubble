@@ -2,11 +2,10 @@ use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::client::Client;
 use crate::models::message::Message;
 use crate::models::recipient::Recipient;
-use crate::models::user::User;
 use crate::routes::map_sqlx_err;
 use crate::types::DbPool;
 use axum::http::StatusCode;
-use axum::routing::{get, post};
+use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
@@ -14,10 +13,8 @@ use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 
 pub fn router() -> Router {
-    // should we have a blank route?
     Router::new()
-        .route("/", post(send_message))
-        .route("/receive", get(receive_message))
+        .route("/", get(receive_message).post(send_message))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -30,7 +27,7 @@ pub struct MessageRequest {
 async fn send_message(
     db: Extension<DbPool>,
     Json(payload): Json<MessageRequest>,
-    _user: AuthenticatedUser,
+    _: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     let mut message = Message {
         id: Default::default(),
@@ -39,8 +36,9 @@ async fn send_message(
     };
     message.create(&db.0).await.map_err(map_sqlx_err)?;
 
+    // TODO O(n) -> O(1)
     for client_uuid in payload.client_uuids {
-        let client = User::from_uuid(
+        let client = Client::from_uuid(
             &db.0,
             &Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?,
         )
@@ -73,21 +71,26 @@ pub struct MessagesReturned {
 async fn receive_message(
     db: Extension<DbPool>,
     Json(payload): Json<CheckMessages>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
-    //TODO authenticated user?
 
     // Get client
     let uuid = &Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
+
+    // Ensure client belongs to user
+    if client.user_id != user.id {
+        return Err(StatusCode::UNAUTHORIZED)
+    }
 
     // Get Recipients
     let recipients = Recipient::filter_client_id(&db.0, client.id)
         .await
         .map_err(map_sqlx_err)?;
 
+    // TODO O(n) -> O(1)
     // Get messages
-    let mut messages_to_return: Vec<Vec<u8>> = Vec::new();
+    let mut messages_to_return= Vec::new();
     for recipient in recipients {
         let message_to_read = Message::from_id(&db.0, recipient.message_id)
             .await
