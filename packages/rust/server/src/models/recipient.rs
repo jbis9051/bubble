@@ -39,6 +39,12 @@ impl Recipient {
         Ok(())
     }
 
+    pub async fn create_all(db: &DbPool, client_ids: Vec<i32>, message_id: i32) -> Result<(), sqlx::Error> {
+        // TODO
+
+        Ok(())
+    }
+
     pub async fn filter_client_id(
         db: &DbPool,
         client_id: i32,

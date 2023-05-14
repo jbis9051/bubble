@@ -29,13 +29,33 @@ impl From<&PgRow> for Client {
 }
 
 impl Client {
-    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Client, sqlx::Error> {
+    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Client, sqlx::Error> {
         Ok(sqlx::query("SELECT * FROM client WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)
             .await?
             .borrow()
             .into())
+    }
+
+    pub async fn all_from_uuids(db: &DbPool, uuids: Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
+        // TODO better/cleaner way to get "$1, $2,...$n"
+        let dirty_params = format!("$?{}", ", $?", .repeat(uuids.len()-1));
+        let pre_format = params.replace("?", "{}");
+        let params = format!(dirty, (1..=uuids.len()).collect());
+        let query_string = format!("SELECT * FROM client WHERE uuid IN ({});", params);
+
+        let mut query = sqlx::query(&query_string);
+        for uuid in uuids {
+            query = query.bind(uuid);
+        }
+
+        Ok(query
+            .fetch_all(db)
+            .await?
+            .iter()
+            .map(|row| row.into())
+            .collect())
     }
 
     pub async fn filter_user_id(db: &DbPool, user_id: i32) -> Result<Vec<Client>, sqlx::Error> {

@@ -36,10 +36,18 @@ async fn send_message(
     message.create(&db.0).await.map_err(map_sqlx_err)?;
 
     // TODO O(n) -> O(1)
+    let uuids = payload.client_uuids
+        .iter()
+        .map(|uuid| Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST))?;
+
+    let clients: Vec<Client> = Client::all_from_uuids(&db.0, uuids)
+        .await
+        .map_err(map_sqlx_err)?;
+
     for client_uuid in payload.client_uuids {
         let client = Client::from_uuid(
             &db.0,
-            &Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?,
+            Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?,
         )
         .await
         .map_err(map_sqlx_err)?;
@@ -73,7 +81,7 @@ async fn receive_message(
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
     // Get client
-    let uuid = &Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
 
     // Ensure client belongs to user
