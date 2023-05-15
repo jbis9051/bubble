@@ -283,7 +283,7 @@ async fn test_key_packages() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    // Ensure the key packages are uploaded
+    // Get a Key Package
 
     let res = client
         .get(&format!("/client/{}/key_package", client_uuid))

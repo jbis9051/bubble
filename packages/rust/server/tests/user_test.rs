@@ -4,8 +4,10 @@ use bubble::models::confirmation::Confirmation;
 use bubble::models::forgot::Forgot;
 use bubble::models::user::User;
 use bubble::routes::user::{
-    ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset, UpdateIdentity,
+    ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset, PublicUser,
+    UpdateIdentity,
 };
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
@@ -309,6 +311,76 @@ async fn test_delete_user() {
     assert!(User::from_email(db.pool(), &email).await.is_err());
 }
 
+#[tokio::test]
+async fn test_get_user() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .get(&format!("/user/{}", user.uuid))
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let payload: PublicUser = res.json().await;
+
+    assert_eq!(payload.uuid, user.uuid.to_string());
+    assert_eq!(payload.username, user.username);
+    assert_eq!(payload.name, user.name);
+    assert_eq!(payload.identity.0, user.identity);
+}
+
+#[tokio::test]
+async fn test_replace_identity() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let keypair = generate_ed25519_keypair();
+    let public_2 = keypair.public.as_bytes().to_vec();
+    let update_identity = UpdateIdentity {
+        identity: Base64(public_2.clone()),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .put("/user/identity")
+        .json(&update_identity)
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let user = User::from_uuid(db.pool(), &user.uuid).await.unwrap();
+
+    assert_eq!(user.identity, public_2);
+}
+
 // negative tests
 
 #[tokio::test]
@@ -450,41 +522,4 @@ async fn test_delete_bad_password() {
         .await;
 
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
-}
-
-#[tokio::test]
-async fn test_replace_identity() {
-    let db = TempDatabase::new().await;
-    let client = start_server(db.pool().clone()).await;
-
-    let created_user = CreateUser {
-        email: "test@gmail.com".to_string(),
-        username: "testusername".to_string(),
-        password: "testpassword".to_string(),
-        name: "testname".to_string(),
-        identity: Base64(PUBLIC.to_vec()),
-    };
-    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
-        .await
-        .unwrap();
-
-    let keypair = generate_ed25519_keypair();
-    let public_2 = keypair.public.as_bytes().to_vec();
-    let update_identity = UpdateIdentity {
-        identity: Base64(public_2.clone()),
-    };
-
-    let bearer = format!("Bearer {}", token);
-    let res = client
-        .put("/user/identity")
-        .json(&update_identity)
-        .header("Authorization", bearer)
-        .send()
-        .await;
-
-    assert_eq!(res.status(), StatusCode::OK);
-
-    let user = User::from_uuid(db.pool(), &user.uuid).await.unwrap();
-
-    assert_eq!(user.identity, public_2);
 }
