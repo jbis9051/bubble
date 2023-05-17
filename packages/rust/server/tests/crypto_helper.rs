@@ -1,5 +1,4 @@
 use ed25519_dalek::Keypair;
-use openmls::prelude::*;
 
 use rand_core_2::OsRng;
 
@@ -16,15 +15,4 @@ pub const PRIVATE: &[u8] = &[
 pub fn generate_ed25519_keypair() -> Keypair {
     let mut csprng = OsRng {};
     Keypair::generate(&mut csprng)
-}
-
-pub fn generate_credential_bundle(
-    identity: Vec<u8>,
-    credential_type: CredentialType,
-    signature_algorithm: SignatureScheme,
-    backend: &impl OpenMlsCryptoProvider,
-) -> Result<Credential, CredentialError> {
-    let credential_bundle =
-        CredentialBundle::new(identity, credential_type, signature_algorithm, backend)?;
-    Ok(credential_bundle.into_parts().0)
 }

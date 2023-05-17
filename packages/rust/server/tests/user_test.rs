@@ -7,7 +7,8 @@ use bubble::routes::user::{
     ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset, PublicUser,
     UpdateIdentity,
 };
-use serde_json::json;
+use ed25519_dalek::PublicKey;
+
 use uuid::Uuid;
 
 use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
@@ -384,6 +385,33 @@ async fn test_replace_identity() {
 // negative tests
 
 #[tokio::test]
+async fn test_register_bad_identity() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let identity = vec![0];
+
+    assert!(PublicKey::from_bytes(&identity).is_err());
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(identity),
+    };
+
+    let res = client
+        .post("/user/register")
+        .header("Content-Type", "application/json")
+        .json(&created_user)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
 async fn test_register_conflict() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
@@ -522,4 +550,68 @@ async fn test_delete_bad_password() {
         .await;
 
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn test_change_email_bad_password() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "emailtest@gmail.com".to_string(),
+        username: "emailtestusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+
+    let (token, _user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let change = ChangeEmail {
+        new_email: "newtest@gmail.com".to_string(),
+        password: "badpassword".to_string(),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .post("/user/email")
+        .json(&change)
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn test_replace_identity_bad_identity() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let update_identity = UpdateIdentity {
+        identity: Base64(vec![0]),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .put("/user/identity")
+        .json(&update_identity)
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 }
