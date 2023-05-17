@@ -8,6 +8,7 @@ use bubble::routes::user::{Clients, CreateUser, PublicClient};
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
 use openmls::prelude::*;
 use openmls_rust_crypto::OpenMlsRustCrypto;
+use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -294,4 +295,12 @@ async fn test_key_packages() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let _: KeyPackagePublic = res.json().await;
+
+
+    let count: i64 = sqlx::query("SELECT COUNT(*) as count FROM key_package;")
+        .fetch_one(db.pool())
+        .await
+        .unwrap().get("count");
+
+    assert_eq!(count, 4); // ensure that one key package is deleted
 }

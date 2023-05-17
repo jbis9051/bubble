@@ -52,7 +52,7 @@ impl KeyPackage {
         client_id: i32,
     ) -> Result<(Option<Self>, i64), sqlx::Error> {
         let res = sqlx::query(
-            "SELECT *, COUNT(*) as count FROM key_package WHERE client_id = $1 GROUP BY id;",
+            "SELECT *, COUNT(*) OVER ()as count FROM key_package WHERE client_id = $1 GROUP BY id;",
         )
         .bind(client_id)
         .fetch_one(db)
