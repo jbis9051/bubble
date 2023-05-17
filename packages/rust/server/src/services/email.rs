@@ -18,7 +18,7 @@ impl EmailService {
         let api_key = &CONFIG.api_key_check; // pull api key
 
         // create mail object and add sender, recipient data
-        let mail_info = Mail::new()
+        let mut mail_info = Mail::new()
             .add_to(Destination {
                 address: _recipient.0,
                 name: _recipient.1,

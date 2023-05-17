@@ -107,10 +107,16 @@ async fn register(
     })?;
 
     email_service
-        .send(&format!(
-            "to: {} | body: token: {}",
-            confirmation.email, confirmation.token
-        ))
+        .send(
+            &format!(
+                "to: {} | body: token: {}",
+                confirmation.email, confirmation.token
+            ),
+            "Registered Successfully",
+            (&confirmation.email, &user.name),
+            false,
+            "",
+        ) // successful confirmation email
         .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -237,10 +243,13 @@ async fn forgot(
     forgot.create(&db).await.map_err(map_sqlx_err)?;
 
     email_service
-        .send(&format!(
-            "to: {} | body: token: {}",
-            payload.email, forgot.token
-        ))
+        .send(
+            &format!("to: {} | body: token: {}", payload.email, forgot.token),
+            "Forgot Password",
+            (&payload.email, &user.name),
+            false,
+            "",
+        )
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(StatusCode::CREATED)
@@ -327,10 +336,13 @@ async fn change_email(
     change.create(&db).await.map_err(map_sqlx_err)?;
 
     email_service
-        .send(&format!(
-            "to: {} | body: token: {}",
-            change.email, change.token
-        ))
+        .send(
+            &format!("to: {} | body: token: {}", change.email, change.token),
+            "Change Email",
+            (&change.email, &user.name),
+            false,
+            "",
+        )
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(StatusCode::CREATED)

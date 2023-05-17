@@ -4,6 +4,8 @@ use std::env;
 pub struct Config {
     pub listen_addr: String,
     pub db_url: String,
+    pub api_key_check: String,
+    pub sender_email: String,
 }
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
