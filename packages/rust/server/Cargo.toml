@@ -20,6 +20,7 @@ base64 = "0.21.0"
 
 # SendGrid
 sendgrid = "0.18.1"
+mockall = "0.11.4"
 
 [dev-dependencies]
 axum-test-helper = "0.1.0"

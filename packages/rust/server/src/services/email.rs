@@ -1,3 +1,5 @@
+use std::fmt;
+use std::fmt::Debug;
 use crate::config::CONFIG;
 use sendgrid::SGClient;
 use sendgrid::SendgridError;
