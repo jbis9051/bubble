@@ -44,7 +44,7 @@ impl Recipient {
         client_ids: Vec<i32>,
         message_id: i32,
     ) -> Result<(), sqlx::Error> {
-        let mut params = format!("($1, $2)");
+        let mut params = "($1, $2)".to_string();
         for i in (3..=client_ids.len()).step_by(2) {
             params.push_str(&format!(", (${}, ${})", i, i + 1));
         }
@@ -78,12 +78,43 @@ impl Recipient {
             .collect())
     }
 
+    pub async fn filter_message_id_by_client_id(
+        db: &DbPool,
+        client_id: i32,
+    ) -> Result<Vec<i32>, sqlx::Error> {
+        Ok(
+            sqlx::query("SELECT message_id FROM recipient WHERE client_id = $1;")
+                .bind(client_id)
+                .fetch_all(db)
+                .await?
+                .iter()
+                .map(|row| row.get("message_id"))
+                .collect(),
+        )
+    }
+
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM recipient WHERE id = $1")
             .bind(self.id)
             .execute(db)
             .await?;
 
+        Ok(())
+    }
+    pub async fn delete_ids(recipient_ids: Vec<i32>, db: &DbPool) -> Result<(), sqlx::Error> {
+        let mut params = "$1".to_string();
+        for i in 2..=recipient_ids.len() {
+            params.push_str(&format!(", ${}", i));
+        }
+
+        let query_string = format!("DELETE FROM recipient WHERE id IN ({});", params);
+
+        let mut query = sqlx::query(&query_string);
+        for id in recipient_ids {
+            query = query.bind(id);
+        }
+
+        query.fetch_all(db).await?;
         Ok(())
     }
 }

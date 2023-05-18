@@ -1,5 +1,4 @@
 use crate::helper::{start_server, TempDatabase};
-use std::borrow::Borrow;
 
 use axum::http::StatusCode;
 use bubble::models::client::Client;

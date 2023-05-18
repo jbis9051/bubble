@@ -40,7 +40,7 @@ impl Client {
 
     pub async fn filter_uuids(db: &DbPool, uuids: Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
         // TODO better/cleaner way to get "$1, $2,...$n"
-        let mut params = format!("$1");
+        let mut params = "$1".to_string();
         for i in 2..=uuids.len() {
             params.push_str(&format!(", ${}", i));
         }

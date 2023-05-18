@@ -43,12 +43,50 @@ impl Message {
             .into())
     }
 
+    pub async fn from_ids(db: &DbPool, ids: Vec<i32>) -> Result<Vec<Message>, sqlx::Error> {
+        let mut params = "$1".to_string();
+        for i in 2..=ids.len() {
+            params.push_str(&format!(", ${}", i));
+        }
+
+        let query_string = format!("SELECT * FROM message WHERE id IN ({});", params);
+
+        let mut query = sqlx::query(&query_string);
+        for id in ids {
+            query = query.bind(id);
+        }
+
+        Ok(query
+            .fetch_all(db)
+            .await?
+            .iter()
+            .map(|row| row.into())
+            .collect())
+    }
+
     pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM message WHERE id = $1")
             .bind(self.id)
             .execute(db)
             .await?;
 
+        Ok(())
+    }
+
+    pub async fn delete_ids(message_ids: Vec<i32>, db: &DbPool) -> Result<(), sqlx::Error> {
+        let mut params = "$1".to_string();
+        for i in 2..=message_ids.len() {
+            params.push_str(&format!(", ${}", i));
+        }
+
+        let query_string = format!("DELETE FROM message WHERE id IN ({});", params);
+
+        let mut query = sqlx::query(&query_string);
+        for id in message_ids {
+            query = query.bind(id);
+        }
+
+        query.fetch_all(db).await?;
         Ok(())
     }
 }

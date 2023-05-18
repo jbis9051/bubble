@@ -85,19 +85,45 @@ async fn receive_message(
     // Get Recipients
     let recipients = Recipient::filter_client_id(&db.0, client.id)
         .await
-        .map_err(map_sqlx_err)?;
+        .map_err(|_| StatusCode::EXPECTATION_FAILED)?;
 
-    // TODO O(n) -> O(1)
-    // Get messages
-    let mut messages_to_return = Vec::new();
-    for recipient in recipients {
-        let message_to_read = Message::from_id(&db.0, recipient.message_id)
-            .await
-            .map_err(map_sqlx_err)?;
-        messages_to_return.push(message_to_read.message.clone());
-        message_to_read.delete(&db.0).await.map_err(map_sqlx_err)?;
-        recipient.delete(&db.0).await.map_err(map_sqlx_err)?;
+    if recipients.is_empty() {
+        return Ok((
+            StatusCode::OK,
+            Json(MessagesReturned {
+                messages: Vec::new(),
+            }),
+        ));
     }
+
+    // Get messages
+    // let _messages_to_return: Vec<Vec<u8>> = Vec::new();
+    let messages_to_read = Message::from_ids(
+        &db.0,
+        recipients
+            .iter()
+            .map(|recipient| recipient.message_id)
+            .collect(),
+    )
+    .await
+    .map_err(|_| StatusCode::LOCKED)?;
+
+    let messages_to_return = messages_to_read
+        .iter()
+        .map(|message| message.message.clone())
+        .collect();
+    Recipient::delete_ids(
+        recipients.iter().map(|recipient| recipient.id).collect(),
+        &db.0,
+    )
+    .await
+    .map_err(map_sqlx_err)?;
+    Message::delete_ids(
+        messages_to_read.iter().map(|message| message.id).collect(),
+        &db.0,
+    )
+    .await
+    .map_err(map_sqlx_err)?;
 
     Ok((
         StatusCode::OK,
