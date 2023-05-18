@@ -113,7 +113,7 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.app"
+    namespace 'com.bubble.app'
     defaultConfig {
         applicationId 'com.bubble.app'
         minSdkVersion rootProject.ext.minSdkVersion
