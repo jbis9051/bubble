@@ -77,4 +77,93 @@ async fn test_message() {
     let ret = res.json::<MessagesReturned>().await.messages;
     assert_eq!(ret.len(), 1);
     assert_eq!(ret[0], message.message);
+
+    //negative tests
+
+    //not a Uuid
+    let message = MessageRequest {
+        client_uuids: vec![69.to_string()],
+        message: "test message".to_string().into_bytes(),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = server
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    //not a valid Uuid
+    let message = MessageRequest {
+        client_uuids: vec![Uuid::new_v4().to_string()],
+        message: "test message".to_string().into_bytes(),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = server
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+    //the client does not exist
+
+    let request_messages = CheckMessages {
+        client_uuid: Uuid::new_v4().to_string(),
+    };
+
+    let bearer = format!("Bearer {}", token);
+    let res = server
+        .get("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&request_messages).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    //the client belongs to a different user
+    let created_user2 = CreateUser {
+        email: "test2@gmail.com".to_string(),
+        username: "test_username2".to_string(),
+        password: "test_password2".to_string(),
+        name: "test_name2".to_string(),
+    };
+    let (_token2, user2) = helper::initialize_user(db.pool(), &server, &created_user2)
+        .await
+        .unwrap();
+
+    let mut client2 = Client {
+        id: 0,
+        user_id: user2.id,
+        uuid: Uuid::new_v4(),
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
+    assert!(client2.create(db.pool()).await.is_ok());
+
+    let request_messages = CheckMessages {
+        client_uuid: client2.uuid.to_string(),
+    };
+
+    //first user's token is used here
+    let bearer = format!("Bearer {}", token);
+    let res = server
+        .get("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&request_messages).unwrap())
+        .header("Authorization", bearer)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+
+    //a lot of the other error catching is actually very
+    // unlikely to hit if the first few error checks pass, especially due to the nature of the recipients table
 }

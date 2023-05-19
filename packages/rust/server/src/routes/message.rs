@@ -38,12 +38,13 @@ async fn send_message(
     let uuids = payload
         .client_uuids
         .iter()
-        .map(|uuid| {
-            Uuid::parse_str(uuid)
-                .map_err(|_| StatusCode::BAD_REQUEST)
-                .unwrap()
-        })
+        .map(|uuid| Uuid::parse_str(uuid).map_err(|_| StatusCode::BAD_REQUEST))
         .collect();
+
+    let uuids = match uuids {
+        Ok(uuids) => uuids,
+        Err(status) => return Err(status),
+    };
 
     let clients: Vec<Client> = Client::filter_uuids(&db.0, uuids)
         .await
@@ -79,13 +80,13 @@ async fn receive_message(
 
     // Ensure client belongs to user
     if client.user_id != user.id {
-        return Err(StatusCode::UNAUTHORIZED);
+        return Err(StatusCode::FORBIDDEN);
     }
 
     // Get Recipients
     let recipients = Recipient::filter_client_id(&db.0, client.id)
         .await
-        .map_err(|_| StatusCode::EXPECTATION_FAILED)?;
+        .map_err(map_sqlx_err)?;
 
     if recipients.is_empty() {
         return Ok((
@@ -106,7 +107,7 @@ async fn receive_message(
             .collect(),
     )
     .await
-    .map_err(|_| StatusCode::LOCKED)?;
+    .map_err(map_sqlx_err)?;
 
     let messages_to_return = messages_to_read
         .iter()
