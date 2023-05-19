@@ -17,6 +17,7 @@ use crate::models::session::Session;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
 use crate::services::email::EmailService;
+use crate::services::email::SendGridEmailService;
 use crate::services::password;
 use crate::services::session::create_session;
 use crate::types::{Base64, DbPool};
@@ -47,7 +48,7 @@ pub struct CreateUser {
 
 async fn register(
     db: Extension<DbPool>,
-    email_service: Extension<EmailService>,
+    email_service: Extension<SendGridEmailService>,
     Json(payload): Json<CreateUser>,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
@@ -109,11 +110,12 @@ async fn register(
     email_service
         .send(
             &format!(
-                "to: {} | body: token: {}",
+                // plaintext email and can be replaced with html content down the road
+                "to: {} | body: token: {} \nYou have registered successfully for our service!",
                 confirmation.email, confirmation.token
             ),
-            "Registered Successfully",
-            (&confirmation.email, &user.name),
+            "Registration Acknowledgement",
+            &vec![(confirmation.email, user.name)],
             false,
             "",
         ) // successful confirmation email
@@ -227,7 +229,7 @@ pub struct Email {
 
 async fn forgot(
     db: Extension<DbPool>,
-    email_service: Extension<EmailService>,
+    email_service: Extension<SendGridEmailService>,
     Json(payload): Json<Email>,
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db, &payload.email)
@@ -244,9 +246,12 @@ async fn forgot(
 
     email_service
         .send(
-            &format!("to: {} | body: token: {}", payload.email, forgot.token),
-            "Forgot Password",
-            (&payload.email, &user.name),
+            &format!(
+                "to: {} | body: token: {} \nTo reset your password, please do the following: \n",
+                payload.email, forgot.token
+            ),
+            "Password Reset",
+            &vec![(payload.email, user.name)],
             false,
             "",
         )
@@ -315,7 +320,7 @@ pub struct ChangeEmail {
 
 async fn change_email(
     db: Extension<DbPool>,
-    email_service: Extension<EmailService>,
+    email_service: Extension<SendGridEmailService>,
     Json(payload): Json<ChangeEmail>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
@@ -337,9 +342,12 @@ async fn change_email(
 
     email_service
         .send(
-            &format!("to: {} | body: token: {}", change.email, change.token),
-            "Change Email",
-            (&change.email, &user.name),
+            &format!(
+                "to: {} | body: token: {} \n Please do the following to change your email: \n",
+                change.email, change.token
+            ),
+            "Change Email Request",
+            &vec![(change.email, String::from(&user.name))],
             false,
             "",
         )

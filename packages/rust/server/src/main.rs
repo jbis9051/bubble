@@ -1,4 +1,4 @@
-use bubble::services::email::EmailService;
+use bubble::services::email::SendGridEmailService;
 use bubble::{config, router};
 use sqlx::postgres::PgPoolOptions;
 
@@ -10,7 +10,7 @@ async fn main() -> Result<(), ()> {
         .await
         .unwrap();
 
-    let email_service = EmailService::default();
+    let email_service = SendGridEmailService::default();
 
     let router = router::router(pool, email_service);
 
