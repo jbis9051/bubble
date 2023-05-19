@@ -77,10 +77,10 @@ async fn test_message() {
     let ret = res.json::<MessagesReturned>().await.messages;
     assert_eq!(ret.len(), 1);
     assert_eq!(ret[0], message.message);
-
-    //negative tests
-
-    //not a Uuid
+    //
+    // //negative tests
+    //
+    // //not a Uuid
     let message = MessageRequest {
         client_uuids: vec![69.to_string()],
         message: "test message".to_string().into_bytes(),

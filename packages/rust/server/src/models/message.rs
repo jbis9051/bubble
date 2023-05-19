@@ -89,4 +89,19 @@ impl Message {
         query.fetch_all(db).await?;
         Ok(())
     }
+
+    pub async fn from_client_id(db: &DbPool, client_id: i32) -> Result<Vec<Message>, sqlx::Error> {
+        Ok(sqlx::query(
+            "SELECT *
+        FROM message
+        INNER JOIN recipient ON message.id = recipient.message_id
+        WHERE recipient.client_id = $1;",
+        )
+        .bind(client_id)
+        .fetch_all(db)
+        .await?
+        .iter()
+        .map(|row| row.into())
+        .collect())
+    }
 }

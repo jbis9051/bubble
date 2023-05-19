@@ -84,11 +84,39 @@ async fn receive_message(
     }
 
     // Get Recipients
+    // let recipients = Recipient::filter_client_id(&db.0, client.id)
+    //     .await
+    //     .map_err(map_sqlx_err)?;
+    //
+    // if recipients.is_empty() {
+    //     return Ok((
+    //         StatusCode::OK,
+    //         Json(MessagesReturned {
+    //             messages: Vec::new(),
+    //         }),
+    //     ));
+    // }
+    //
+    // // Get messages
+    // // let _messages_to_return: Vec<Vec<u8>> = Vec::new();
+    // let messages_to_read = Message::from_ids(
+    //     &db.0,
+    //     recipients
+    //         .iter()
+    //         .map(|recipient| recipient.message_id)
+    //         .collect(),
+    // )
+    // .await
+    // .map_err(map_sqlx_err)?;
+
+    //let messages_to_return: Vec<Vec<u8>> = Vec::new();
+    let messages_to_read = Message::from_client_id(&db.0, client.id)
+        .await
+        .map_err(|_| StatusCode::FORBIDDEN)?;
     let recipients = Recipient::filter_client_id(&db.0, client.id)
         .await
         .map_err(map_sqlx_err)?;
-
-    if recipients.is_empty() {
+    if recipients.is_empty() || messages_to_read.is_empty() {
         return Ok((
             StatusCode::OK,
             Json(MessagesReturned {
@@ -97,22 +125,11 @@ async fn receive_message(
         ));
     }
 
-    // Get messages
-    // let _messages_to_return: Vec<Vec<u8>> = Vec::new();
-    let messages_to_read = Message::from_ids(
-        &db.0,
-        recipients
-            .iter()
-            .map(|recipient| recipient.message_id)
-            .collect(),
-    )
-    .await
-    .map_err(map_sqlx_err)?;
-
     let messages_to_return = messages_to_read
         .iter()
         .map(|message| message.message.clone())
         .collect();
+
     Recipient::delete_ids(
         recipients.iter().map(|recipient| recipient.id).collect(),
         &db.0,
