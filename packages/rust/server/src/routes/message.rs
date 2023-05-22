@@ -31,13 +31,10 @@ async fn send_message(
 ) -> Result<StatusCode, StatusCode> {
     let uuids = payload
         .client_uuids
-        .iter()
-        .map(|uuid| {
-            Uuid::parse_str(uuid)
-                .map_err(|_| StatusCode::BAD_REQUEST)
-                .unwrap()
-        })
-        .collect();
+        .into_iter()
+        .map(|uuid| Uuid::parse_str(&uuid))
+        .collect::<Result<Vec<Uuid>, uuid::Error>>()
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let clients = Client::filter_uuids(&db.0, &uuids)
         .await

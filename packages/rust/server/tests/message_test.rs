@@ -12,7 +12,6 @@ use bubble::routes::user::{Clients, CreateUser};
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
 use openmls::prelude::*;
 use openmls_rust_crypto::OpenMlsRustCrypto;
-use sqlx::Row;
 
 use bubble::routes::client::CreateClient;
 
@@ -184,11 +183,7 @@ async fn negative_test_message() {
     // //not a Uuid
     let message = MessageRequest {
         client_uuids: vec![69.to_string()],
-        message: Base64(
-            general_purpose::STANDARD
-                .encode("test message")
-                .into_bytes(),
-        ),
+        message: Base64("test message".as_bytes().to_vec()),
     };
 
     let res = client
