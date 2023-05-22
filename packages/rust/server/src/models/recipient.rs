@@ -25,20 +25,6 @@ impl From<&PgRow> for Recipient {
 }
 
 impl Recipient {
-    pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
-        *self = sqlx::query(
-            "INSERT INTO recipient (client_id, message_id) VALUES ($1,$2) RETURNING *;",
-        )
-        .bind(self.client_id)
-        .bind(self.message_id)
-        .fetch_one(db)
-        .await?
-        .borrow()
-        .into();
-
-        Ok(())
-    }
-
     pub async fn create_all(
         db: &DbPool,
         client_ids: Vec<i32>,
@@ -76,30 +62,6 @@ impl Recipient {
             .iter()
             .map(|row| row.into())
             .collect())
-    }
-
-    pub async fn filter_message_id_by_client_id(
-        db: &DbPool,
-        client_id: i32,
-    ) -> Result<Vec<i32>, sqlx::Error> {
-        Ok(
-            sqlx::query("SELECT message_id FROM recipient WHERE client_id = $1;")
-                .bind(client_id)
-                .fetch_all(db)
-                .await?
-                .iter()
-                .map(|row| row.get("message_id"))
-                .collect(),
-        )
-    }
-
-    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM recipient WHERE id = $1")
-            .bind(self.id)
-            .execute(db)
-            .await?;
-
-        Ok(())
     }
     pub async fn delete_ids(recipient_ids: Vec<i32>, db: &DbPool) -> Result<(), sqlx::Error> {
         let mut params = "$1".to_string();

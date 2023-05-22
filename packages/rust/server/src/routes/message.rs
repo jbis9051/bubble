@@ -11,6 +11,7 @@ use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
+use std::iter::Iterator;
 
 pub fn router() -> Router {
     Router::new().route("/", get(receive_message).post(send_message))
@@ -22,7 +23,6 @@ pub struct MessageRequest {
     pub message: Vec<u8>,
 }
 
-// list of recipients, message,
 async fn send_message(
     db: Extension<DbPool>,
     Json(payload): Json<MessageRequest>,
@@ -35,25 +35,20 @@ async fn send_message(
     };
     message.create(&db.0).await.map_err(map_sqlx_err)?;
 
-    let uuids = payload
+    let uuids: Result<Vec<Uuid>, StatusCode> = payload
         .client_uuids
         .iter()
         .map(|uuid| Uuid::parse_str(uuid).map_err(|_| StatusCode::BAD_REQUEST))
         .collect();
 
-    let uuids = match uuids {
-        Ok(uuids) => uuids,
-        Err(status) => return Err(status),
-    };
-
-    let clients: Vec<Client> = Client::filter_uuids(&db.0, uuids)
+    let clients: Vec<Client> = Client::filter_uuids(&db.0, &uuids?)
         .await
-        .map_err(map_sqlx_err)?;
+        .map_err(|_| StatusCode::NOT_FOUND)?;
     let client_ids = clients.iter().map(|client| client.id).collect();
 
     Recipient::create_all(&db.0, client_ids, message.id)
         .await
-        .map_err(map_sqlx_err)?;
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
 
     Ok(StatusCode::OK)
 }
@@ -68,7 +63,6 @@ pub struct MessagesReturned {
     pub messages: Vec<Vec<u8>>,
 }
 
-// Receive message also deletes message from table
 async fn receive_message(
     db: Extension<DbPool>,
     Json(payload): Json<CheckMessages>,
@@ -76,40 +70,13 @@ async fn receive_message(
 ) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
     // Get client
     let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let client = Client::from_uuid(&db.0, uuid).await.map_err(map_sqlx_err)?;
+    let client = Client::from_uuid(&db.0, &uuid)
+        .await
+        .map_err(map_sqlx_err)?;
 
-    // Ensure client belongs to user
     if client.user_id != user.id {
         return Err(StatusCode::FORBIDDEN);
     }
-
-    // Get Recipients
-    // let recipients = Recipient::filter_client_id(&db.0, client.id)
-    //     .await
-    //     .map_err(map_sqlx_err)?;
-    //
-    // if recipients.is_empty() {
-    //     return Ok((
-    //         StatusCode::OK,
-    //         Json(MessagesReturned {
-    //             messages: Vec::new(),
-    //         }),
-    //     ));
-    // }
-    //
-    // // Get messages
-    // // let _messages_to_return: Vec<Vec<u8>> = Vec::new();
-    // let messages_to_read = Message::from_ids(
-    //     &db.0,
-    //     recipients
-    //         .iter()
-    //         .map(|recipient| recipient.message_id)
-    //         .collect(),
-    // )
-    // .await
-    // .map_err(map_sqlx_err)?;
-
-    //let messages_to_return: Vec<Vec<u8>> = Vec::new();
     let messages_to_read = Message::from_client_id(&db.0, client.id)
         .await
         .map_err(|_| StatusCode::FORBIDDEN)?;
@@ -137,7 +104,7 @@ async fn receive_message(
     .await
     .map_err(map_sqlx_err)?;
     Message::delete_ids(
-        messages_to_read.iter().map(|message| message.id).collect(),
+        &messages_to_read.iter().map(|message| message.id).collect(),
         &db.0,
     )
     .await

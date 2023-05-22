@@ -41,7 +41,7 @@ async fn test_message() {
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
 
@@ -53,23 +53,21 @@ async fn test_message() {
         message: "test message".to_string().into_bytes(),
     };
 
-    let bearer = format!("Bearer {}", token);
     let res = server
         .post("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let bearer = format!("Bearer {}", token);
     let res = server
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
 
@@ -78,39 +76,60 @@ async fn test_message() {
     assert_eq!(ret.len(), 1);
     assert_eq!(ret[0], message.message);
     //
-    // //negative tests
-    //
+}
+#[tokio::test]
+async fn negative_test_message() {
+    let db = TempDatabase::new().await;
+    let server = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "test_username".to_string(),
+        password: "test_password".to_string(),
+        name: "test_name".to_string(),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &server, &created_user)
+        .await
+        .unwrap();
+
+    let mut client = Client {
+        id: 0,
+        user_id: user.id,
+        uuid: Uuid::new_v4(),
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
+    let bearer = format!("Bearer {}", token);
+    assert!(client.create(db.pool()).await.is_ok());
+
     // //not a Uuid
     let message = MessageRequest {
         client_uuids: vec![69.to_string()],
         message: "test message".to_string().into_bytes(),
     };
 
-    let bearer = format!("Bearer {}", token);
     let res = server
         .post("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
-    //not a valid Uuid
+    //not an existing Uuid
     let message = MessageRequest {
         client_uuids: vec![Uuid::new_v4().to_string()],
         message: "test message".to_string().into_bytes(),
     };
 
-    let bearer = format!("Bearer {}", token);
     let res = server
         .post("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
     //the client does not exist
 
@@ -118,12 +137,11 @@ async fn test_message() {
         client_uuid: Uuid::new_v4().to_string(),
     };
 
-    let bearer = format!("Bearer {}", token);
     let res = server
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
 
@@ -153,17 +171,13 @@ async fn test_message() {
     };
 
     //first user's token is used here
-    let bearer = format!("Bearer {}", token);
     let res = server
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
-        .header("Authorization", bearer)
+        .header("Authorization", bearer.clone())
         .send()
         .await;
 
     assert_eq!(res.status(), StatusCode::FORBIDDEN);
-
-    //a lot of the other error catching is actually very
-    // unlikely to hit if the first few error checks pass, especially due to the nature of the recipients table
 }

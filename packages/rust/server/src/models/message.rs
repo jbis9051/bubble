@@ -43,7 +43,7 @@ impl Message {
             .into())
     }
 
-    pub async fn from_ids(db: &DbPool, ids: Vec<i32>) -> Result<Vec<Message>, sqlx::Error> {
+    pub async fn from_ids(db: &DbPool, ids: &[i32]) -> Result<Vec<Message>, sqlx::Error> {
         let mut params = "$1".to_string();
         for i in 2..=ids.len() {
             params.push_str(&format!(", ${}", i));
@@ -73,7 +73,7 @@ impl Message {
         Ok(())
     }
 
-    pub async fn delete_ids(message_ids: Vec<i32>, db: &DbPool) -> Result<(), sqlx::Error> {
+    pub async fn delete_ids(message_ids: &Vec<i32>, db: &DbPool) -> Result<(), sqlx::Error> {
         let mut params = "$1".to_string();
         for i in 2..=message_ids.len() {
             params.push_str(&format!(", ${}", i));

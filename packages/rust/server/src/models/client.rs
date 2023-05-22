@@ -29,7 +29,7 @@ impl From<&PgRow> for Client {
 }
 
 impl Client {
-    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Client, sqlx::Error> {
+    pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<Client, sqlx::Error> {
         Ok(sqlx::query("SELECT * FROM client WHERE uuid = $1;")
             .bind(uuid)
             .fetch_one(db)
@@ -38,7 +38,7 @@ impl Client {
             .into())
     }
 
-    pub async fn filter_uuids(db: &DbPool, uuids: Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
+    pub async fn filter_uuids(db: &DbPool, uuids: &Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
         // TODO better/cleaner way to get "$1, $2,...$n"
         let mut params = "$1".to_string();
         for i in 2..=uuids.len() {
