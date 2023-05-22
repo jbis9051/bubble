@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
 use crate::models::user::User;
@@ -18,6 +18,12 @@ impl Deref for AuthenticatedUser {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for AuthenticatedUser {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

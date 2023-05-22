@@ -1,6 +1,6 @@
 fmt:
 	cargo fmt --all
-	cargo clippy --fix --allow-dirty --allow-staged
+	cargo clippy --all --fix --allow-dirty --allow-staged
 
 # For usage when developing server
 dev:

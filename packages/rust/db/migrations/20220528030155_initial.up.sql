@@ -1,12 +1,13 @@
 CREATE TABLE "user"
 (
-    id              SERIAL PRIMARY KEY,
-    uuid            UUID UNIQUE         NOT NULL,
-    username        VARCHAR(255) UNIQUE NOT NULL,
-    password        VARCHAR(255)        NOT NULL,
-    email           VARCHAR(255) UNIQUE NULL,
-    name            VARCHAR(255)        NOT NULL,
-    created         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id       SERIAL PRIMARY KEY,
+    uuid     UUID UNIQUE         NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255)        NOT NULL,
+    email    VARCHAR(255) UNIQUE NULL,
+    name     VARCHAR(255)        NOT NULL,
+    identity BYTEA               NOT NULL,
+    created  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE forgot
@@ -37,10 +38,12 @@ CREATE TABLE session
 
 CREATE TABLE client
 (
-    id      SERIAL PRIMARY KEY,
-    user_id INT REFERENCES "user" (id) ON DELETE CASCADE NOT NULL,
-    uuid    UUID UNIQUE                                  NOT NULL,
-    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id          SERIAL PRIMARY KEY,
+    user_id     INT REFERENCES "user" (id) ON DELETE CASCADE NOT NULL,
+    uuid        UUID UNIQUE                                  NOT NULL,
+    signing_key BYTEA                                        NOT NULL,
+    signature   BYTEA                                        NOT NULL,
+    created     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE message

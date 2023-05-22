@@ -38,4 +38,38 @@ impl KeyPackage {
 
         Ok(())
     }
+
+    pub async fn delete_all_by_client_id(db: &DbPool, client_id: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM key_package WHERE client_id = $1;")
+            .bind(client_id)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_one_with_count(
+        db: &DbPool,
+        client_id: i32,
+    ) -> Result<(Option<Self>, i64), sqlx::Error> {
+        let res = sqlx::query(
+            "SELECT *, COUNT(*) OVER ()as count FROM key_package WHERE client_id = $1 GROUP BY id;",
+        )
+        .bind(client_id)
+        .fetch_one(db)
+        .await?;
+        let count = res.get::<i64, _>("count");
+        if count == 0 {
+            return Ok((None, count));
+        }
+
+        Ok((Some(res.borrow().into()), count))
+    }
+
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM key_package WHERE id = $1;")
+            .bind(self.id)
+            .execute(db)
+            .await?;
+        Ok(())
+    }
 }

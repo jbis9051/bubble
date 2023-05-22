@@ -1,19 +1,24 @@
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
+use std::str::FromStr;
 
 use bubble::models::user::User;
 use bubble::router;
 
-use bubble::types::DbPool;
+use bubble::types::{Base64, DbPool, SIGNATURE_SCHEME};
 use sqlx::postgres::PgPoolOptions;
 
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
+use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
+use openmls::prelude::SignatureKeypair;
+use openmls_rust_crypto::OpenMlsRustCrypto;
 
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
 
 use bubble::models::session::Session;
+use bubble::routes::client::CreateClient;
 use bubble::services::email::EmailService;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
@@ -175,4 +180,40 @@ pub async fn initialize_user(
     .unwrap();
 
     Ok((token, user))
+}
+
+pub async fn create_client(
+    public: &[u8],
+    private: &[u8],
+    bearer: &str,
+    client: &TestClient,
+) -> (SignatureKeypair, Uuid) {
+    let backend = &OpenMlsRustCrypto::default();
+    let signature_keypair = SignatureKeypair::new(SIGNATURE_SCHEME, backend).unwrap();
+    let (_signature_privkey, signature_pubkey) = signature_keypair.clone().into_tuple();
+
+    let user_keypair = Keypair {
+        public: PublicKey::from_bytes(public).unwrap(),
+        secret: SecretKey::from_bytes(private).unwrap(),
+    };
+
+    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+
+    let create_client = CreateClient {
+        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
+    };
+
+    let res = client
+        .post("/client")
+        .header("Authorization", bearer)
+        .json(&create_client)
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::CREATED);
+
+    let client_uuid = Uuid::from_str(&res.text().await).unwrap();
+
+    (signature_keypair, client_uuid)
 }
