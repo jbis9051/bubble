@@ -417,7 +417,7 @@ POST /message
 404 Not Found
 ```
 
-Error StatusCode::BadRequest is returned when the json fields are improperly formatted or missing. Error StatusCode::NotFound is returned when the client_uuids are not found in the database.
+Error StatusCode::BadRequest is returned when the json fields are improperly formatted or missing. Error StatusCode::NotFound is returned when any of the client_uuids are not found in the database.
 
 ## Receive Message
 #### Request
@@ -434,13 +434,13 @@ GET /message
 #### Response
 ```json
 {
-  "message": "<message>"
+  "messages": "<messages>"
 }
 ```
 ```http request
 200 OK
 ```
-`<message>` is a base64 encoding of a message's bytes.
+`<messages>` is a vector of base64 encodings of a message's bytes.
 
 #### Error
 ```http request
