@@ -2,6 +2,8 @@ use axum::http::StatusCode;
 
 pub mod client;
 pub mod message;
+
+pub mod client;
 pub mod user;
 
 pub fn map_sqlx_err(err: sqlx::Error) -> StatusCode {
