@@ -17,6 +17,7 @@ use sqlx::Row;
 use bubble::routes::client::CreateClient;
 
 use crate::crypto_helper::{PRIVATE, PUBLIC};
+use base64::{engine::general_purpose, Engine as _};
 use bubble::types::{Base64, SIGNATURE_SCHEME};
 
 mod crypto_helper;
@@ -95,7 +96,11 @@ async fn test_message() {
 
     let message = MessageRequest {
         client_uuids: vec![client_uuid.to_string()],
-        message: "test message".to_string().into_bytes(),
+        message: Base64(
+            general_purpose::STANDARD
+                .encode("test message")
+                .into_bytes(),
+        ),
     };
 
     let res = client
@@ -119,7 +124,12 @@ async fn test_message() {
     assert_eq!(res.status(), StatusCode::OK);
     let ret = res.json::<MessagesReturned>().await.messages;
     assert_eq!(ret.len(), 1);
-    assert_eq!(ret[0], message.message);
+    let decoded_message = general_purpose::STANDARD.decode(message.message.0);
+    let decoded_message = match decoded_message {
+        Ok(message) => message,
+        Err(_) => panic!("failed to decode message"),
+    };
+    assert_eq!("test message".as_bytes().to_vec(), decoded_message);
 }
 #[tokio::test]
 async fn negative_test_message() {
@@ -174,7 +184,11 @@ async fn negative_test_message() {
     // //not a Uuid
     let message = MessageRequest {
         client_uuids: vec![69.to_string()],
-        message: "test message".to_string().into_bytes(),
+        message: Base64(
+            general_purpose::STANDARD
+                .encode("test message")
+                .into_bytes(),
+        ),
     };
 
     let res = client
@@ -189,7 +203,11 @@ async fn negative_test_message() {
     //not an existing Uuid
     let message = MessageRequest {
         client_uuids: vec![Uuid::new_v4().to_string()],
-        message: "test message".to_string().into_bytes(),
+        message: Base64(
+            general_purpose::STANDARD
+                .encode("test message")
+                .into_bytes(),
+        ),
     };
 
     let res = client

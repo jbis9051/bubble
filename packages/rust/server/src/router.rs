@@ -11,8 +11,6 @@ pub fn router(pool: DbPool, email_service: EmailService) -> Router {
         .nest("/user", routes::user::router())
         .nest("/message", routes::message::router())
         .nest("/client", routes::client::router())
-        .nest("/message", routes::message::router())
-        .nest("/client", routes::client::router())
         .layer(Extension(pool))
         .layer(Extension(email_service))
 }

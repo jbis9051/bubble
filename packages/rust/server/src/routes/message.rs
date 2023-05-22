@@ -3,11 +3,12 @@ use crate::models::client::Client;
 use crate::models::message::Message;
 
 use crate::routes::map_sqlx_err;
-use crate::types::DbPool;
+use crate::types::{Base64, DbPool};
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
@@ -20,7 +21,7 @@ pub fn router() -> Router {
 #[derive(Serialize, Deserialize)]
 pub struct MessageRequest {
     pub client_uuids: Vec<String>,
-    pub message: Vec<u8>,
+    pub message: Base64,
 }
 
 async fn send_message(
@@ -28,9 +29,12 @@ async fn send_message(
     Json(payload): Json<MessageRequest>,
     _: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
+    let decoded_message: Vec<u8> = general_purpose::STANDARD
+        .decode(payload.message.0)
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
     let mut message = Message {
         id: Default::default(),
-        message: payload.message,
+        message: decoded_message,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     let uuids: Result<Vec<Uuid>, StatusCode> = payload
@@ -59,7 +63,7 @@ pub struct CheckMessages {
 
 #[derive(Serialize, Deserialize)]
 pub struct MessagesReturned {
-    pub messages: Vec<Vec<u8>>,
+    pub messages: Vec<Base64>,
 }
 
 async fn receive_message(
@@ -91,7 +95,13 @@ async fn receive_message(
 
     let messages_to_return = messages_to_read
         .iter()
-        .map(|message| message.message.clone())
+        .map(|message| {
+            Base64(
+                general_purpose::STANDARD
+                    .encode(message.message.clone())
+                    .into_bytes(),
+            )
+        })
         .collect();
 
     Message::delete_ids(
