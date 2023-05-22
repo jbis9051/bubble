@@ -48,23 +48,12 @@ impl Message {
             .await?
             .borrow()
             .into();
-        let mut params = "($1, $2)".to_string();
-        for i in (3..=client_ids.len()).step_by(2) {
-            params.push_str(&format!(", (${}, ${})", i, i + 1));
-        }
 
-        let query_string = format!(
-            "INSERT INTO recipient (client_id, message_id) VALUES {};",
-            params
-        );
-
-        let mut query = sqlx::query(&query_string);
-        for client_id in client_ids {
-            query = query.bind(client_id);
-            query = query.bind(self.id);
-        }
-
-        query.fetch_all(db).await?;
+        sqlx::query("INSERT INTO recipient (client_id, message_id) SELECT * FROM UNNEST($1::int8[], $2::x[]);")
+            .bind(&client_ids[..])
+            .bind(&vec![self.id; client_ids.len()][..])
+            .execute(db)
+            .await?;
         Ok(())
     }
 
@@ -78,19 +67,9 @@ impl Message {
     }
 
     pub async fn from_ids(db: &DbPool, ids: &[i32]) -> Result<Vec<Message>, sqlx::Error> {
-        let mut params = "$1".to_string();
-        for i in 2..=ids.len() {
-            params.push_str(&format!(", ${}", i));
-        }
-
-        let query_string = format!("SELECT * FROM message WHERE id IN ({});", params);
-
-        let mut query = sqlx::query(&query_string);
-        for id in ids {
-            query = query.bind(id);
-        }
-
-        Ok(query
+        // a bug of the parameter typechecking code requires all array parameters to be slices
+        Ok(sqlx::query("SELECT * FROM message WHERE id = ANY($1);")
+            .bind(ids)
             .fetch_all(db)
             .await?
             .iter()
@@ -112,41 +91,15 @@ impl Message {
         client_id: i32,
         db: &DbPool,
     ) -> Result<(), sqlx::Error> {
-        let mut recipients_id: Vec<i32> = Vec::new();
-        recipients_id = sqlx::query("SELECT id FROM recipient WHERE client_id = $1;")
+        sqlx::query("DELETE FROM recipient WHERE client_id = $1;")
             .bind(client_id)
-            .fetch_all(db)
-            .await?
-            .iter()
-            .map(|row| row.get::<i32, _>("id"))
-            .collect();
+            .execute(db)
+            .await?;
 
-        let mut params = "$1".to_string();
-        for i in 2..=recipients_id.len() {
-            params.push_str(&format!(", ${}", i));
-        }
-
-        let query_string = format!("DELETE FROM recipient WHERE id IN ({});", params);
-
-        let mut query = sqlx::query::<sqlx::Postgres>(&query_string);
-        for id in recipients_id {
-            query = query.bind(id);
-        }
-        query.fetch_all(db).await?;
-
-        let mut params = "$1".to_string();
-        for i in 2..=message_ids.len() {
-            params.push_str(&format!(", ${}", i));
-        }
-
-        let query_string = format!("DELETE FROM message WHERE id IN ({});", params);
-
-        let mut query = sqlx::query::<sqlx::Postgres>(&query_string);
-        for id in message_ids {
-            query = query.bind(id);
-        }
-
-        query.fetch_all(db).await?;
+        sqlx::query("DELETE FROM message WHERE id = ANY($1);")
+            .bind(message_ids)
+            .execute(db)
+            .await?;
 
         Ok(())
     }

@@ -29,25 +29,26 @@ async fn send_message(
     Json(payload): Json<MessageRequest>,
     _: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let decoded_message: Vec<u8> = general_purpose::STANDARD
-        .decode(payload.message.0)
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    let mut message = Message {
-        id: Default::default(),
-        message: decoded_message,
-        created: NaiveDateTime::from_timestamp(0, 0),
-    };
-    let uuids: Result<Vec<Uuid>, StatusCode> = payload
+    let uuids = payload
         .client_uuids
         .iter()
-        .map(|uuid| Uuid::parse_str(uuid).map_err(|_| StatusCode::BAD_REQUEST))
+        .map(|uuid| {
+            Uuid::parse_str(uuid)
+                .map_err(|_| StatusCode::BAD_REQUEST)
+                .unwrap()
+        })
         .collect();
 
-    let clients: Vec<Client> = Client::filter_uuids(&db.0, &uuids?)
+    let clients = Client::filter_uuids(&db.0, &uuids)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
     let client_ids = clients.iter().map(|client| client.id).collect();
 
+    let mut message = Message {
+        id: Default::default(),
+        message: payload.message.0,
+        created: NaiveDateTime::from_timestamp(0, 0),
+    };
     message
         .create(&db.0, &client_ids)
         .await

@@ -39,20 +39,9 @@ impl Client {
     }
 
     pub async fn filter_uuids(db: &DbPool, uuids: &Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
-        // TODO better/cleaner way to get "$1, $2,...$n"
-        let mut params = "$1".to_string();
-        for i in 2..=uuids.len() {
-            params.push_str(&format!(", ${}", i));
-        }
-
-        let query_string = format!("SELECT * FROM client WHERE uuid IN ({});", params);
-
-        let mut query = sqlx::query(&query_string);
-        for uuid in uuids {
-            query = query.bind(uuid);
-        }
-
-        Ok(query
+        // a bug of the parameter typechecking code requires all array parameters to be slices
+        Ok(sqlx::query("SELECT * FROM client WHERE uuid = ANY($1);")
+            .bind(&uuids[..])
             .fetch_all(db)
             .await?
             .iter()
