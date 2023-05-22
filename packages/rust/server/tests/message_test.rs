@@ -1,43 +1,88 @@
 use crate::helper::{start_server, TempDatabase};
 
 use axum::http::StatusCode;
-use bubble::models::client::Client;
+
 use bubble::routes::message::{CheckMessages, MessageRequest, MessagesReturned};
-use bubble::routes::user::CreateUser;
-use sqlx::types::chrono::NaiveDateTime;
+
 use uuid::Uuid;
 
+use std::str::FromStr;
+
+use bubble::routes::user::{Clients, CreateUser};
+use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
+use openmls::prelude::*;
+use openmls_rust_crypto::OpenMlsRustCrypto;
+use sqlx::Row;
+
+use bubble::routes::client::CreateClient;
+
+use crate::crypto_helper::{PRIVATE, PUBLIC};
+use bubble::types::{Base64, SIGNATURE_SCHEME};
+
+mod crypto_helper;
 mod helper;
 
 #[tokio::test]
 async fn test_message() {
     let db = TempDatabase::new().await;
-    let server = start_server(db.pool().clone()).await;
+    let client = start_server(db.pool().clone()).await;
 
     let created_user = CreateUser {
         email: "test@gmail.com".to_string(),
         username: "test_username".to_string(),
         password: "test_password".to_string(),
         name: "test_name".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
-    let (token, user) = helper::initialize_user(db.pool(), &server, &created_user)
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
         .unwrap();
 
-    let mut client = Client {
-        id: 0,
-        user_id: user.id,
-        uuid: Uuid::new_v4(),
-        created: NaiveDateTime::from_timestamp(0, 0),
+    let bearer = format!("Bearer {}", token);
+
+    let res = client
+        .get(&format!("/user/{}/clients", user.uuid))
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let payload: Clients = res.json().await;
+
+    assert_eq!(payload.clients.len(), 0);
+
+    // Create a Client
+    let backend = &OpenMlsRustCrypto::default();
+    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
+        .unwrap()
+        .into_tuple();
+
+    let user_keypair = Keypair {
+        public: PublicKey::from_bytes(PUBLIC).unwrap(),
+        secret: SecretKey::from_bytes(PRIVATE).unwrap(),
     };
-    assert!(client.create(db.pool()).await.is_ok());
+
+    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+
+    let create_client = CreateClient {
+        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
+    };
+
+    let res = client
+        .post("/client")
+        .header("Authorization", bearer.clone())
+        .json(&create_client)
+        .send()
+        .await;
+
+    let client_uuid = Uuid::from_str(&res.text().await).unwrap();
 
     let request_messages = CheckMessages {
-        client_uuid: client.uuid.to_string(),
+        client_uuid: client_uuid.to_string(),
     };
-
-    let bearer = format!("Bearer {}", token);
-    let res = server
+    let res = client
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
@@ -49,11 +94,11 @@ async fn test_message() {
     assert_eq!(res.json::<MessagesReturned>().await.messages.len(), 0);
 
     let message = MessageRequest {
-        client_uuids: vec![client.uuid.to_string()],
+        client_uuids: vec![client_uuid.to_string()],
         message: "test message".to_string().into_bytes(),
     };
 
-    let res = server
+    let res = client
         .post("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
@@ -63,7 +108,7 @@ async fn test_message() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let res = server
+    let res = client
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
@@ -75,31 +120,56 @@ async fn test_message() {
     let ret = res.json::<MessagesReturned>().await.messages;
     assert_eq!(ret.len(), 1);
     assert_eq!(ret[0], message.message);
-    //
 }
 #[tokio::test]
 async fn negative_test_message() {
     let db = TempDatabase::new().await;
-    let server = start_server(db.pool().clone()).await;
-
+    let client = start_server(db.pool().clone()).await;
     let created_user = CreateUser {
         email: "test@gmail.com".to_string(),
         username: "test_username".to_string(),
         password: "test_password".to_string(),
         name: "test_name".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
-    let (token, user) = helper::initialize_user(db.pool(), &server, &created_user)
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
         .unwrap();
 
-    let mut client = Client {
-        id: 0,
-        user_id: user.id,
-        uuid: Uuid::new_v4(),
-        created: NaiveDateTime::from_timestamp(0, 0),
-    };
     let bearer = format!("Bearer {}", token);
-    assert!(client.create(db.pool()).await.is_ok());
+    let res = client
+        .get(&format!("/user/{}/clients", user.uuid))
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    let _payload: Clients = res.json().await;
+
+    // Create a Client
+    let backend = &OpenMlsRustCrypto::default();
+    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
+        .unwrap()
+        .into_tuple();
+
+    let user_keypair = Keypair {
+        public: PublicKey::from_bytes(PUBLIC).unwrap(),
+        secret: SecretKey::from_bytes(PRIVATE).unwrap(),
+    };
+
+    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+
+    let create_client = CreateClient {
+        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
+    };
+
+    let res = client
+        .post("/client")
+        .header("Authorization", bearer.clone())
+        .json(&create_client)
+        .send()
+        .await;
+    let _client_uuid = Uuid::from_str(&res.text().await).unwrap();
 
     // //not a Uuid
     let message = MessageRequest {
@@ -107,7 +177,7 @@ async fn negative_test_message() {
         message: "test message".to_string().into_bytes(),
     };
 
-    let res = server
+    let res = client
         .post("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
@@ -122,7 +192,7 @@ async fn negative_test_message() {
         message: "test message".to_string().into_bytes(),
     };
 
-    let res = server
+    let res = client
         .post("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
@@ -137,7 +207,7 @@ async fn negative_test_message() {
         client_uuid: Uuid::new_v4().to_string(),
     };
 
-    let res = server
+    let res = client
         .get("/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
@@ -148,33 +218,54 @@ async fn negative_test_message() {
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
     //the client belongs to a different user
+    //make a second client
     let created_user2 = CreateUser {
         email: "test2@gmail.com".to_string(),
         username: "test_username2".to_string(),
         password: "test_password2".to_string(),
         name: "test_name2".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
     };
-    let (_token2, user2) = helper::initialize_user(db.pool(), &server, &created_user2)
+
+    let (token2, _user2) = helper::initialize_user(db.pool(), &client, &created_user2)
         .await
         .unwrap();
+    let bearer2 = format!("Bearer {}", token2);
 
-    let mut client2 = Client {
-        id: 0,
-        user_id: user2.id,
-        uuid: Uuid::new_v4(),
-        created: NaiveDateTime::from_timestamp(0, 0),
+    let backend2 = &OpenMlsRustCrypto::default();
+    let (_signature_privkey2, signature_pubkey2) =
+        SignatureKeypair::new(SIGNATURE_SCHEME, backend2)
+            .unwrap()
+            .into_tuple();
+
+    let user_keypair2 = Keypair {
+        public: PublicKey::from_bytes(PUBLIC).unwrap(),
+        secret: SecretKey::from_bytes(PRIVATE).unwrap(),
     };
-    assert!(client2.create(db.pool()).await.is_ok());
 
-    let request_messages = CheckMessages {
-        client_uuid: client2.uuid.to_string(),
+    let signature_of_signing_key2 = user_keypair2.sign(signature_pubkey2.as_slice());
+
+    let create_client2 = CreateClient {
+        signing_key: Base64(signature_pubkey2.as_slice().to_vec()),
+        signature: Base64(signature_of_signing_key2.to_bytes().to_vec()),
+    };
+    let res2 = client
+        .post("/client")
+        .header("Authorization", bearer2.clone())
+        .json(&create_client2)
+        .send()
+        .await;
+
+    let client_uuid2 = Uuid::from_str(&res2.text().await).unwrap();
+    let request_messages2 = CheckMessages {
+        client_uuid: client_uuid2.to_string(),
     };
 
     //first user's token is used here
-    let res = server
+    let res = client
         .get("/message")
         .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&request_messages).unwrap())
+        .body(serde_json::to_string(&request_messages2).unwrap())
         .header("Authorization", bearer.clone())
         .send()
         .await;
