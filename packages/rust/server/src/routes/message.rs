@@ -1,7 +1,7 @@
 use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::client::Client;
 use crate::models::message::Message;
-use crate::models::recipient::Recipient;
+
 use crate::routes::map_sqlx_err;
 use crate::types::DbPool;
 use axum::http::StatusCode;
@@ -33,8 +33,6 @@ async fn send_message(
         message: payload.message,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
-    message.create(&db.0).await.map_err(map_sqlx_err)?;
-
     let uuids: Result<Vec<Uuid>, StatusCode> = payload
         .client_uuids
         .iter()
@@ -46,7 +44,8 @@ async fn send_message(
         .map_err(|_| StatusCode::NOT_FOUND)?;
     let client_ids = clients.iter().map(|client| client.id).collect();
 
-    Recipient::create_all(&db.0, client_ids, message.id)
+    message
+        .create(&db.0, &client_ids)
         .await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
@@ -80,10 +79,8 @@ async fn receive_message(
     let messages_to_read = Message::from_client_id(&db.0, client.id)
         .await
         .map_err(|_| StatusCode::FORBIDDEN)?;
-    let recipients = Recipient::filter_client_id(&db.0, client.id)
-        .await
-        .map_err(map_sqlx_err)?;
-    if recipients.is_empty() || messages_to_read.is_empty() {
+
+    if messages_to_read.is_empty() {
         return Ok((
             StatusCode::OK,
             Json(MessagesReturned {
@@ -97,14 +94,9 @@ async fn receive_message(
         .map(|message| message.message.clone())
         .collect();
 
-    Recipient::delete_ids(
-        recipients.iter().map(|recipient| recipient.id).collect(),
-        &db.0,
-    )
-    .await
-    .map_err(map_sqlx_err)?;
     Message::delete_ids(
         &messages_to_read.iter().map(|message| message.id).collect(),
+        client.id,
         &db.0,
     )
     .await
