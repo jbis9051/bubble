@@ -198,11 +198,7 @@ async fn negative_test_message() {
     //not an existing Uuid
     let message = MessageRequest {
         client_uuids: vec![Uuid::new_v4().to_string()],
-        message: Base64(
-            general_purpose::STANDARD
-                .encode("test message")
-                .into_bytes(),
-        ),
+        message: Base64("test_message".as_bytes().to_vec()),
     };
 
     let res = client
@@ -212,7 +208,7 @@ async fn negative_test_message() {
         .header("Authorization", bearer.clone())
         .send()
         .await;
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
     //the client does not exist
 

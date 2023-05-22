@@ -49,11 +49,9 @@ impl Message {
             .borrow()
             .into();
 
-        let v = vec![self.id; client_ids.len()];
-
         sqlx::query("INSERT INTO recipient (client_id, message_id) SELECT * FROM UNNEST($1::int8[], $2::int8[]);")
             .bind(&client_ids[..])
-            .bind(&v[..])
+            .bind(&vec![self.id; client_ids.len()][..])
             .execute(db)
             .await?;
         Ok(())

@@ -38,7 +38,10 @@ async fn send_message(
 
     let clients = Client::filter_uuids(&db.0, &uuids)
         .await
-        .map_err(|_| StatusCode::NOT_FOUND)?;
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    if clients.len() != uuids.len() {
+        return Err(StatusCode::NOT_FOUND);
+    }
     let client_ids = clients.iter().map(|client| client.id).collect();
 
     let mut message = Message {
