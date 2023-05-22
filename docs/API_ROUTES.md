@@ -382,3 +382,71 @@ GET /client/<uuid>/key_package
 
 `<key_package>` is a base64 encoded byte string.
 
+---
+
+# Messages
+
+Messages are information sent and received by clients, including location updates. Updates to Recipients are abstracted to the messages model layer, there are no direct routes. 
+
+## Send Message
+
+#### Request:
+
+```http request
+POST /message
+```
+
+```json
+    {
+      "client_uuids": "<client_uuids>",
+      "message": "<message>"
+    }
+```
+
+`<client_uuids` is a vector of strings and `<message>` is a base64 encoding of a string's bytes.
+
+#### Response:
+
+```
+200 OK
+```
+
+#### Error:
+```
+400 Bad Request
+404 Not Found
+```
+
+Error StatusCode::BadRequest is returned when the json fields are improperly formatted or missing. Error StatusCode::NotFound is returned when the client_uuids are not found in the database.
+
+## Receive Message
+#### Request
+```http request
+GET /message
+```
+```json
+{
+  "client_uuid": "<client_uuid>"
+}
+```
+'<client_uuid>' is a String.
+
+#### Response
+```json
+{
+  "message": "<message>"
+}
+```
+```http request
+200 OK
+```
+`<message>` is a base64 encoding of a message's bytes.
+
+#### Error
+```http request
+400 Bad Request
+403 Forbidden
+404 Not Found
+```
+StatusCode::BadRequest is returned when the json fields are improperly formatted or missing. StatusCode::Forbidden is returned when the client is not associated with the user.
+StatusCode::NotFound is returned when the client_uuid or message is not found in the database.

@@ -75,14 +75,14 @@ async fn receive_message(
     let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db.0, &uuid)
         .await
-        .map_err(map_sqlx_err)?;
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     if client.user_id != user.id {
         return Err(StatusCode::FORBIDDEN);
     }
     let messages_to_read = Message::from_client_id(&db.0, client.id)
         .await
-        .map_err(|_| StatusCode::FORBIDDEN)?;
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     if messages_to_read.is_empty() {
         return Ok((
@@ -110,7 +110,7 @@ async fn receive_message(
         &db.0,
     )
     .await
-    .map_err(map_sqlx_err)?;
+    .map_err(|_| StatusCode::NOT_FOUND)?;
 
     Ok((
         StatusCode::OK,
