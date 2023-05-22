@@ -1,24 +1,19 @@
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
-use std::str::FromStr;
 
 use bubble::models::user::User;
 use bubble::router;
 
-use bubble::types::{Base64, DbPool, SIGNATURE_SCHEME};
+use bubble::types::DbPool;
 use sqlx::postgres::PgPoolOptions;
 
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
-use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
-use openmls::prelude::SignatureKeypair;
-use openmls_rust_crypto::OpenMlsRustCrypto;
 
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
 
 use bubble::models::session::Session;
-use bubble::routes::client::CreateClient;
 use bubble::services::email::SendGridEmailService;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
