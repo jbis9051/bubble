@@ -174,7 +174,7 @@ User loses their identity private key or simply to rotate the identity key. In t
 new identity key with the old identity key to prove that the new identity key belongs to the User. They should then send
 this signature to all groups that they are a member of so that the group can update their records.
 
-`<idenity>` and other byte strings are encoded as base64 strings.
+`<identity>` and other byte strings are encoded as base64 strings.
 
 ### Update Identity
 
@@ -225,6 +225,10 @@ GET /user/<uuid>/clients
 
 #### Response:
 
+```
+200 OK
+```
+
 ```json
 {
   "clients": [
@@ -268,6 +272,10 @@ The `<signature>` must be a signature of the `<signing_key>` by the User's ident
 
 ```http request
 GET /client/:uuid
+```
+
+```
+200 OK
 ```
 
 ```json
@@ -316,11 +324,15 @@ DELETE /client/:uuid
 
 ---
 
-## Replace KeyPackages
+# KeyPackages
 
 KeyPackages are one time use (with the exception of the last KeyPackage).
 
 See the MLS spec for more information.
+
+
+
+## Replace KeyPackages
 
 Note: This will replace all existing KeyPackages for the Client.
 

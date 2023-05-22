@@ -33,7 +33,7 @@ pub fn router() -> Router {
         .route("/email", post(change_email))
         .route("/identity", put(update_identity))
         .route("/:uuid", get(get_user))
-        .route("/:uuid/clients", get(clients))
+        .route("/:uuid/clients", get(get_clients))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -412,7 +412,7 @@ pub struct Clients {
     pub clients: Vec<PublicClient>,
 }
 
-async fn clients(
+async fn get_clients(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
     _: AuthenticatedUser,
