@@ -2,6 +2,7 @@ use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use bubble::models::user::User;
 use bubble::router;
@@ -20,6 +21,8 @@ use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken
 use bubble::models::session::Session;
 use bubble::routes::client::CreateClient;
 use bubble::services::email::EmailService;
+use bubble::services::email::PrinterEmailService;
+
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
 use uuid::Uuid;
@@ -53,7 +56,7 @@ impl TempDatabase {
 }
 
 pub async fn start_server(pool: DbPool) -> TestClient {
-    let email_service = EmailService::default();
+    let email_service = Arc::new(PrinterEmailService::default());
     let router = router::router(pool, email_service);
 
     TestClient::new(router)

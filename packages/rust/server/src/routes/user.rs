@@ -1,3 +1,4 @@
+use axum::body::HttpBody;
 use axum::extract::{Path, Query};
 use axum::http::StatusCode;
 use axum::routing::{delete, get, patch, post, put};
@@ -16,10 +17,12 @@ use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::services::email::EmailService;
+use crate::services::email::{EmailService, Recipient};
+
 use crate::services::password;
 use crate::services::session::create_session;
-use crate::types::{Base64, DbPool};
+use crate::types::Base64;
+use crate::types::{DbPool, EmailServiceArc};
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
@@ -47,7 +50,7 @@ pub struct CreateUser {
 
 async fn register(
     db: Extension<DbPool>,
-    email_service: Extension<EmailService>,
+    email_service: Extension<EmailServiceArc>,
     Json(payload): Json<CreateUser>,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
@@ -107,10 +110,18 @@ async fn register(
     })?;
 
     email_service
-        .send(&format!(
-            "to: {} | body: token: {}",
-            confirmation.email, confirmation.token
-        ))
+        .send(
+            "Bubble - Email Confirmation",
+            &[Recipient {
+                address: confirmation.email,
+                name: user.name,
+            }],
+            Some(&format!(
+                "Please click the link to confirm your email address: {}",
+                confirmation.token
+            )),
+            None,
+        ) // successful confirmation email
         .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -221,7 +232,7 @@ pub struct Email {
 
 async fn forgot(
     db: Extension<DbPool>,
-    email_service: Extension<EmailService>,
+    email_service: Extension<EmailServiceArc>,
     Json(payload): Json<Email>,
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db, &payload.email)
@@ -237,10 +248,18 @@ async fn forgot(
     forgot.create(&db).await.map_err(map_sqlx_err)?;
 
     email_service
-        .send(&format!(
-            "to: {} | body: token: {}",
-            payload.email, forgot.token
-        ))
+        .send(
+            "Bubble - Password Reset",
+            &[Recipient {
+                address: payload.email,
+                name: user.name,
+            }],
+            Some(&format!(
+                "Please click the link to reset your password: {}",
+                forgot.token
+            )),
+            None,
+        )
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(StatusCode::CREATED)
@@ -306,7 +325,7 @@ pub struct ChangeEmail {
 
 async fn change_email(
     db: Extension<DbPool>,
-    email_service: Extension<EmailService>,
+    email_service: Extension<EmailServiceArc>,
     Json(payload): Json<ChangeEmail>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
@@ -327,10 +346,18 @@ async fn change_email(
     change.create(&db).await.map_err(map_sqlx_err)?;
 
     email_service
-        .send(&format!(
-            "to: {} | body: token: {}",
-            change.email, change.token
-        ))
+        .send(
+            "Bubble - Confirm Email Change",
+            &[Recipient {
+                address: change.email,
+                name: user.0.name,
+            }],
+            Some(&format!(
+                "Please click the link to change your email: {}",
+                change.token
+            )),
+            None,
+        )
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(StatusCode::CREATED)
@@ -407,6 +434,7 @@ pub struct PublicClient {
     pub signing_key: Base64,
     pub signature: Base64,
 }
+
 #[derive(Serialize, Deserialize)]
 pub struct Clients {
     pub clients: Vec<PublicClient>,
