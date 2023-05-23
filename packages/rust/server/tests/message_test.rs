@@ -15,8 +15,7 @@ use openmls_rust_crypto::OpenMlsRustCrypto;
 
 use bubble::routes::client::CreateClient;
 
-use crate::crypto_helper::{PRIVATE, PUBLIC};
-use base64::{engine::general_purpose, Engine as _};
+use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
 use bubble::types::{Base64, SIGNATURE_SCHEME};
 
 mod crypto_helper;
@@ -34,7 +33,7 @@ async fn test_single_message() {
         name: "test_name".to_string(),
         identity: Base64(PUBLIC.to_vec()),
     };
-    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+    let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
         .unwrap();
 
@@ -94,7 +93,7 @@ async fn test_multiple_messages() {
         name: "test_name".to_string(),
         identity: Base64(PUBLIC.to_vec()),
     };
-    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+    let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
         .unwrap();
 
@@ -162,12 +161,11 @@ async fn test_multiple_messages() {
     assert!(messages.contains(&message_3.message));
 }
 
-//TODO fix completely
-
 #[tokio::test]
-async fn negative_test_message() {
+async fn test_bad_uuid() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
+
     let created_user = CreateUser {
         email: "test@gmail.com".to_string(),
         username: "test_username".to_string(),
@@ -175,81 +173,18 @@ async fn negative_test_message() {
         name: "test_name".to_string(),
         identity: Base64(PUBLIC.to_vec()),
     };
-    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+    let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
         .await
         .unwrap();
 
     let bearer = format!("Bearer {}", token);
-    let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
-        .header("Authorization", bearer.clone())
-        .send()
-        .await;
+    let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
 
-    let _payload: Clients = res.json().await;
-
-    // Create a Client
-    let backend = &OpenMlsRustCrypto::default();
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
-
-    let user_keypair = Keypair {
-        public: PublicKey::from_bytes(PUBLIC).unwrap(),
-        secret: SecretKey::from_bytes(PRIVATE).unwrap(),
-    };
-
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
-
-    let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
-        signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
-    };
-
-    let res = client
-        .post("/client")
-        .header("Authorization", bearer.clone())
-        .json(&create_client)
-        .send()
-        .await;
-    let _client_uuid = Uuid::from_str(&res.text().await).unwrap();
-
-    // //not a Uuid
-    let message = MessageRequest {
-        client_uuids: vec![69.to_string()],
-        message: Base64("test message".as_bytes().to_vec()),
-    };
-
-    let res = client
-        .post("/message")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&message).unwrap())
-        .header("Authorization", bearer.clone())
-        .send()
-        .await;
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
-
-    //not an existing Uuid
-    let message = MessageRequest {
-        client_uuids: vec![Uuid::new_v4().to_string()],
-        message: Base64("test_message".as_bytes().to_vec()),
-    };
-
-    let res = client
-        .post("/message")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&message).unwrap())
-        .header("Authorization", bearer.clone())
-        .send()
-        .await;
-    assert_eq!(res.status(), StatusCode::NOT_FOUND);
-
-    //the client does not exist
+    let bad_uuid = Uuid::new_v4().to_string();
 
     let request_messages = CheckMessages {
-        client_uuid: Uuid::new_v4().to_string(),
+        client_uuid: bad_uuid.clone(),
     };
-
     let res = client
         .get("/message")
         .header("Content-Type", "application/json")
@@ -260,56 +195,132 @@ async fn negative_test_message() {
 
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
-    //the client belongs to a different user
-    //make a second client
-    let created_user2 = CreateUser {
-        email: "test2@gmail.com".to_string(),
-        username: "test_username2".to_string(),
-        password: "test_password2".to_string(),
-        name: "test_name2".to_string(),
-        identity: Base64(PUBLIC.to_vec()),
+    let request_messages = CheckMessages {
+        client_uuid: "bad uuid".to_string(),
     };
-
-    let (token2, _user2) = helper::initialize_user(db.pool(), &client, &created_user2)
-        .await
-        .unwrap();
-    let bearer2 = format!("Bearer {}", token2);
-
-    let backend2 = &OpenMlsRustCrypto::default();
-    let (_signature_privkey2, signature_pubkey2) =
-        SignatureKeypair::new(SIGNATURE_SCHEME, backend2)
-            .unwrap()
-            .into_tuple();
-
-    let user_keypair2 = Keypair {
-        public: PublicKey::from_bytes(PUBLIC).unwrap(),
-        secret: SecretKey::from_bytes(PRIVATE).unwrap(),
-    };
-
-    let signature_of_signing_key2 = user_keypair2.sign(signature_pubkey2.as_slice());
-
-    let create_client2 = CreateClient {
-        signing_key: Base64(signature_pubkey2.as_slice().to_vec()),
-        signature: Base64(signature_of_signing_key2.to_bytes().to_vec()),
-    };
-    let res2 = client
-        .post("/client")
-        .header("Authorization", bearer2.clone())
-        .json(&create_client2)
-        .send()
-        .await;
-
-    let client_uuid2 = Uuid::from_str(&res2.text().await).unwrap();
-    let request_messages2 = CheckMessages {
-        client_uuid: client_uuid2.to_string(),
-    };
-
-    //first user's token is used here
     let res = client
         .get("/message")
         .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&request_messages2).unwrap())
+        .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    let message = MessageRequest {
+        client_uuids: vec![bad_uuid.clone()],
+        message: Base64("test message".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let message = MessageRequest {
+        client_uuids: vec![client_uuid.to_string(), bad_uuid],
+        message: Base64("test message".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let message = MessageRequest {
+        client_uuids: vec!["bad uuid".to_string()],
+        message: Base64("test message".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+
+    let message = MessageRequest {
+        client_uuids: vec![],
+        message: Base64("test message".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_bad_user() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let test_keypair = generate_ed25519_keypair();
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "test_username".to_string(),
+        password: "test_password".to_string(),
+        name: "test_name".to_string(),
+        identity: Base64(test_keypair.public.to_bytes().to_vec()),
+    };
+    let (token, _) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let bearer = format!("Bearer {}", token);
+    let (_, client_uuid) = helper::create_client(
+        &test_keypair.public.to_bytes(),
+        &test_keypair.secret.to_bytes(),
+        &bearer,
+        &client,
+    )
+    .await;
+
+    let bad_keypair = generate_ed25519_keypair();
+    let bad_user = CreateUser {
+        email: "bad@gmail.com".to_string(),
+        username: "bad_username".to_string(),
+        password: "bad_password".to_string(),
+        name: "bad_name".to_string(),
+        identity: Base64(bad_keypair.public.to_bytes().to_vec()),
+    };
+    let (bad_token, _) = helper::initialize_user(db.pool(), &client, &bad_user)
+        .await
+        .unwrap();
+
+    let bad_bearer = format!("Bearer {}", bad_token);
+    let (_, bad_client_uuid) = helper::create_client(
+        &bad_keypair.public.to_bytes(),
+        &bad_keypair.secret.to_bytes(),
+        &bad_bearer,
+        &client,
+    )
+    .await;
+
+    let request_messages = CheckMessages {
+        client_uuid: client_uuid.to_string(),
+    };
+    let res = client
+        .get("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&request_messages).unwrap())
+        .header("Authorization", bad_bearer.clone())
         .send()
         .await;
 

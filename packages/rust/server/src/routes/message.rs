@@ -33,6 +33,9 @@ async fn send_message(
         .map(|uuid| Uuid::parse_str(&uuid))
         .collect::<Result<Vec<Uuid>, uuid::Error>>()
         .map_err(|_| StatusCode::BAD_REQUEST)?;
+    if uuids.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
 
     let clients = Client::filter_uuids(&db, &uuids)
         .await
