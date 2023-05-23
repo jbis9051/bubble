@@ -3,8 +3,8 @@ use base64::{engine::general_purpose, Engine as _};
 use openmls::prelude::{Ciphersuite, SignatureScheme};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use sqlx::{Pool, Postgres};
-use std::sync::Arc;
 use std::ops::Deref;
+use std::sync::Arc;
 
 pub const SIGNATURE_SCHEME: SignatureScheme = SignatureScheme::ED25519;
 

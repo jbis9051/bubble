@@ -1,8 +1,8 @@
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
-use std::sync::Arc;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use bubble::models::user::User;
 use bubble::router;
@@ -19,10 +19,10 @@ use openmls_rust_crypto::OpenMlsRustCrypto;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
 
 use bubble::models::session::Session;
+use bubble::routes::client::CreateClient;
 use bubble::services::email::EmailService;
 use bubble::services::email::PrinterEmailService;
-use bubble::routes::client::CreateClient;
-use bubble::services::email::SendGridEmailService;
+
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
 use uuid::Uuid;

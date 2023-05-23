@@ -17,11 +17,11 @@ use crate::models::session::Session;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
 use crate::services::email::EmailService;
-use crate::services::email::SendGridEmailService;
+
 use crate::services::password;
 use crate::services::session::create_session;
+use crate::types::Base64;
 use crate::types::{DbPool, EmailServiceArc};
-use crate::types::{Base64};
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
