@@ -3,20 +3,73 @@ import EditScreenInfo from '../../components/EditScreenInfo';
 import { Text, View } from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useState } from 'react';
+
+interface CurrentBubbleDisplayProps {
+
+}
+function CurrentBubbleDisplay(props: CurrentBubbleDisplayProps) {
+  const {
+
+  } = props;
+  const [open, setOpen] = useState(false);
+
+  return (
+    <View style={{
+      backgroundColor: "white",
+      borderRadius: 30,
+      height: "100%",
+      width: "100%",
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 15,
+      gap: 15,
+    }}>
+      <MaterialCommunityIcons name="chart-bubble" size={24} color="black" />
+      <Text>Go Blue's Bubble</Text>
+    </View>
+  );
+}
+
+interface BubbleSettingsProps {
+  
+}
+function BubbleSettings(props: BubbleSettingsProps) {
+  const {
+
+  } = props;
+
+
+  return (
+    <View style={{
+      backgroundColor: "white",
+      borderRadius: 9999,
+      width: "100%",
+      aspectRatio: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}>
+      <Ionicons name="settings" size={24} color="black" />
+    </View>
+  );
+}
 
 interface CustomMarkerProps {
   coordinate: LatLng;
   selected?: boolean;
   onPress?: () => void;
-
+  photoUrl?: string; // if there, is a photoUrl, display it. Otherwise, display initials
 }
 function CustomMarker(props: CustomMarkerProps) {
   const {
-    coordinate
+    coordinate,
+    onPress,
   } = props;
 
   return (
-    <Marker coordinate={coordinate}>
+    <Marker coordinate={coordinate} onPress={onPress}>
       <View style={{
         height: 50,
         width: 50,
@@ -26,7 +79,7 @@ function CustomMarker(props: CustomMarkerProps) {
         justifyContent: "center",
         backgroundColor: "white"
       }}>
-        <Text>Hello</Text>
+        <Text>Blue</Text>
       </View>
     </Marker>
   );
@@ -39,7 +92,9 @@ export default function MapScreen() {
       <MapView
         style={styles.map}
       >
-        <CustomMarker coordinate={{ latitude: 37.427475, longitude: -122.169716 }} />
+        <CustomMarker
+          coordinate={{ latitude: 37.427475, longitude: -122.169716 }}
+        />
       </MapView>
       <SafeAreaView style={{
         position: "absolute",
@@ -53,37 +108,14 @@ export default function MapScreen() {
           height: 50,
           paddingHorizontal: 10,
         }}>
-          <View style={{
-            backgroundColor: "white",
-            borderRadius: 30,
-            height: "100%",
-            width: "100%",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 15,
-            gap: 15,
-          }}>
-            <MaterialCommunityIcons name="chart-bubble" size={24} color="black" />
-            <Text>Go Blue's Bubble</Text>
-          </View>
+          <CurrentBubbleDisplay />
         </View>
         <View style={{
           width: "20%",
           height: "100%",
           paddingHorizontal: 12,
         }}>
-          <View style={{
-            backgroundColor: "white",
-            borderRadius: 9999,
-            width: "100%",
-            aspectRatio: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            <Ionicons name="settings" size={24} color="black" />
-          </View>
+          <BubbleSettings />
         </View>
       </SafeAreaView>
     </View>
