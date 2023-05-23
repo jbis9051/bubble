@@ -1,3 +1,4 @@
+use axum::body::HttpBody;
 use axum::extract::{Path, Query};
 use axum::http::StatusCode;
 use axum::routing::{delete, get, patch, post, put};
@@ -16,7 +17,7 @@ use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::services::email::EmailService;
+use crate::services::email::{EmailService, Recipient};
 
 use crate::services::password;
 use crate::services::session::create_session;
@@ -110,15 +111,16 @@ async fn register(
 
     email_service
         .send(
-            &format!(
-                // plaintext email and can be replaced with html content down the road
-                "to: {} | body: token: {} \nYou have registered successfully for our service!",
-                confirmation.email, confirmation.token
-            ),
-            "Registration Acknowledgement",
-            &[(confirmation.email, user.name)],
-            false,
-            "",
+            "Bubble - Email Confirmation",
+            &[Recipient {
+                address: confirmation.email,
+                name: user.name,
+            }],
+            Some(&format!(
+                "Please click the link to confirm your email address: {}",
+                confirmation.token
+            )),
+            None,
         ) // successful confirmation email
         .map_err(|_| {
             (
@@ -247,14 +249,16 @@ async fn forgot(
 
     email_service
         .send(
-            &format!(
-                "to: {} | body: token: {} \nTo reset your password, please do the following: \n",
-                payload.email, forgot.token
-            ),
-            "Password Reset",
-            &[(payload.email, user.name)],
-            false,
-            "",
+            "Bubble - Password Reset",
+            &[Recipient {
+                address: payload.email,
+                name: user.name,
+            }],
+            Some(&format!(
+                "Please click the link to reset your password: {}",
+                forgot.token
+            )),
+            None,
         )
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -343,14 +347,16 @@ async fn change_email(
 
     email_service
         .send(
-            &format!(
-                "to: {} | body: token: {} \n Please do the following to change your email: \n",
-                change.email, change.token
-            ),
-            "Change Email Request",
-            &[(change.email, String::from(&user.name))],
-            false,
-            "",
+            "Bubble - Confirm Email Change",
+            &[Recipient {
+                address: change.email,
+                name: user.0.name,
+            }],
+            Some(&format!(
+                "Please click the link to change your email: {}",
+                change.token
+            )),
+            None,
         )
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -428,6 +434,7 @@ pub struct PublicClient {
     pub signing_key: Base64,
     pub signature: Base64,
 }
+
 #[derive(Serialize, Deserialize)]
 pub struct Clients {
     pub clients: Vec<PublicClient>,
