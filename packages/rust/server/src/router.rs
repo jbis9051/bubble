@@ -1,11 +1,11 @@
 use crate::routes;
-use crate::services::email::SendGridEmailService;
-use crate::types::DbPool;
+
+use crate::types::{DbPool, EmailServiceArc};
 use axum::routing::get;
 use axum::{Extension, Json, Router};
 use serde::Serialize;
 
-pub fn router(pool: DbPool, email_service: SendGridEmailService) -> Router {
+pub fn router(pool: DbPool, email_service: EmailServiceArc) -> Router {
     Router::new()
         .route("/", get(hello))
         .nest("/user", routes::user::router())

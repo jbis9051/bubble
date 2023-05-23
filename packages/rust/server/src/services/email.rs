@@ -5,6 +5,7 @@ use sendgrid::{Destination, Mail};
 
 #[derive(Default, Clone, Copy)]
 pub struct SendGridEmailService {}
+#[derive(Default, Clone, Copy)]
 pub struct PrinterEmailService {}
 
 pub trait EmailService {

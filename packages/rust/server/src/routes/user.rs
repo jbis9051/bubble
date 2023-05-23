@@ -20,7 +20,8 @@ use crate::services::email::EmailService;
 use crate::services::email::SendGridEmailService;
 use crate::services::password;
 use crate::services::session::create_session;
-use crate::types::{Base64, DbPool};
+use crate::types::{DbPool, EmailServiceArc};
+use crate::types::{Base64};
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
@@ -48,7 +49,7 @@ pub struct CreateUser {
 
 async fn register(
     db: Extension<DbPool>,
-    email_service: Extension<SendGridEmailService>,
+    email_service: Extension<EmailServiceArc>,
     Json(payload): Json<CreateUser>,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
@@ -229,7 +230,7 @@ pub struct Email {
 
 async fn forgot(
     db: Extension<DbPool>,
-    email_service: Extension<SendGridEmailService>,
+    email_service: Extension<EmailServiceArc>,
     Json(payload): Json<Email>,
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db, &payload.email)
@@ -320,7 +321,7 @@ pub struct ChangeEmail {
 
 async fn change_email(
     db: Extension<DbPool>,
-    email_service: Extension<SendGridEmailService>,
+    email_service: Extension<EmailServiceArc>,
     Json(payload): Json<ChangeEmail>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {

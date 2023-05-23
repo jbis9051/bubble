@@ -1,6 +1,10 @@
+#[cfg(test)]
+use bubble::services::email::PrinterEmailService;
+#[cfg(not(test))]
 use bubble::services::email::SendGridEmailService;
 use bubble::{config, router};
 use sqlx::postgres::PgPoolOptions;
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
@@ -10,7 +14,11 @@ async fn main() -> Result<(), ()> {
         .await
         .unwrap();
 
-    let email_service = SendGridEmailService::default();
+    #[cfg(not(test))]
+    let email_service = Arc::new(SendGridEmailService::default());
+
+    #[cfg(test)]
+    let email_service = Arc::new(PrinterEmailService::default());
 
     let router = router::router(pool, email_service);
 

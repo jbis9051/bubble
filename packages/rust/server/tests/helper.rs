@@ -1,6 +1,7 @@
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
+use std::sync::Arc;
 use std::str::FromStr;
 
 use bubble::models::user::User;
@@ -18,6 +19,8 @@ use openmls_rust_crypto::OpenMlsRustCrypto;
 use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
 
 use bubble::models::session::Session;
+use bubble::services::email::EmailService;
+use bubble::services::email::PrinterEmailService;
 use bubble::routes::client::CreateClient;
 use bubble::services::email::SendGridEmailService;
 use sqlx::migrate::MigrateDatabase;
@@ -53,7 +56,7 @@ impl TempDatabase {
 }
 
 pub async fn start_server(pool: DbPool) -> TestClient {
-    let email_service = SendGridEmailService::default();
+    let email_service = Arc::new(PrinterEmailService::default());
     let router = router::router(pool, email_service);
 
     TestClient::new(router)

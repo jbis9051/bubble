@@ -1,7 +1,9 @@
+use crate::services::email::EmailService;
 use base64::{engine::general_purpose, Engine as _};
 use openmls::prelude::{Ciphersuite, SignatureScheme};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use sqlx::{Pool, Postgres};
+use std::sync::Arc;
 use std::ops::Deref;
 
 pub const SIGNATURE_SCHEME: SignatureScheme = SignatureScheme::ED25519;
@@ -10,6 +12,8 @@ pub const CIPHERSUITES: Ciphersuite =
     Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519;
 
 pub type DbPool = Pool<Postgres>;
+
+pub type EmailServiceArc = Arc<(dyn EmailService + Send + Sync)>;
 
 // https://users.rust-lang.org/t/serialize-a-vec-u8-to-json-as-base64/57781/5
 pub struct Base64(pub Vec<u8>);
