@@ -7,7 +7,6 @@ use axum::http::StatusCode;
 use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
-use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
@@ -35,7 +34,7 @@ async fn send_message(
         .collect::<Result<Vec<Uuid>, uuid::Error>>()
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let clients = Client::filter_uuids(&db.0, &uuids)
+    let clients = Client::filter_uuids(&db, &uuids)
         .await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
     if clients.len() != uuids.len() {
@@ -49,7 +48,7 @@ async fn send_message(
         created: NaiveDateTime::from_timestamp(0, 0),
     };
     message
-        .create(&db.0, &client_ids)
+        .create(&db, &client_ids)
         .await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
@@ -73,18 +72,17 @@ async fn receive_message(
 ) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
     // Get client
     let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let client = Client::from_uuid(&db.0, &uuid)
+    let client = Client::from_uuid(&db, &uuid)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
-
     if client.user_id != user.id {
         return Err(StatusCode::FORBIDDEN);
     }
-    let messages_to_read = Message::from_client_id(&db.0, client.id)
+
+    let messages = Message::from_client_id(&db, client.id)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
-
-    if messages_to_read.is_empty() {
+    if messages.is_empty() {
         return Ok((
             StatusCode::OK,
             Json(MessagesReturned {
@@ -92,23 +90,15 @@ async fn receive_message(
             }),
         ));
     }
-
-    let messages_to_return = messages_to_read
-        .iter()
-        .map(|message| {
-            Base64(
-                general_purpose::STANDARD
-                    .encode(message.message.clone())
-                    .into_bytes(),
-            )
-        })
-        .collect();
-
-    let ids: Vec<_> = messages_to_read.iter().map(|message| message.id).collect();
-
-    Message::delete_ids(&ids, client.id, &db.0)
+    let ids: Vec<_> = messages.iter().map(|message| message.id).collect();
+    Message::delete_ids(&ids, client.id, &db)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
+
+    let messages_to_return = messages
+        .iter()
+        .map(|message| Base64(message.message.clone()))
+        .collect();
 
     Ok((
         StatusCode::OK,

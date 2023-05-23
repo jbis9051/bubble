@@ -23,7 +23,7 @@ mod crypto_helper;
 mod helper;
 
 #[tokio::test]
-async fn test_message() {
+async fn test_single_message() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
 
@@ -39,45 +39,7 @@ async fn test_message() {
         .unwrap();
 
     let bearer = format!("Bearer {}", token);
-
-    let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
-        .header("Authorization", bearer.clone())
-        .send()
-        .await;
-
-    assert_eq!(res.status(), StatusCode::OK);
-
-    let payload: Clients = res.json().await;
-
-    assert_eq!(payload.clients.len(), 0);
-
-    // Create a Client
-    let backend = &OpenMlsRustCrypto::default();
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
-
-    let user_keypair = Keypair {
-        public: PublicKey::from_bytes(PUBLIC).unwrap(),
-        secret: SecretKey::from_bytes(PRIVATE).unwrap(),
-    };
-
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
-
-    let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
-        signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
-    };
-
-    let res = client
-        .post("/client")
-        .header("Authorization", bearer.clone())
-        .json(&create_client)
-        .send()
-        .await;
-
-    let client_uuid = Uuid::from_str(&res.text().await).unwrap();
+    let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
 
     let request_messages = CheckMessages {
         client_uuid: client_uuid.to_string(),
@@ -95,13 +57,8 @@ async fn test_message() {
 
     let message = MessageRequest {
         client_uuids: vec![client_uuid.to_string()],
-        message: Base64(
-            general_purpose::STANDARD
-                .encode("test message")
-                .into_bytes(),
-        ),
+        message: Base64("test message".as_bytes().to_vec()),
     };
-
     let res = client
         .post("/message")
         .header("Content-Type", "application/json")
@@ -121,15 +78,92 @@ async fn test_message() {
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
-    let ret = res.json::<MessagesReturned>().await.messages;
-    assert_eq!(ret.len(), 1);
-    let decoded_message = general_purpose::STANDARD.decode(message.message.0);
-    let decoded_message = match decoded_message {
-        Ok(message) => message,
-        Err(_) => panic!("failed to decode message"),
-    };
-    assert_eq!("test message".as_bytes().to_vec(), decoded_message);
+    let messages = res.json::<MessagesReturned>().await.messages;
+    assert_eq!(messages.len(), 1);
+    assert_eq!("test message".as_bytes().to_vec(), messages[0].0);
 }
+
+#[tokio::test]
+async fn test_multiple_messages() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "test_username".to_string(),
+        password: "test_password".to_string(),
+        name: "test_name".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let bearer = format!("Bearer {}", token);
+    let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
+
+    let message_1 = MessageRequest {
+        client_uuids: vec![client_uuid.to_string()],
+        message: Base64("test message 1".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message_1).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let message_2 = MessageRequest {
+        client_uuids: vec![client_uuid.to_string()],
+        message: Base64("test message 2".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message_2).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let message_3 = MessageRequest {
+        client_uuids: vec![client_uuid.to_string()],
+        message: Base64("test message 3".as_bytes().to_vec()),
+    };
+    let res = client
+        .post("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&message_3).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let request_messages = CheckMessages {
+        client_uuid: client_uuid.to_string(),
+    };
+    let res = client
+        .get("/message")
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&request_messages).unwrap())
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+    let messages = res.json::<MessagesReturned>().await.messages;
+    assert_eq!(messages.len(), 3);
+    assert!(messages.contains(&message_1.message));
+    assert!(messages.contains(&message_2.message));
+    assert!(messages.contains(&message_3.message));
+}
+
+//TODO fix completely
+
 #[tokio::test]
 async fn negative_test_message() {
     let db = TempDatabase::new().await;
