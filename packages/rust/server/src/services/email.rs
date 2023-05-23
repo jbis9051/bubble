@@ -60,11 +60,13 @@ impl EmailService for PrinterEmailService {
         email: &str,
         subjects: &str,
         recipients: &[(String, String)],
-        has_html: bool,
+        _has_html: bool,
         html_content: &str,
     ) -> Result<(), SendgridError> {
-        println!("Mock Email sent to: {}, Subject: {}, Body: {}, HTML: {}",
-                 recipients[0].1, subjects, email, html_content);
+        println!(
+            "Mock Email sent to: {}, Subject: {}, Body: {}, HTML: {}",
+            recipients[0].1, subjects, email, html_content
+        );
         Ok(())
     }
 }

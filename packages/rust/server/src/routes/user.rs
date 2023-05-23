@@ -116,7 +116,7 @@ async fn register(
                 confirmation.email, confirmation.token
             ),
             "Registration Acknowledgement",
-            &vec![(confirmation.email, user.name)],
+            &[(confirmation.email, user.name)],
             false,
             "",
         ) // successful confirmation email
@@ -252,7 +252,7 @@ async fn forgot(
                 payload.email, forgot.token
             ),
             "Password Reset",
-            &vec![(payload.email, user.name)],
+            &[(payload.email, user.name)],
             false,
             "",
         )
@@ -348,7 +348,7 @@ async fn change_email(
                 change.email, change.token
             ),
             "Change Email Request",
-            &vec![(change.email, String::from(&user.name))],
+            &[(change.email, String::from(&user.name))],
             false,
             "",
         )
