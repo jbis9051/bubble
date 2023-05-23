@@ -2,7 +2,6 @@ use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::client::Client;
 use crate::models::message::Message;
 
-use crate::routes::map_sqlx_err;
 use crate::types::{Base64, DbPool};
 use axum::http::StatusCode;
 use axum::routing::get;
@@ -42,7 +41,7 @@ async fn send_message(
     if clients.len() != uuids.len() {
         return Err(StatusCode::NOT_FOUND);
     }
-    let client_ids = clients.iter().map(|client| client.id).collect();
+    let client_ids: Vec<_> = clients.iter().map(|client| client.id).collect();
 
     let mut message = Message {
         id: Default::default(),
@@ -105,13 +104,11 @@ async fn receive_message(
         })
         .collect();
 
-    Message::delete_ids(
-        &messages_to_read.iter().map(|message| message.id).collect(),
-        client.id,
-        &db.0,
-    )
-    .await
-    .map_err(|_| StatusCode::NOT_FOUND)?;
+    let ids: Vec<_> = messages_to_read.iter().map(|message| message.id).collect();
+
+    Message::delete_ids(&ids, client.id, &db.0)
+        .await
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     Ok((
         StatusCode::OK,

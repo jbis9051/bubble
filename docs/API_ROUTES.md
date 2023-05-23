@@ -386,7 +386,7 @@ GET /client/<uuid>/key_package
 
 # Messages
 
-Messages are information sent and received by clients, including location updates. Updates to Recipients are abstracted to the messages model layer, there are no direct routes. 
+Messages are MLS messages to be delivered by the Delivery Service (us).
 
 ## Send Message
 
@@ -397,13 +397,13 @@ POST /message
 ```
 
 ```json
-    {
-      "client_uuids": "<client_uuids>",
-      "message": "<message>"
-    }
+{
+  "client_uuids": ["<client_uuids>"],
+  "message": "<message>"
+}
 ```
 
-`<client_uuids` is a vector of strings and `<message>` is a base64 encoding of a string's bytes.
+`<client_uuids>` is a vector of uuids of Client's for the message to be delivered to. `<message>` is a base64 encoded MLS message.
 
 #### Response:
 
@@ -413,13 +413,13 @@ POST /message
 
 #### Error:
 ```
-400 Bad Request
 404 Not Found
 ```
 
-Error StatusCode::BadRequest is returned when the json fields are improperly formatted or missing. Error StatusCode::NotFound is returned when any of the client_uuids are not found in the database.
+404 Not Found is returned when any of the client_uuids not exist.
 
 ## Receive Message
+
 #### Request
 ```http request
 GET /message
@@ -429,24 +429,15 @@ GET /message
   "client_uuid": "<client_uuid>"
 }
 ```
-'<client_uuid>' is a String.
 
 #### Response
 ```json
 {
-  "messages": "<messages>"
+  "messages": ["<messages>"]
 }
 ```
 ```http request
 200 OK
 ```
-`<messages>` is a vector of base64 encodings of a message's bytes.
 
-#### Error
-```http request
-400 Bad Request
-403 Forbidden
-404 Not Found
-```
-StatusCode::BadRequest is returned when the json fields are improperly formatted or missing. StatusCode::Forbidden is returned when the client is not associated with the user.
-StatusCode::NotFound is returned when the client_uuid or message is not found in the database.
+`<messages>` is an array of base64 encoded MLS messages.

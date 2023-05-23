@@ -41,7 +41,7 @@ impl From<&PgRow> for Message {
 }
 
 impl Message {
-    pub async fn create(&mut self, db: &DbPool, client_ids: &Vec<i32>) -> Result<(), sqlx::Error> {
+    pub async fn create(&mut self, db: &DbPool, client_ids: &[i32]) -> Result<(), sqlx::Error> {
         *self = sqlx::query("INSERT INTO message (message) VALUES ($1) RETURNING *;")
             .bind(&self.message)
             .fetch_one(db)
@@ -50,7 +50,7 @@ impl Message {
             .into();
 
         sqlx::query("INSERT INTO recipient (client_id, message_id) SELECT * FROM UNNEST($1::int8[], $2::int8[]);")
-            .bind(&client_ids[..])
+            .bind(client_ids)
             .bind(&vec![self.id; client_ids.len()][..])
             .execute(db)
             .await?;
@@ -87,7 +87,7 @@ impl Message {
     }
 
     pub async fn delete_ids(
-        message_ids: &Vec<i32>,
+        message_ids: &[i32],
         client_id: i32,
         db: &DbPool,
     ) -> Result<(), sqlx::Error> {

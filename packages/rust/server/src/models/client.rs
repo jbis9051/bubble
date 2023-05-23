@@ -38,10 +38,10 @@ impl Client {
             .into())
     }
 
-    pub async fn filter_uuids(db: &DbPool, uuids: &Vec<Uuid>) -> Result<Vec<Client>, sqlx::Error> {
+    pub async fn filter_uuids(db: &DbPool, uuids: &[Uuid]) -> Result<Vec<Client>, sqlx::Error> {
         // a bug of the parameter typechecking code requires all array parameters to be slices
         Ok(sqlx::query("SELECT * FROM client WHERE uuid = ANY($1);")
-            .bind(&uuids[..])
+            .bind(uuids)
             .fetch_all(db)
             .await?
             .iter()
