@@ -1,4 +1,5 @@
 fmt:
+	sleek **/**/*.sql
 	cargo fmt --all
 	cargo clippy --all --fix --allow-dirty --allow-staged
 
@@ -29,5 +30,6 @@ test_server_ci: stop_ci start_ci
 	cd server && DB_URL=postgres://user:pass@localhost:5433 cargo test --tests && cd ..
 
 fmt_ci:
+	sleek --check **/**/*.sql
 	cargo fmt --all -- --check
 	cargo clippy --all

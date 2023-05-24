@@ -2,7 +2,7 @@
 CREATE TABLE "user" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL ,
+    name TEXT NOT NULL,
     identity TEXT NOT NULL,
     updated_date TEXT NOT NULL
 );
