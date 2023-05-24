@@ -26,6 +26,12 @@ impl Deref for Base64 {
     }
 }
 
+impl PartialEq for Base64 {
+    fn eq(&self, other: &Base64) -> bool {
+        self.0 == other.0
+    }
+}
+
 impl Serialize for Base64 {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.collect_str(&general_purpose::STANDARD.encode(&self.0))

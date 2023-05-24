@@ -391,7 +391,7 @@ async fn test_update_client_bad_auth() {
 }
 
 #[tokio::test]
-async fn test_update_client_bad_singature() {
+async fn test_update_client_bad_signature() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
 

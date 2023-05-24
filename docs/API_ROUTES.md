@@ -382,3 +382,62 @@ GET /client/<uuid>/key_package
 
 `<key_package>` is a base64 encoded byte string.
 
+---
+
+# Messages
+
+Messages are MLS messages to be delivered by the Delivery Service (us).
+
+## Send Message
+
+#### Request:
+
+```http request
+POST /message
+```
+
+```json
+{
+  "client_uuids": ["<client_uuids>"],
+  "message": "<message>"
+}
+```
+
+`<client_uuids>` is a vector of uuids of Client's for the message to be delivered to. `<message>` is a base64 encoded MLS message.
+
+#### Response:
+
+```
+200 OK
+```
+
+#### Error:
+```
+404 Not Found
+```
+
+404 Not Found is returned when any of the client_uuids not exist.
+
+## Receive Message
+
+#### Request
+```http request
+GET /message
+```
+```json
+{
+  "client_uuid": "<client_uuid>"
+}
+```
+
+#### Response
+```json
+{
+  "messages": ["<messages>"]
+}
+```
+```http request
+200 OK
+```
+
+`<messages>` is an array of base64 encoded MLS messages.

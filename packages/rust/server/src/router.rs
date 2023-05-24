@@ -10,6 +10,7 @@ pub fn router(pool: DbPool, email_service: EmailServiceArc) -> Router {
         .route("/", get(hello))
         .nest("/user", routes::user::router())
         .nest("/client", routes::client::router())
+        .nest("/message", routes::message::router())
         .layer(Extension(pool))
         .layer(Extension(email_service))
 }
