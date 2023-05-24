@@ -6,17 +6,11 @@ use bubble::routes::message::{CheckMessages, MessageRequest, MessagesReturned};
 
 use uuid::Uuid;
 
-use std::str::FromStr;
-
-use bubble::routes::user::{Clients, CreateUser};
-use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
-use openmls::prelude::*;
-use openmls_rust_crypto::OpenMlsRustCrypto;
-
-use bubble::routes::client::CreateClient;
+use bubble::routes::user::CreateUser;
 
 use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
-use bubble::types::{Base64, SIGNATURE_SCHEME};
+
+use bubble::types::Base64;
 
 mod crypto_helper;
 mod helper;
@@ -53,10 +47,10 @@ async fn test_single_message() {
 
     assert_eq!(res.status(), StatusCode::OK);
     assert_eq!(res.json::<MessagesReturned>().await.messages.len(), 0);
-
+    let testmessage1 = "test message";
     let message = MessageRequest {
         client_uuids: vec![client_uuid.to_string()],
-        message: Base64("test message".as_bytes().to_vec()),
+        message: Base64(testmessage1.clone().as_bytes().to_vec()),
     };
     let res = client
         .post("/message")
@@ -79,7 +73,7 @@ async fn test_single_message() {
     assert_eq!(res.status(), StatusCode::OK);
     let messages = res.json::<MessagesReturned>().await.messages;
     assert_eq!(messages.len(), 1);
-    assert_eq!("test message".as_bytes().to_vec(), messages[0].0);
+    assert_eq!(testmessage1.as_bytes().to_vec(), messages[0].0);
 }
 
 #[tokio::test]
@@ -156,13 +150,13 @@ async fn test_multiple_messages() {
     assert_eq!(res.status(), StatusCode::OK);
     let messages = res.json::<MessagesReturned>().await.messages;
     assert_eq!(messages.len(), 3);
-    assert!(messages.contains(&message_1.message));
-    assert!(messages.contains(&message_2.message));
-    assert!(messages.contains(&message_3.message));
+    assert_eq!("test message 1".as_bytes().to_vec(), messages[0].0);
+    assert_eq!("test message 2".as_bytes().to_vec(), messages[1].0);
+    assert_eq!("test message 3".as_bytes().to_vec(), messages[2].0);
 }
 
 #[tokio::test]
-async fn test_bad_uuid() {
+async fn test_invalid_uuid() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
 
@@ -305,7 +299,7 @@ async fn test_bad_user() {
         .unwrap();
 
     let bad_bearer = format!("Bearer {}", bad_token);
-    let (_, bad_client_uuid) = helper::create_client(
+    let (_, _bad_client_uuid) = helper::create_client(
         &bad_keypair.public.to_bytes(),
         &bad_keypair.secret.to_bytes(),
         &bad_bearer,
