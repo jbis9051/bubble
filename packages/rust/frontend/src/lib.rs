@@ -1,40 +1,50 @@
 mod export_macro;
+pub mod init;
+mod models;
+mod types;
 
-use once_cell::sync::OnceCell;
+use crate::init::TokioThread;
+use once_cell::sync::{Lazy, OnceCell};
 use serde_json::Value;
+use sqlx::SqlitePool;
 use std::ffi::{c_char, CStr};
-use std::sync;
-use std::thread;
-use tokio::runtime::{Handle, Runtime};
-use tokio::sync::oneshot::Sender;
+use tokio::sync::RwLock;
 
-#[derive(Debug)]
-pub struct TokioThread {
-    handle: Handle,
-    shutdown: Sender<()>,
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("sqlx error: {0}")]
+    Sqlx(#[from] sqlx::Error),
+    #[error("sqlx migrate error: {0}")]
+    SqlxMigrate(#[from] sqlx::migrate::MigrateError),
+    #[error("global oneshot initialized, you probably called init twice")]
+    GlobalAlreadyInitialized,
 }
 
-static TOKIO_THREAD: OnceCell<TokioThread> = OnceCell::new();
+#[derive(Debug)]
+pub struct GlobalStaticData {
+    pub data_directory: String,
+    pub tokio: TokioThread,
+}
+
+#[derive(Debug)]
+pub struct GlobalAccountData {
+    pub bearer: RwLock<String>,
+    pub database: SqlitePool,
+}
+
+pub static GLOBAL_STATIC_DATA: OnceCell<GlobalStaticData> = OnceCell::new();
+pub static GLOBAL_DATABASE: OnceCell<SqlitePool> = OnceCell::new();
+pub static GLOBAL_ACCOUNT_DATA: Lazy<RwLock<Option<GlobalAccountData>>> =
+    Lazy::new(|| RwLock::new(None));
 
 #[no_mangle]
-pub extern "C" fn init() {
-    let (handle_send, handle_recv) = sync::mpsc::channel();
-    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+pub unsafe extern "C" fn init(data_directory: *const c_char) {
+    let data_directory = unsafe { CStr::from_ptr(data_directory) }
+        .to_str()
+        .unwrap()
+        .to_string();
 
-    thread::spawn(move || {
-        let runtime = Runtime::new().unwrap();
-        handle_send.send(runtime.handle().clone()).unwrap();
-        runtime.block_on(async {
-            shutdown_rx.await.unwrap();
-        });
-    });
-    let handle = handle_recv.recv().unwrap();
-    TOKIO_THREAD
-        .set(TokioThread {
-            handle,
-            shutdown: shutdown_tx,
-        })
-        .unwrap();
+    init::init(data_directory).unwrap();
 }
 
 #[no_mangle]
@@ -47,7 +57,7 @@ pub unsafe extern "C" fn call(json: *const c_char) {
     let mut deserialized: Value = serde_json::from_str(json).unwrap();
     let method = deserialized["method"].as_str().unwrap().to_string();
     let params = deserialized["params"].take();
-    dynamic_call(&method, params, &TOKIO_THREAD).unwrap();
+    dynamic_call(&method, params).unwrap();
 }
 
 pub async fn foo(_abc: String) {

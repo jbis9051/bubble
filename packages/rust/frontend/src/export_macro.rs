@@ -7,12 +7,12 @@ macro_rules! export {
           )
         ),*,
     ) => {
-        pub fn dynamic_call(name_: &str, mut params_: Value, tokio_thread: &once_cell::sync::OnceCell<TokioThread>) -> Result<(),()> {
+        pub fn dynamic_call(name_: &str, mut params_: Value) -> Result<(),()> {
             match name_ {
                 $(
                     stringify!($name) => {
                         $(let $arg: $atype = serde_json::from_value(params_[stringify!($arg)].take()).unwrap();)*
-                        tokio_thread.get().unwrap().handle.spawn(async move {
+                        $crate::GLOBAL_STATIC_DATA.get().unwrap().tokio.handle.spawn(async move {
                             $name($($arg),*).await;
                         });
                         Ok(())

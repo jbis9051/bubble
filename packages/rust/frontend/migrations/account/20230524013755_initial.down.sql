@@ -1,4 +1,3 @@
--- Add migration script here
 DROP TABLE keystore;
 
 DROP TABLE kv;
