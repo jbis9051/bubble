@@ -14,6 +14,7 @@ export {
     ErrorBoundary,
 } from 'expo-router';
 
+// eslint-disable-next-line camelcase
 export const unstable_settings = {
     // Ensure that reloading on `/modal` keeps a back button present.
     initialRouteName: '(tabs)',
@@ -21,6 +22,7 @@ export const unstable_settings = {
 
 export default function RootLayout() {
     const [loaded, error] = useFonts({
+        // eslint-disable-next-line global-require
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });

@@ -9,6 +9,7 @@ export class UserService {
         username: string;
         password: string;
         name: string;
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
     }) {}
 
     static async emailConfirm({ token }: { token: string }) {}

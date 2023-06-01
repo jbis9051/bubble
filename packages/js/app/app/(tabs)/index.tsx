@@ -4,8 +4,10 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import EditScreenInfo from '../../components/EditScreenInfo';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface CurrentBubbleDisplayProps {}
 function CurrentBubbleDisplay(props: CurrentBubbleDisplayProps) {
+    // eslint-disable-next-line no-empty-pattern
     const {} = props;
     const [open, setOpen] = useState(false);
 
@@ -33,8 +35,10 @@ function CurrentBubbleDisplay(props: CurrentBubbleDisplayProps) {
     );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface BubbleSettingsProps {}
 function BubbleSettings(props: BubbleSettingsProps) {
+    // eslint-disable-next-line no-empty-pattern
     const {} = props;
 
     return (
