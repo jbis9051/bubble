@@ -47,7 +47,9 @@
         "@typescript-eslint/no-shadow": ["error"],
         "@typescript-eslint/no-explicit-any": "off",
         "no-use-before-define": "off", // https://stackoverflow.com/a/64024916/7886229
-        "@typescript-eslint/no-use-before-define": ["error"]
+        "@typescript-eslint/no-use-before-define": ["warn"],
+        "import/prefer-default-export": ["warn"],
+        "@typescript-eslint/no-empty-function": ["warn"]
     },
     "ignorePatterns": ["**/build/*"]
 }
