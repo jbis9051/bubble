@@ -1,13 +1,25 @@
-
-
-
 export class UserService {
-    static async signup({ email, username, password, name }:
-        { email: string, username: string, password: string, name: string }) {}
+    static async signup({
+        email,
+        username,
+        password,
+        name,
+    }: {
+        email: string;
+        username: string;
+        password: string;
+        name: string;
+    }) {}
 
     static async emailConfirm({ token }: { token: string }) {}
 
-    static async login({ username, password }: { username: string, password: string }) {}
+    static async login({
+        username,
+        password,
+    }: {
+        username: string;
+        password: string;
+    }) {}
 
     static async logout({ token }: { token: string }) {}
 

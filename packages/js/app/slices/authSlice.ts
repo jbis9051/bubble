@@ -1,17 +1,17 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit';
 
 export const authSlice = createSlice({
     name: 'auth',
     initialState: {
         status: 'idle',
-        user: null
+        user: null,
     },
     reducers: {
         setAuth: (state, action) => {
             state.status = 'fulfilled';
             state.user = action.payload;
         },
-    }
+    },
 });
 
 export interface AuthUser {
@@ -22,8 +22,8 @@ export interface AuthUser {
     onboarded: boolean;
 }
 
-export const { setAuth, } = authSlice.actions;
+export const { setAuth } = authSlice.actions;
 
-export const selectUser = (state:any): AuthUser => state.auth.user;
+export const selectUser = (state: any): AuthUser => state.auth.user;
 
 export default authSlice.reducer;

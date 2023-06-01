@@ -1,6 +1,6 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore } from '@reduxjs/toolkit';
 
-import authReducer from "./slices/authSlice";
+import authReducer from './slices/authSlice';
 
 export interface RootState {
     auth: ReturnType<typeof authReducer>;
@@ -9,5 +9,5 @@ export interface RootState {
 export default configureStore<RootState>({
     reducer: {
         auth: authReducer,
-    }
+    },
 });

@@ -1,14 +1,9 @@
-import { LatLng } from "react-native-maps";
-
+import { LatLng } from 'react-native-maps';
 
 export class MapService {
-    static async getAllBubbles() {
+    static async getAllBubbles() {}
 
-    }
-
-    static async getBubbleLocations(bubbleId: number) {
-
-    }
+    static async getBubbleLocations(bubbleId: number) {}
 }
 
 export interface IBasicUserInfo {

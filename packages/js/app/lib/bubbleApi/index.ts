@@ -1,4 +1,4 @@
-import { NativeModules } from "react-native/types";
+import { NativeModules } from 'react-native/types';
 
 const { BubbleApi } = NativeModules;
 
