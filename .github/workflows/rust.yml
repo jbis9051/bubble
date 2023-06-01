@@ -25,6 +25,11 @@ jobs:
           components: rustfmt, clippy
           override: true
           profile: minimal
+      - uses: actions-rs/install@v0.1
+        with:
+            crate: sleek
+            version: latest
+            use-tool-cache: true
       - run: make fmt_ci
   test:
     runs-on: ubuntu-latest
