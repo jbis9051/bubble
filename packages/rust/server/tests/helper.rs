@@ -7,7 +7,7 @@ use std::sync::Arc;
 use bubble::models::user::User;
 use bubble::router;
 
-use bubble::types::{Base64, DbPool, SIGNATURE_SCHEME};
+use bubble::types::{DbPool, SIGNATURE_SCHEME};
 use sqlx::postgres::PgPoolOptions;
 
 use axum::http::StatusCode;
@@ -16,13 +16,14 @@ use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
 use openmls::prelude::SignatureKeypair;
 use openmls_rust_crypto::OpenMlsRustCrypto;
 
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
-
 use bubble::models::session::Session;
-use bubble::routes::client::CreateClient;
 use bubble::services::email::EmailService;
 use bubble::services::email::PrinterEmailService;
 
+use common::base64::Base64;
+use common::http_types::{
+    ChangeEmail, ConfirmEmail, CreateClient, CreateUser, Login, SessionTokenResponse,
+};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
 use uuid::Uuid;
@@ -86,7 +87,7 @@ pub async fn register(
 pub async fn confirm_user(
     db: &DbPool,
     client: &TestClient,
-    confirm: &Confirm,
+    confirm: &ConfirmEmail,
     user_in: &User,
 ) -> Result<(User, Uuid), StatusCode> {
     let res = client
@@ -99,7 +100,7 @@ pub async fn confirm_user(
     assert_eq!(res.status(), StatusCode::OK);
 
     let user = User::from_id(db, user_in.id).await.unwrap();
-    let token: SessionToken = res.json().await;
+    let token: SessionTokenResponse = res.json().await;
     Ok((user, Uuid::parse_str(&token.token).unwrap()))
 }
 
@@ -112,7 +113,7 @@ pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<U
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let token: SessionToken = res.json().await;
+    let token: SessionTokenResponse = res.json().await;
     Ok(Uuid::parse_str(&token.token).unwrap())
 }
 
@@ -121,7 +122,7 @@ pub async fn logout(
     client: &TestClient,
     session: &Session,
 ) -> Result<(), StatusCode> {
-    let token = SessionToken {
+    let token = SessionTokenResponse {
         token: session.token.to_string(),
     };
     let bearer = format!("Bearer {}", token.token);
@@ -174,7 +175,7 @@ pub async fn initialize_user(
     let (user, token) = confirm_user(
         db,
         client,
-        &Confirm {
+        &ConfirmEmail {
             token: link_id.to_string(),
         },
         &user,

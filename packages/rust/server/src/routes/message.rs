@@ -2,12 +2,13 @@ use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::client::Client;
 use crate::models::message::Message;
 
-use crate::types::{Base64, DbPool};
+use crate::types::DbPool;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
-use serde::{Deserialize, Serialize};
+use common::base64::Base64;
+use common::http_types::{CheckMessages, MessagesResponse, SendMessage};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use std::iter::Iterator;
@@ -16,15 +17,9 @@ pub fn router() -> Router {
     Router::new().route("/", get(receive_message).post(send_message))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct MessageRequest {
-    pub client_uuids: Vec<String>,
-    pub message: Base64,
-}
-
 async fn send_message(
     db: Extension<DbPool>,
-    Json(payload): Json<MessageRequest>,
+    Json(payload): Json<SendMessage>,
     _: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     let uuids = payload
@@ -58,21 +53,11 @@ async fn send_message(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CheckMessages {
-    pub client_uuid: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct MessagesReturned {
-    pub messages: Vec<Base64>,
-}
-
 async fn receive_message(
     db: Extension<DbPool>,
     Json(payload): Json<CheckMessages>,
     user: AuthenticatedUser,
-) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
+) -> Result<(StatusCode, Json<MessagesResponse>), StatusCode> {
     // Get client
     let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid)
@@ -88,7 +73,7 @@ async fn receive_message(
     if messages.is_empty() {
         return Ok((
             StatusCode::OK,
-            Json(MessagesReturned {
+            Json(MessagesResponse {
                 messages: Vec::new(),
             }),
         ));
@@ -105,7 +90,7 @@ async fn receive_message(
 
     Ok((
         StatusCode::OK,
-        Json(MessagesReturned {
+        Json(MessagesResponse {
             messages: messages_to_return,
         }),
     ))

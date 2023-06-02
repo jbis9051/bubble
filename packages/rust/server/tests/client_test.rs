@@ -4,7 +4,6 @@ use std::str::FromStr;
 
 use axum::http::StatusCode;
 
-use bubble::routes::user::{Clients, CreateUser, PublicClient};
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
 use openmls::prelude::*;
 use openmls_rust_crypto::OpenMlsRustCrypto;
@@ -12,10 +11,12 @@ use sqlx::Row;
 
 use uuid::Uuid;
 
-use bubble::routes::client::{CreateClient, KeyPackagePublic, ReplaceKeyPackages};
-
 use crate::crypto_helper::{PRIVATE, PUBLIC};
-use bubble::types::{Base64, CIPHERSUITES, SIGNATURE_SCHEME};
+use bubble::types::{CIPHERSUITES, SIGNATURE_SCHEME};
+use common::base64::Base64;
+use common::http_types::{
+    ClientsResponse, CreateClient, CreateUser, KeyPackagePublic, PublicClient, ReplaceKeyPackages,
+};
 
 mod crypto_helper;
 mod helper;
@@ -47,7 +48,7 @@ async fn test_client_crud() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let payload: Clients = res.json().await;
+    let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 0);
 
@@ -89,7 +90,7 @@ async fn test_client_crud() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let payload: Clients = res.json().await;
+    let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 1);
     assert_eq!(payload.clients[0].user_uuid, user.uuid.to_string());
@@ -179,7 +180,7 @@ async fn test_client_crud() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let payload: Clients = res.json().await;
+    let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 0);
 

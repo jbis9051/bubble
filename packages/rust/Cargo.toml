@@ -2,6 +2,7 @@
 members = [
     "server",
     "frontend",
+    "common",
     "bridge_macro",
     "bridge_gen"
 ]

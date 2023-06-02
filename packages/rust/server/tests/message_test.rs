@@ -1,16 +1,9 @@
-use crate::helper::{start_server, TempDatabase};
-
-use axum::http::StatusCode;
-
-use bubble::routes::message::{CheckMessages, MessageRequest, MessagesReturned};
-
-use uuid::Uuid;
-
-use bubble::routes::user::CreateUser;
-
 use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
-
-use bubble::types::Base64;
+use crate::helper::{start_server, TempDatabase};
+use axum::http::StatusCode;
+use common::base64::Base64;
+use common::http_types::{CheckMessages, CreateUser, MessagesResponse, SendMessage};
+use uuid::Uuid;
 
 mod crypto_helper;
 mod helper;
@@ -46,11 +39,11 @@ async fn test_single_message() {
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(res.json::<MessagesReturned>().await.messages.len(), 0);
+    assert_eq!(res.json::<MessagesResponse>().await.messages.len(), 0);
     let testmessage1 = "test message";
-    let message = MessageRequest {
+    let message = SendMessage {
         client_uuids: vec![client_uuid.to_string()],
-        message: Base64(testmessage1.clone().as_bytes().to_vec()),
+        message: Base64(testmessage1.as_bytes().to_vec()),
     };
     let res = client
         .post("/message")
@@ -71,7 +64,7 @@ async fn test_single_message() {
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
-    let messages = res.json::<MessagesReturned>().await.messages;
+    let messages = res.json::<MessagesResponse>().await.messages;
     assert_eq!(messages.len(), 1);
     assert_eq!(testmessage1.as_bytes().to_vec(), messages[0].0);
 }
@@ -94,7 +87,7 @@ async fn test_multiple_messages() {
     let bearer = format!("Bearer {}", token);
     let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
 
-    let message_1 = MessageRequest {
+    let message_1 = SendMessage {
         client_uuids: vec![client_uuid.to_string()],
         message: Base64("test message 1".as_bytes().to_vec()),
     };
@@ -108,7 +101,7 @@ async fn test_multiple_messages() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let message_2 = MessageRequest {
+    let message_2 = SendMessage {
         client_uuids: vec![client_uuid.to_string()],
         message: Base64("test message 2".as_bytes().to_vec()),
     };
@@ -122,7 +115,7 @@ async fn test_multiple_messages() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let message_3 = MessageRequest {
+    let message_3 = SendMessage {
         client_uuids: vec![client_uuid.to_string()],
         message: Base64("test message 3".as_bytes().to_vec()),
     };
@@ -148,7 +141,7 @@ async fn test_multiple_messages() {
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
-    let messages = res.json::<MessagesReturned>().await.messages;
+    let messages = res.json::<MessagesResponse>().await.messages;
     assert_eq!(messages.len(), 3);
     assert_eq!("test message 1".as_bytes().to_vec(), messages[0].0);
     assert_eq!("test message 2".as_bytes().to_vec(), messages[1].0);
@@ -202,7 +195,7 @@ async fn test_invalid_uuid() {
 
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
-    let message = MessageRequest {
+    let message = SendMessage {
         client_uuids: vec![bad_uuid.clone()],
         message: Base64("test message".as_bytes().to_vec()),
     };
@@ -216,7 +209,7 @@ async fn test_invalid_uuid() {
 
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
-    let message = MessageRequest {
+    let message = SendMessage {
         client_uuids: vec![client_uuid.to_string(), bad_uuid],
         message: Base64("test message".as_bytes().to_vec()),
     };
@@ -230,7 +223,7 @@ async fn test_invalid_uuid() {
 
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
-    let message = MessageRequest {
+    let message = SendMessage {
         client_uuids: vec!["bad uuid".to_string()],
         message: Base64("test message".as_bytes().to_vec()),
     };
@@ -244,7 +237,7 @@ async fn test_invalid_uuid() {
 
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
-    let message = MessageRequest {
+    let message = SendMessage {
         client_uuids: vec![],
         message: Base64("test message".as_bytes().to_vec()),
     };

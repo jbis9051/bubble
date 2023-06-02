@@ -1,20 +1,18 @@
+use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
 use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
 use bubble::models::confirmation::Confirmation;
 use bubble::models::forgot::Forgot;
+use bubble::models::session::Session;
 use bubble::models::user::User;
-use bubble::routes::user::{
-    ChangeEmail, Confirm, CreateUser, Delete, Email, Login, PasswordReset, PublicUser,
-    UpdateIdentity,
+use bubble::services::password;
+use common::base64::Base64;
+use common::http_types::{
+    ChangeEmail, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login, PasswordReset,
+    PublicUser, UpdateIdentity,
 };
 use ed25519_dalek::PublicKey;
-
 use uuid::Uuid;
-
-use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
-use bubble::models::session::Session;
-use bubble::services::password;
-use bubble::types::Base64;
 
 mod crypto_helper;
 mod helper;
@@ -65,7 +63,7 @@ async fn test_register() {
         .patch("/user/confirm")
         .header("Content-Type", "application/json")
         .body(
-            serde_json::to_string(&Confirm {
+            serde_json::to_string(&ConfirmEmail {
                 token: confirmation.token.to_string(),
             })
             .unwrap(),
@@ -155,7 +153,7 @@ async fn test_forgot_password() {
     // ensure a session exists for the user
     assert!(Session::from_token(db.pool(), &token).await.is_ok());
 
-    let email_in = Email {
+    let email_in = ForgotEmail {
         email: user.email.unwrap(),
     };
 
@@ -253,7 +251,7 @@ async fn test_change_email() {
     assert_eq!(confirmation.token, link_id);
     assert_eq!(confirmation.email, change.new_email);
 
-    let confirm = Confirm {
+    let confirm = ConfirmEmail {
         token: link_id.to_string(),
     };
 
@@ -294,7 +292,7 @@ async fn test_delete_user() {
 
     assert!(User::from_email(db.pool(), &email).await.is_ok());
 
-    let delete_in = Delete {
+    let delete_in = DeleteUser {
         password: created_user.password.clone(),
     };
 
@@ -506,7 +504,7 @@ async fn test_forgot_bad_email() {
     let db = TempDatabase::new().await;
     let client = start_server(db.pool().clone()).await;
 
-    let forgot = Email {
+    let forgot = ForgotEmail {
         email: "forgot@gmail.com".to_string(),
     };
 
@@ -536,7 +534,7 @@ async fn test_delete_bad_password() {
         .await
         .unwrap();
 
-    let delete_user = Delete {
+    let delete_user = DeleteUser {
         password: "badpassword".to_string(),
     };
 

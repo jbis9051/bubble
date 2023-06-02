@@ -12,10 +12,12 @@ use crate::models::client::Client;
 use crate::models::key_package::KeyPackage as KeyPackageModel;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::routes::user::PublicClient;
-use crate::types::{Base64, DbPool};
+use crate::types::DbPool;
+use common::base64::Base64;
+use common::http_types::{
+    CreateClient, KeyPackagePublic, PublicClient, ReplaceKeyPackages, UpdateClient,
+};
 use openmls::key_packages::KeyPackage;
-use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
     Router::new()
@@ -26,12 +28,6 @@ pub fn router() -> Router {
         )
         .route("/:uuid/key_packages", post(replace_key_packages))
         .route("/:uuid/key_package", get(get_key_package))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CreateClient {
-    pub signing_key: Base64,
-    pub signature: Base64,
 }
 
 pub async fn create(
@@ -61,12 +57,6 @@ pub async fn create(
     client.create(&db).await.map_err(map_sqlx_err)?;
 
     Ok((StatusCode::CREATED, client.uuid.to_string()))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UpdateClient {
-    pub signing_key: Base64,
-    pub signature: Base64,
 }
 
 pub async fn update(
@@ -133,11 +123,6 @@ pub async fn delete_client(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ReplaceKeyPackages {
-    pub key_packages: Vec<Base64>,
-}
-
 pub async fn replace_key_packages(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -176,11 +161,6 @@ pub async fn replace_key_packages(
     }
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct KeyPackagePublic {
-    pub key_package: Base64,
 }
 
 pub async fn get_key_package(

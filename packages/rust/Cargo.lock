@@ -265,6 +265,7 @@ dependencies = [
  "axum",
  "axum-test-helper",
  "base64 0.21.0",
+ "common",
  "ed25519-dalek",
  "once_cell",
  "openmls",
@@ -359,6 +360,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ee52072ec15386f770805afd189a01c8841be8696bed250fa2f13c4c0d6dfb7"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.0",
+ "serde",
 ]
 
 [[package]]

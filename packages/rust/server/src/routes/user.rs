@@ -17,13 +17,17 @@ use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::services::email::{EmailService, Recipient};
+use crate::services::email::Recipient;
 
 use crate::services::password;
 use crate::services::session::create_session;
-use crate::types::Base64;
 use crate::types::{DbPool, EmailServiceArc};
-use serde::{Deserialize, Serialize};
+use common::base64::Base64;
+use common::http_types::{
+    ChangeEmail, ClientsResponse, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login,
+    PasswordReset, PasswordResetCheck, PublicClient, PublicUser, SessionTokenResponse,
+    UpdateIdentity,
+};
 
 pub fn router() -> Router {
     Router::new()
@@ -37,15 +41,6 @@ pub fn router() -> Router {
         .route("/identity", put(update_identity))
         .route("/:uuid", get(get_user))
         .route("/:uuid/clients", get(get_clients))
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct CreateUser {
-    pub email: String,
-    pub username: String,
-    pub password: String,
-    pub name: String,
-    pub identity: Base64,
 }
 
 async fn register(
@@ -132,20 +127,10 @@ async fn register(
     Ok((StatusCode::CREATED, user.uuid.to_string()))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Confirm {
-    pub token: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct SessionToken {
-    pub token: String,
-}
-
 async fn confirm(
     db: Extension<DbPool>,
-    Json(payload): Json<Confirm>,
-) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
+    Json(payload): Json<ConfirmEmail>,
+) -> Result<(StatusCode, Json<SessionTokenResponse>), StatusCode> {
     let confirmation = Confirmation::from_token(
         &db,
         &Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?,
@@ -171,22 +156,16 @@ async fn confirm(
 
     Ok((
         StatusCode::OK,
-        Json(SessionToken {
+        Json(SessionTokenResponse {
             token: token.to_string(),
         }),
     ))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Login {
-    pub email: String,
-    pub password: String,
-}
-
 async fn login(
     db: Extension<DbPool>,
     Json(payload): Json<Login>,
-) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
+) -> Result<(StatusCode, Json<SessionTokenResponse>), StatusCode> {
     let user = User::from_email(&db, &payload.email)
         .await
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
@@ -201,7 +180,7 @@ async fn login(
 
     Ok((
         StatusCode::CREATED,
-        Json(SessionToken {
+        Json(SessionTokenResponse {
             token: token.to_string(),
         }),
     ))
@@ -209,7 +188,7 @@ async fn login(
 
 async fn logout(
     db: Extension<DbPool>,
-    Json(payload): Json<SessionToken>,
+    Json(payload): Json<SessionTokenResponse>,
     _user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     // so while with authenticate the user, this permits any user to delete any session token
@@ -225,15 +204,10 @@ async fn logout(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Email {
-    pub email: String,
-}
-
 async fn forgot(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
-    Json(payload): Json<Email>,
+    Json(payload): Json<ForgotEmail>,
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db, &payload.email)
         .await
@@ -265,12 +239,6 @@ async fn forgot(
     Ok(StatusCode::CREATED)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PasswordReset {
-    pub password: String,
-    pub token: String,
-}
-
 async fn reset(
     db: Extension<DbPool>,
     Json(payload): Json<PasswordReset>,
@@ -300,11 +268,6 @@ async fn reset(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PasswordResetCheck {
-    pub token: String,
-}
-
 async fn reset_check(
     db: Extension<DbPool>,
     Query(payload): Query<PasswordResetCheck>,
@@ -315,12 +278,6 @@ async fn reset_check(
     }
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ChangeEmail {
-    pub new_email: String,
-    pub password: String,
 }
 
 async fn change_email(
@@ -363,14 +320,9 @@ async fn change_email(
     Ok(StatusCode::CREATED)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Delete {
-    pub password: String,
-}
-
 async fn delete_user(
     db: Extension<DbPool>,
-    Json(payload): Json<Delete>,
+    Json(payload): Json<DeleteUser>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     if !password::verify(&user.password, &payload.password)
@@ -382,11 +334,6 @@ async fn delete_user(
     user.delete(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UpdateIdentity {
-    pub identity: Base64,
 }
 
 async fn update_identity(
@@ -401,14 +348,6 @@ async fn update_identity(
     user.update(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct PublicUser {
-    pub uuid: String,
-    pub username: String,
-    pub name: String,
-    pub identity: Base64,
 }
 
 async fn get_user(
@@ -427,24 +366,11 @@ async fn get_user(
     }))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PublicClient {
-    pub user_uuid: String,
-    pub uuid: String,
-    pub signing_key: Base64,
-    pub signature: Base64,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Clients {
-    pub clients: Vec<PublicClient>,
-}
-
 async fn get_clients(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
     _: AuthenticatedUser,
-) -> Result<Json<Clients>, StatusCode> {
+) -> Result<Json<ClientsResponse>, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
 
@@ -452,7 +378,7 @@ async fn get_clients(
         .await
         .map_err(map_sqlx_err)
         .map(|clients| {
-            Json(Clients {
+            Json(ClientsResponse {
                 clients: clients
                     .into_iter()
                     .map(|c| PublicClient {
