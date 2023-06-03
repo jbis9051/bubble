@@ -6,6 +6,7 @@ use std::{sync, thread};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::oneshot::Sender;
 use tokio::sync::RwLock;
+use crate::promise::{DevicePromise, Promise, promisify};
 
 #[derive(Debug)]
 pub struct TokioThread {
@@ -35,10 +36,15 @@ impl TokioThread {
     }
 }
 
-pub fn init(data_directory: String) -> Result<(), Error> {
+pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
     let tokio_thread = TokioThread::spawn();
+    /*
 
-    tokio_thread.handle.block_on(init_async(&data_directory))?;
+    tokio_thread.handle.block_on(promisify::<(), Error>(promise, async move {
+        //init_async(&data_directory).await?;
+        Ok(())
+    }));*/
+
 
     let global_data = GlobalStaticData {
         data_directory,
@@ -49,6 +55,7 @@ pub fn init(data_directory: String) -> Result<(), Error> {
         .set(global_data)
         .map(|_| ())
         .map_err(|_| Error::GlobalAlreadyInitialized)?;
+    promise.resolve("We in init bitches!");
 
     Ok(())
 }

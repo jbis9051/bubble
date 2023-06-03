@@ -2,13 +2,28 @@ mod export_macro;
 pub mod init;
 mod models;
 mod types;
+mod promise;
 
 use crate::init::TokioThread;
 use once_cell::sync::{Lazy, OnceCell};
-use serde_json::Value;
+use serde_json::{json, Value};
 use sqlx::SqlitePool;
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, c_void, CStr};
+use std::fmt::format;
+use std::thread;
+use std::thread::sleep;
+use serde::{Serialize, Serializer};
 use tokio::sync::RwLock;
+use crate::promise::{DevicePromise, Promise};
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_foo(callbacker: *const c_void) {
+    let tokio = TokioThread::spawn();
+    let promise = DevicePromise::new(callbacker);
+    thread::spawn(move || {
+        promise.resolve("Hello from a rust Promise!");
+    });
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -18,6 +33,15 @@ pub enum Error {
     SqlxMigrate(#[from] sqlx::migrate::MigrateError),
     #[error("global oneshot initialized, you probably called init twice")]
     GlobalAlreadyInitialized,
+}
+
+impl Serialize for Error {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let value = json!({
+            "message": self.to_string()
+        });
+        value.serialize(serializer)
+    }
 }
 
 #[derive(Debug)]
@@ -38,17 +62,18 @@ pub static GLOBAL_ACCOUNT_DATA: Lazy<RwLock<Option<GlobalAccountData>>> =
     Lazy::new(|| RwLock::new(None));
 
 #[no_mangle]
-pub unsafe extern "C" fn init(data_directory: *const c_char) {
+pub unsafe extern "C" fn init(callbacker: *const c_void, data_directory: *const c_char) {
     let data_directory = unsafe { CStr::from_ptr(data_directory) }
         .to_str()
         .unwrap()
         .to_string();
 
-    init::init(data_directory).unwrap();
+    let promise = DevicePromise::new(callbacker);
+    init::init(promise, data_directory).unwrap();
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn call(json: *const c_char) {
+pub unsafe extern "C" fn call(callbacker: *const c_void, json: *const c_char) {
     if json.is_null() {
         panic!("rust call function was passed a null pointer");
     }
@@ -56,11 +81,12 @@ pub unsafe extern "C" fn call(json: *const c_char) {
     let json = json.to_str().unwrap();
     let mut deserialized: Value = serde_json::from_str(json).unwrap();
     let method = deserialized["method"].as_str().unwrap().to_string();
-    let params = deserialized["params"].take();
-    dynamic_call(&method, params).unwrap();
+    let args = deserialized["args"].take();
+    let promise = DevicePromise::new(callbacker);
+    dynamic_call(&method, args, promise).unwrap();
 }
 
-pub async fn foo(_abc: String) {
+pub async fn foo(_abc: String) -> Result<(), ()> {
     let abc = reqwest::get("bubble.whatever/user/register")
         .await
         .unwrap()
@@ -69,6 +95,16 @@ pub async fn foo(_abc: String) {
         .unwrap();
 
     println!("Hello from foo: {}!", abc);
+
+    Ok(())
 }
 
-export!(foo(abc: String),);
+
+pub async fn multiply(a: i32, b: i32) -> Result<i32, ()> {
+    Ok(a * b)
+}
+
+export!(
+    foo(abc: String) -> Result<(), ()>;
+    multiply(a: i32, b: i32) -> Result<i32, ()>;
+);

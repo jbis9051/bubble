@@ -4,3 +4,4 @@
 **/target/
 **/.DS_Store
 **/index.node
+packages/js/bubble_rust/rust/*

@@ -1,5 +1,6 @@
 #import "RCTBubble.h"
 #import <React/RCTLog.h>
+#import "../rust.h"
 
 @interface Callbacker : NSObject {
   RCTPromiseResolveBlock _resolve;
@@ -29,9 +30,14 @@ void C_callback(void *self, const char *result);
   _resolve(result);
 }
 
-void C_callback(void *self, const char *result) {
-  Callbacker *callbacker = (__bridge Callbacker *)self;
-  [callbacker callback:[NSString stringWithUTF8String:result]];
+void promise_callbacker_resolve(const void *self, const char *result) {
+  Callbacker *callbacker = (Callbacker *)CFBridgingRelease(self);
+  callbacker->_resolve([NSString stringWithUTF8String:result]);
+}
+
+void promise_callbacker_reject(const void *self, const char *result) {
+  Callbacker *callbacker = (Callbacker *)CFBridgingRelease(self);
+  callbacker->_resolve([NSString stringWithUTF8String:result]);
 }
 
 @end
@@ -41,15 +47,34 @@ void C_callback(void *self, const char *result) {
 // To export a module named RCTCalendarModule
 RCT_EXPORT_MODULE();
 
-RCT_REMAP_METHOD(multiply, multiplyWithA
-                 : (double)a withB
-                 : (double)b withResolver
+RCT_REMAP_METHOD(rust_foo, multiplyWithA
                  : (RCTPromiseResolveBlock)resolve withRejecter
                  : (RCTPromiseRejectBlock)reject) {
 
   Callbacker *callbacker = [[Callbacker alloc] initWithResolve:resolve
                                                         reject:reject];
-  fooer::foo((__bridge void *)(callbacker));
+  rust_foo((void *)CFBridgingRetain(callbacker));
+}
+
+RCT_REMAP_METHOD(init, initWithDataDir
+                 : (NSString *)dataDir withResolver
+                 : (RCTPromiseResolveBlock)resolve withRejecter
+                 : (RCTPromiseRejectBlock)reject) {
+
+  Callbacker *callbacker = [[Callbacker alloc] initWithResolve:resolve
+                                                        reject:reject];
+  init((void *)CFBridgingRetain(callbacker), [dataDir UTF8String]);
+
+}
+
+RCT_REMAP_METHOD(call, callWithJson
+                 : (NSString *)json withResolver
+                 : (RCTPromiseResolveBlock)resolve withRejecter
+                 : (RCTPromiseRejectBlock)reject) {
+
+  Callbacker *callbacker = [[Callbacker alloc] initWithResolve:resolve
+                                                        reject:reject];
+  call((void *)CFBridgingRetain(callbacker), [json UTF8String]);
 }
 
 @end

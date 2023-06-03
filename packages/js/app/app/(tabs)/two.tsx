@@ -1,4 +1,4 @@
-import { multiply } from '@bubble/react-native-bubble-rust';
+import {init, multiply, rust_foo} from '@bubble/react-native-bubble-rust';
 import { StyleSheet } from 'react-native';
 
 import {useEffect, useState} from "react";
@@ -9,7 +9,16 @@ export default function TabTwoScreen() {
     const [math, setMath] = useState("");
 
     useEffect(() => {
-        multiply(1, 4).then((result) => {
+        /*init(".").then(() => {
+            console.log("Initialized");
+            return multiply(5, 4)
+        }).then((result) => {
+            setMath(result);
+        });*/
+        init(".").then((result) => {
+            setMath(result as unknown as string);
+          return multiply(5, 4);
+        }).then(result => {
             setMath(result);
         });
     }, []);
