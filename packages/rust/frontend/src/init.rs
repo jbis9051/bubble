@@ -3,6 +3,7 @@ use crate::{Error, GlobalAccountData, GlobalStaticData, GLOBAL_STATIC_DATA};
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::{sync, thread};
+use serde_json::json;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::oneshot::Sender;
 use tokio::sync::RwLock;
@@ -55,7 +56,9 @@ pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error>
         .set(global_data)
         .map(|_| ())
         .map_err(|_| Error::GlobalAlreadyInitialized)?;
-    promise.resolve("We in init bitches!");
+
+
+    promise.resolve(json!({"status": true, "value": null}).to_string().as_str());
 
     Ok(())
 }

@@ -15,6 +15,7 @@ use std::thread::sleep;
 use serde::{Serialize, Serializer};
 use tokio::sync::RwLock;
 use crate::promise::{DevicePromise, Promise};
+use bridge_macro::bridge;
 
 #[no_mangle]
 pub unsafe extern "C" fn rust_foo(callbacker: *const c_void) {
@@ -108,3 +109,18 @@ export!(
     foo(abc: String) -> Result<(), ()>;
     multiply(a: i32, b: i32) -> Result<i32, ()>;
 );
+
+#[bridge]
+struct Foo {
+    a: i32,
+    b: i32,
+}
+
+#[bridge]
+pub fn bar(a: i32) {
+    if a > 10 {
+        println!("a is greater than 10");
+    } else {
+        println!("a is less than 10");
+    }
+}

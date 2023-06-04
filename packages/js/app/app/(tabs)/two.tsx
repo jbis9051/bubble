@@ -6,20 +6,15 @@ import EditScreenInfo from '../../components/EditScreenInfo';
 import { Text, View } from '../../components/Themed';
 
 export default function TabTwoScreen() {
-    const [math, setMath] = useState("");
+    const [math, setMath] = useState(0);
 
     useEffect(() => {
-        /*init(".").then(() => {
-            console.log("Initialized");
-            return multiply(5, 4)
-        }).then((result) => {
-            setMath(result);
-        });*/
-        init(".").then((result) => {
-            setMath(result as unknown as string);
+        init(".").then(() => {
           return multiply(5, 4);
         }).then(result => {
-            setMath(result);
+            if(result.status === "success"){
+                setMath(result.value);
+            }
         });
     }, []);
 

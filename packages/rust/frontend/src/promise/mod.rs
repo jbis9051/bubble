@@ -21,14 +21,14 @@ pub fn promisify<T: Serialize, E: Serialize>(promise: DevicePromise, f: impl Fut
         match result {
             Ok(value) => {
                 let value = json!({
-                "status": "success",
+                "success": true,
                 "value": value
             });
                 promise.resolve(&value.to_string());
             }
             Err(error) => {
                 let value = json!({
-                "status": "error",
+                "success": false,
                 "value": error
             });
                 promise.reject(&value.to_string());

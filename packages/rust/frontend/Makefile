@@ -5,3 +5,5 @@ ios:
 ios-sim:
 	cargo build --target=aarch64-apple-ios-sim --release # arm iOS simulator
 	cp ../target/aarch64-apple-ios-sim/release/libfrontend.a ../../js/bubble_rust/rust
+typescript:
+	cargo run --package bridge_gen --bin bridge_gen -- ./src ../../js/bubble_rust/src/gen.ts
