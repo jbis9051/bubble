@@ -7,7 +7,8 @@ use serde_json::json;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::oneshot::Sender;
 use tokio::sync::RwLock;
-use crate::promise::{DevicePromise, Promise, promisify};
+use crate::platform::DevicePromise;
+use crate::promise::Promise;
 
 #[derive(Debug)]
 pub struct TokioThread {

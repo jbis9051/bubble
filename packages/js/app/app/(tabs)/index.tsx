@@ -89,11 +89,11 @@ function CustomMarker(props: CustomMarkerProps) {
 export default function MapScreen() {
     return (
         <View>
-            <MapView style={styles.map}>
+{/*            <MapView style={styles.map}>
                 <CustomMarker
                     coordinate={{ latitude: 37.427475, longitude: -122.169716 }}
                 />
-            </MapView>
+            </MapView>*/}
             <SafeAreaView
                 style={{
                     position: 'absolute',

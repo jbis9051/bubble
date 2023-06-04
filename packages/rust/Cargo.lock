@@ -745,6 +745,7 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "bridge_macro",
+ "cfg-if",
  "once_cell",
  "reqwest",
  "serde",

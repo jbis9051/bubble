@@ -7,7 +7,7 @@ macro_rules! export {
           ) -> Result<$rtype: ty, $err: ty>
         );*;
     ) => {
-        pub fn dynamic_call(name_: &str, mut args_: Value, promise: $crate::promise::DevicePromise) -> Result<(),()> {
+        pub fn dynamic_call(name_: &str, mut args_: Value, promise: $crate::platform::DevicePromise) -> Result<(),()> {
             match name_ {
                 $(
                     stringify!($name) => convert_func!(args_, promise,

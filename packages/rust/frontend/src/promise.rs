@@ -1,16 +1,12 @@
-pub mod ios;
-
 use std::ffi::c_void;
 use std::future::Future;
 use serde::Serialize;
 use serde_json::json;
-
-pub use ios::IOSPromise as DevicePromise;
+use crate::platform::DevicePromise;
 
 pub type Callbacker = *const c_void;
 
 pub trait Promise {
-    fn new(callbacker: Callbacker) -> Self;
     fn resolve(&self, value: &str);
     fn reject(&self, value: &str);
 }
