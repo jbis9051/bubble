@@ -104,8 +104,9 @@ pub async fn foo(_abc: String) -> Result<(), ()> {
 pub async fn multiply(a: i32, b: i32) -> Result<i32, ()> {
     Ok(a * b)
 }
-#[derive(Serialize)]
+
 #[bridge]
+#[derive(Serialize)]
 pub struct HelloResponse {
     message: String,
 }
@@ -118,7 +119,6 @@ pub async fn hello(name: String) -> Result<HelloResponse, ()> {
 }
 
 export!(
-    foo(abc: String) -> Result<(), ()>;
     multiply(a: i32, b: i32) -> Result<i32, ()>;
     hello(name: String) -> Result<HelloResponse, ()>;
 );

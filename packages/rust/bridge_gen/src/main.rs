@@ -5,7 +5,7 @@ use syn::{Attribute, ItemFn, ItemStruct, visit};
 use syn::__private::ToTokens;
 use syn::visit::Visit;
 
-// this some awful goddamn code, we should probably fix it at some point
+// this some awful goddamn code, we should probably clean it up at some point
 
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
@@ -157,13 +157,6 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
     }
     out_func.push_str(&ts_inputs.join(", "));
     out_func.push_str("): Promise<");
-
-    // export function multiply(a: number, b: number): Promise<Result<number, void>> {
-    //     return RustInterop.call(JSON.stringify({
-    //         method: 'multiply',
-    //         args: { a, b },
-    //     })).then((res: string) => JSON.parse(res));
-    // }
 
     if let syn::ReturnType::Type(_, ty) = &int_func.sig.output {
         out_func.push_str(&convert_type_to_ts(&ty.to_token_stream().to_string()));

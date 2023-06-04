@@ -15,24 +15,22 @@ pub trait Promise {
     fn reject(&self, value: &str);
 }
 
-pub fn promisify<T: Serialize, E: Serialize>(promise: DevicePromise, f: impl Future<Output = Result<T, E>>) -> impl Future<Output = ()>  {
-    async move {
-        let result = f.await;
-        match result {
-            Ok(value) => {
-                let value = json!({
+pub async fn promisify<T: Serialize, E: Serialize>(promise: DevicePromise, f: impl Future<Output=Result<T, E>>) {
+    let result = f.await;
+    match result {
+        Ok(value) => {
+            let value = json!({
                 "success": true,
                 "value": value
             });
-                promise.resolve(&value.to_string());
-            }
-            Err(error) => {
-                let value = json!({
+            promise.resolve(&value.to_string());
+        }
+        Err(error) => {
+            let value = json!({
                 "success": false,
                 "value": error
             });
-                promise.reject(&value.to_string());
-            }
-        };
-    }
+            promise.reject(&value.to_string());
+        }
+    };
 }

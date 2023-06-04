@@ -1,6 +1,7 @@
 #import "RCTBubble.h"
-#import <React/RCTLog.h>
 #import "../rust.h"
+#import <React/RCTLog.h>
+#import <stdlib.h>
 
 @interface Callbacker : NSObject {
   RCTPromiseResolveBlock _resolve;
@@ -10,8 +11,6 @@
 - (instancetype)initWithResolve:(RCTPromiseResolveBlock)resolve
                          reject:(RCTPromiseRejectBlock)reject;
 - (void)callback:(NSString *)result;
-
-void C_callback(void *self, const char *result);
 @end
 
 @implementation Callbacker
@@ -32,12 +31,16 @@ void C_callback(void *self, const char *result);
 
 void promise_callbacker_resolve(const void *self, const char *result) {
   Callbacker *callbacker = (Callbacker *)CFBridgingRelease(self);
-  callbacker->_resolve([NSString stringWithUTF8String:result]);
+  NSString *data = [NSString stringWithUTF8String:result];
+  free((void *)result);
+  callbacker->_resolve(data);
 }
 
 void promise_callbacker_reject(const void *self, const char *result) {
   Callbacker *callbacker = (Callbacker *)CFBridgingRelease(self);
-  callbacker->_resolve([NSString stringWithUTF8String:result]);
+  NSString *error = [NSString stringWithUTF8String:result];
+  free((void *)result);
+  callbacker->_resolve(error);
 }
 
 @end
@@ -47,15 +50,6 @@ void promise_callbacker_reject(const void *self, const char *result) {
 // To export a module named RCTCalendarModule
 RCT_EXPORT_MODULE();
 
-RCT_REMAP_METHOD(rust_foo, multiplyWithA
-                 : (RCTPromiseResolveBlock)resolve withRejecter
-                 : (RCTPromiseRejectBlock)reject) {
-
-  Callbacker *callbacker = [[Callbacker alloc] initWithResolve:resolve
-                                                        reject:reject];
-  rust_foo((void *)CFBridgingRetain(callbacker));
-}
-
 RCT_REMAP_METHOD(init, initWithDataDir
                  : (NSString *)dataDir withResolver
                  : (RCTPromiseResolveBlock)resolve withRejecter
@@ -64,7 +58,6 @@ RCT_REMAP_METHOD(init, initWithDataDir
   Callbacker *callbacker = [[Callbacker alloc] initWithResolve:resolve
                                                         reject:reject];
   init((void *)CFBridgingRetain(callbacker), [dataDir UTF8String]);
-
 }
 
 RCT_REMAP_METHOD(call, callWithJson
