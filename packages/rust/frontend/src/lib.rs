@@ -100,27 +100,25 @@ pub async fn foo(_abc: String) -> Result<(), ()> {
     Ok(())
 }
 
-
+#[bridge]
 pub async fn multiply(a: i32, b: i32) -> Result<i32, ()> {
     Ok(a * b)
+}
+#[derive(Serialize)]
+#[bridge]
+pub struct HelloResponse {
+    message: String,
+}
+
+#[bridge]
+pub async fn hello(name: String) -> Result<HelloResponse, ()> {
+    Ok(HelloResponse {
+        message: format!("Hello, {}!", name),
+    })
 }
 
 export!(
     foo(abc: String) -> Result<(), ()>;
     multiply(a: i32, b: i32) -> Result<i32, ()>;
+    hello(name: String) -> Result<HelloResponse, ()>;
 );
-
-#[bridge]
-struct Foo {
-    a: i32,
-    b: i32,
-}
-
-#[bridge]
-pub fn bar(a: i32) {
-    if a > 10 {
-        println!("a is greater than 10");
-    } else {
-        println!("a is less than 10");
-    }
-}

@@ -5,6 +5,8 @@ use syn::{Attribute, ItemFn, ItemStruct, visit};
 use syn::__private::ToTokens;
 use syn::visit::Visit;
 
+// this some awful goddamn code, we should probably fix it at some point
+
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
 
@@ -31,7 +33,7 @@ const LINKING_ERROR =
     )}- You rebuilt the app after installing the package\n` +
     `- You are not using Expo Go\n`;
 
-const RustInterop = NativeModules.Bubble
+export const RustInterop = NativeModules.Bubble
     ? NativeModules.Bubble
     : new Proxy(
           {},
@@ -189,7 +191,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
 fn convert_type_to_ts(in_type: &str) -> String {
     let mut out_type = String::new();
 
-    let vec_regex = Regex::new(r"^Vec<(.*)>$").unwrap();
+    let vec_regex = Regex::new(r"^Vec< (.*) >$").unwrap();
 
     if let Some(captures) = vec_regex.captures(in_type) {
         let inner_type = captures.get(1).unwrap().as_str();
@@ -197,7 +199,7 @@ fn convert_type_to_ts(in_type: &str) -> String {
         return out_type;
     }
 
-    let result_regex = Regex::new(r"^Result<(.*), (.*)>$").unwrap();
+    let result_regex = Regex::new(r"^Result < (.*) , (.*) >$").unwrap();
 
     if let Some(captures) = result_regex.captures(in_type) {
         let ok_type = captures.get(1).unwrap().as_str();
@@ -207,6 +209,7 @@ fn convert_type_to_ts(in_type: &str) -> String {
     }
 
     match in_type {
+        "()" => out_type.push_str("void"),
         "i8" => out_type.push_str("number"),
         "i16" => out_type.push_str("number"),
         "i32" => out_type.push_str("number"),
