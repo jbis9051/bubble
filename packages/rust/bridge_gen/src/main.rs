@@ -1,9 +1,9 @@
+use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
-use regex::Regex;
-use syn::{Attribute, ItemFn, ItemStruct, visit};
 use syn::__private::ToTokens;
 use syn::visit::Visit;
+use syn::{visit, Attribute, ItemFn, ItemStruct};
 
 // this some awful goddamn code, we should probably clean it up at some point
 
@@ -20,7 +20,10 @@ fn main() {
     let mut rust_paths = Vec::new();
     get_all_rust_files_in_dir(source_code_path, &mut rust_paths);
 
-    let parsed_files = rust_paths.iter().map(|path| parse_file(path)).collect::<Vec<_>>();
+    let parsed_files = rust_paths
+        .iter()
+        .map(|path| parse_file(path))
+        .collect::<Vec<_>>();
 
     let mut output = r#"/* WARNING: This file is auto-generated. Do not modify. */
 
@@ -128,7 +131,11 @@ fn convert_struct_to_ts(in_struct: &ItemStruct) -> String {
     for field in &in_struct.fields {
         let field_name = field.ident.as_ref().unwrap().to_string();
 
-        out_struct.push_str(&format!("    {}: {},\n", field_name, convert_type_to_ts(&field.ty.to_token_stream().to_string())));
+        out_struct.push_str(&format!(
+            "    {}: {},\n",
+            field_name,
+            convert_type_to_ts(&field.ty.to_token_stream().to_string())
+        ));
     }
 
     out_struct.push_str("}\n");
@@ -147,7 +154,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
     for input in &int_func.sig.inputs {
         let input = match input {
             syn::FnArg::Typed(input) => input,
-            _ => panic!("Unexpected function input type")
+            _ => panic!("Unexpected function input type"),
         };
         let input_name = input.pat.to_token_stream().to_string();
         input_names.push(input_name.clone());
@@ -164,19 +171,24 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
         out_func.push_str("Result<void, void>");
     }
 
-    out_func.push_str(r#"> {
+    out_func.push_str(
+        r#"> {
     return RustInterop.call(JSON.stringify({
-        method: '"#);
+        method: '"#,
+    );
     out_func.push_str(&func_name);
-    out_func.push_str(r#"',
-        args: {"#);
+    out_func.push_str(
+        r#"',
+        args: {"#,
+    );
     out_func.push_str(&input_names.join(", "));
-    out_func.push_str(r#"},
+    out_func.push_str(
+        r#"},
     })).then((res: string) => JSON.parse(res));
 }
 
-    "#);
-
+    "#,
+    );
 
     out_func
 }
@@ -197,7 +209,11 @@ fn convert_type_to_ts(in_type: &str) -> String {
     if let Some(captures) = result_regex.captures(in_type) {
         let ok_type = captures.get(1).unwrap().as_str();
         let err_type = captures.get(2).unwrap().as_str();
-        out_type.push_str(&format!("Result<{}, {}>", convert_type_to_ts(ok_type), convert_type_to_ts(err_type)));
+        out_type.push_str(&format!(
+            "Result<{}, {}>",
+            convert_type_to_ts(ok_type),
+            convert_type_to_ts(err_type)
+        ));
         return out_type;
     }
 
@@ -215,7 +231,7 @@ fn convert_type_to_ts(in_type: &str) -> String {
         "f64" => out_type.push_str("number"),
         "bool" => out_type.push_str("boolean"),
         "String" => out_type.push_str("string"),
-        _ => out_type.push_str(in_type)
+        _ => out_type.push_str(in_type),
     }
 
     out_type

@@ -1,19 +1,21 @@
-import {hello, init, multiply} from '@bubble/react-native-bubble-rust';
+import { hello, init, multiply } from '@bubble/react-native-bubble-rust';
 import { StyleSheet } from 'react-native';
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from 'react';
 import EditScreenInfo from '../../components/EditScreenInfo';
 import { Text, View } from '../../components/Themed';
 
 export default function TabTwoScreen() {
-    const [math, setMath] = useState("");
+    const [math, setMath] = useState('');
 
     useEffect(() => {
-        init(".").then(() => hello("Josh")).then(result => {
-            if(result.success){
-                setMath(result.value.message);
-            }
-        });
+        init('.')
+            .then(() => hello('Josh'))
+            .then((result) => {
+                if (result.success) {
+                    setMath(result.value.message);
+                }
+            });
     }, []);
 
     return (

@@ -1,8 +1,8 @@
-use std::ffi::c_void;
-use std::future::Future;
+use crate::platform::DevicePromise;
 use serde::Serialize;
 use serde_json::json;
-use crate::platform::DevicePromise;
+use std::ffi::c_void;
+use std::future::Future;
 
 pub type Callbacker = *const c_void;
 
@@ -11,7 +11,10 @@ pub trait Promise {
     fn reject(self, value: &str);
 }
 
-pub async fn promisify<T: Serialize, E: Serialize>(promise: DevicePromise, f: impl Future<Output=Result<T, E>>) {
+pub async fn promisify<T: Serialize, E: Serialize>(
+    promise: DevicePromise,
+    f: impl Future<Output = Result<T, E>>,
+) {
     let result = f.await;
     match result {
         Ok(value) => {

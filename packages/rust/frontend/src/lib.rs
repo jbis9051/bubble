@@ -1,22 +1,21 @@
-mod export_macro;
-mod models;
-mod types;
-mod promise;
 mod call;
-mod platform;
+mod export_macro;
 mod init;
+mod models;
+mod platform;
+mod promise;
+mod types;
 
 // export all platform specific functions
 pub use platform::export::*;
 
+use crate::init::TokioThread;
+use bridge_macro::bridge;
 use once_cell::sync::{Lazy, OnceCell};
+use serde::{Serialize, Serializer};
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
-use serde::{Serialize, Serializer};
 use tokio::sync::RwLock;
-use bridge_macro::bridge;
-use crate::init::TokioThread;
-
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

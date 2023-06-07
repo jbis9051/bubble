@@ -1,5 +1,5 @@
-use std::ffi::{c_char, c_void, CString};
 use crate::promise::{Callbacker, Promise};
+use std::ffi::{c_char, c_void, CString};
 
 pub type DevicePromise = IOSPromise;
 
@@ -14,13 +14,11 @@ pub struct IOSPromise {
     callbacker: *const c_void,
 }
 
-unsafe impl Send for IOSPromise{}
+unsafe impl Send for IOSPromise {}
 
 impl IOSPromise {
     pub fn new(callbacker: Callbacker) -> Self {
-        Self {
-            callbacker
-        }
+        Self { callbacker }
     }
 }
 
@@ -39,9 +37,9 @@ impl Promise for IOSPromise {
 }
 
 pub mod export {
-    use std::ffi::{c_char, c_void, CStr};
-    use crate::{call as call_impl, init as init_impl};
     use crate::platform::ios::DevicePromise;
+    use crate::{call as call_impl, init as init_impl};
+    use std::ffi::{c_char, c_void, CStr};
 
     #[no_mangle]
     pub unsafe extern "C" fn init(callbacker: *const c_void, data_directory: *const c_char) {

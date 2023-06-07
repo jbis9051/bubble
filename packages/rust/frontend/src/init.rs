@@ -1,14 +1,14 @@
 use crate::models::kv::{AccountKv, GlobalKv};
+use crate::platform::DevicePromise;
+use crate::promise::Promise;
 use crate::{Error, GlobalAccountData, GlobalStaticData, GLOBAL_STATIC_DATA};
+use serde_json::json;
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::{sync, thread};
-use serde_json::json;
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::oneshot::Sender;
 use tokio::sync::RwLock;
-use crate::platform::DevicePromise;
-use crate::promise::Promise;
 
 #[derive(Debug)]
 pub struct TokioThread {
@@ -47,7 +47,6 @@ pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error>
         Ok(())
     }));*/
 
-
     let global_data = GlobalStaticData {
         data_directory,
         tokio: tokio_thread,
@@ -57,7 +56,6 @@ pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error>
         .set(global_data)
         .map(|_| ())
         .map_err(|_| Error::GlobalAlreadyInitialized)?;
-
 
     promise.resolve(json!({"status": true, "value": null}).to_string().as_str());
 

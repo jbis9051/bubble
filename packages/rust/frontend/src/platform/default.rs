@@ -1,9 +1,8 @@
-use crate::promise::{Promise};
+use crate::promise::Promise;
 
 pub type DevicePromise = DefaultPromise;
 
 pub struct DefaultPromise {}
-
 
 impl Promise for DefaultPromise {
     fn resolve(self, value: &str) {
@@ -16,18 +15,18 @@ impl Promise for DefaultPromise {
 }
 
 pub mod export {
-    use crate::platform::DevicePromise;
-    use crate::init as init_impl;
     use crate::call as call_impl;
+    use crate::init as init_impl;
+    use crate::platform::DevicePromise;
 
     pub fn init(data_directory: String) {
-        let promise = DevicePromise{};
+        let promise = DevicePromise {};
         init_impl::init(promise, data_directory).unwrap();
     }
 
     #[no_mangle]
     pub fn call(json: String) {
-        let promise = DevicePromise{};
+        let promise = DevicePromise {};
         call_impl::call(promise, &json);
     }
 }

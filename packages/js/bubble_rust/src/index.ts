@@ -1,14 +1,16 @@
-import {RustInterop} from './gen'
+import { RustInterop } from './gen';
 
-export * from "./gen";
+export * from './gen';
 
-export type Result<T, E>  = {
-    success: true;
-    value: T;
-} | {
-    success: false;
-    value: E;
-}
+export type Result<T, E> =
+    | {
+          success: true;
+          value: T;
+      }
+    | {
+          success: false;
+          value: E;
+      };
 
 export function init(dataDir: string): Promise<void> {
     return RustInterop.init(dataDir);

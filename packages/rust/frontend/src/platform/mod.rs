@@ -18,6 +18,3 @@ cfg_if!(
         pub use default::DevicePromise;
     }
 );
-
-
-
