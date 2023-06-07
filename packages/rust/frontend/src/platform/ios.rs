@@ -25,13 +25,13 @@ impl IOSPromise {
 }
 
 impl Promise for IOSPromise {
-    fn resolve(&self, value: &str) {
+    fn resolve(self, value: &str) {
         let value = CString::new(value).unwrap();
         let value = value.into_raw();
         unsafe { promise_callbacker_resolve(self.callbacker, value) };
     }
 
-    fn reject(&self, value: &str) {
+    fn reject(self, value: &str) {
         let value = CString::new(value).unwrap();
         let value = value.into_raw();
         unsafe { promise_callbacker_reject(self.callbacker, value) };
