@@ -1,8 +1,5 @@
 name: Rust Tests
 on:
-  pull_request:
-    paths-ignore:
-      - README.md
   push:
     branches:
       - master

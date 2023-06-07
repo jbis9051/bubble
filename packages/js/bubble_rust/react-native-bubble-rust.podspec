@@ -14,7 +14,6 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "11.0" }
 
   s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp}"
-  #s.compiler_flags = "-x objective-c++"
   s.vendored_libraries = "rust/libfrontend.a"
 
   s.dependency "React-Core"

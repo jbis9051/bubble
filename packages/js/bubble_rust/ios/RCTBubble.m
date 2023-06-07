@@ -47,7 +47,6 @@ void promise_callbacker_reject(const void *self, const char *result) {
 
 @implementation RCTBubble
 
-// To export a module named RCTCalendarModule
 RCT_EXPORT_MODULE();
 
 RCT_REMAP_METHOD(init, initWithDataDir
