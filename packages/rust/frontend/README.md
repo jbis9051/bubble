@@ -2,19 +2,19 @@ I figure I should document how this thing works at least a little bit due to its
 
 So let's first describe the problem we are solving. React Native is used for the UI in Bubble. However, we don't want to
 write the frontend logic in JavaScript/TypeScript because...well...it's JavaScript. If you want a real reason,
-the MLS library we are using is in Rust. So we have to write our frontend in Rust.
+the MLS library we are using is in Rust. So we might as well write it all in Rust.
 
 React Native does support writing native modules, however the native modules must be written in the platform's native language.
 For iOS, this is Objective-C. For Android, this is Java. This presents our first challenge: How do we get Rust and
-Objective-C/Java to talk nicely?
+Objective-C/Java to talk ~~nicely~~?
 
 The Objective-C side is relatively straight forward. Objective-C is compatible with the C ABI. So all we have to do is
 build a static library from our Rust code, and then link the Objective-C code against our static library. All Rust functions
 exposed to Objective-C must be annotated with `#[no_mangle]` and `extern "C"` to tell Rust to make them compatible with
 the C ABI. The Objective-C code is in `js/bubble_rust/ios`.
 
-The Java side is a bit more annoying. Java is compatible with the C ABI through JNI but it's a bit painful to use. Rust
-has a JNI çrate, so we'll eventually probably use that. This hasn't been implemented yet other than a proof of concept.
+The Java side is a bit more annoying. Java is compatible with the C ABI through JNI but it's a bit painful to use. Luckily, Rust
+has a JNI crate, so we'll use that. The Java code is in `js/bubble_rust/android`.
 
 First problem is solved. Moving on...
 
@@ -22,8 +22,7 @@ Every native function that is callable from React Native must be defined in the 
 it means that we have to write every signature four times: once in Rust, once in Objective-C, once in Java, and once
 in TypeScript. Then we have to convert all the parameters back and forth. Yikes!
 
-We eventually will probably want to use some type of code generation tool to solve this problem. However, for now we use a
-a bit of a hack to avoid it. We define a single function, `call`, in Rust, Objective-C, Java, and TypeScript. This function
+We eventually will probably want to use some type of code generation tool to solve this problem. However, for now we use a bit of a hack to avoid it. We define a single function, `call`, in Rust, Objective-C, Java, and TypeScript. This function
 accepts a single string parameter which is a JSON string. The JSON string contains two keys. The first key is `method` which
 is the name of the function to call. The second key is `args` which is an array of parameters to pass to the function.
 
@@ -53,7 +52,7 @@ We can also add the `#[bridge]` attribute to structs so functions can return cus
 
 The second component is the bridge generator (in rust/bridge_gen). This is a simple CLI app that actually generates the
 TypeScript types. It iterates through all .rs files in a given directly, and uses the `syn` crate to parse the Rust code
-in each of those files searching for the #[bridge] attribute. Once it fines one it runs some logic to generate the
+in each of those files searching for the `#[bridge]` attribute. Once it fines one it runs some logic to generate the
 TypeScript types. Most of the conversions are pretty simple, Rust u8, i16, f32, etc. all map to TypeScript number.
 Collections such as `Vec<T>` are converted to `T[]` aka JavaScript arrays. Structs are converted to TypeScript interfaces.
 We then recursively iterate over the fields and convert them to TypeScript types.
@@ -212,21 +211,21 @@ then in `promise_callbacker_resolve` and `promise_callbacker_reject` we do:
 Finally, on the Rust side we provide a simple Promise interface
 
 ```rust
-// packages/rust/frontend/src/promise/mod.rs
+// packages/rust/frontend/src/promise.rs
 pub type Callbacker = *const c_void;
 
 pub trait Promise {
     fn new(callbacker: Callbacker) -> Self;
-    fn resolve(&self, value: &str);
-    fn reject(&self, value: &str);
+    fn resolve(self, value: &str);
+    fn reject(self, value: &str);
 }
 
-// the implementation for iOS:
+// the implementation for iOS (packages/rust/frontend/src/platform/ios.rs:
 pub struct IOSPromise {
     callbacker: *const c_void,
 }
 impl Promise for IOSPromise {
-    fn resolve(&self, value: &str) {
+    fn resolve(self, value: &str) {
         let value = CString::new(value).unwrap();
         let value = value.into_raw();
         unsafe { promise_callbacker_resolve(self.callbacker, value) };
@@ -262,6 +261,45 @@ pub async fn promisify<T: Serialize, E: Serialize>(promise: DevicePromise, f: im
 This is pretty self-explanatory. We take in a `promise` and some `Future` which resolves to a `Result` (`Futures` are the
 Rust equivalent of Promises). We then await the `Future` and match on the result. If the result is Ok, we resolve the `promise`
 otherwise we reject it. This is also where the actual conversion from a Rust Result to TypeScript JSON "Result" happens.
+
+For Java we use a very similar method. Instead of `Callback` JNI allows us to call the `resolve` method directly on the `Promise`. We also have to deal with Java's garbage collection system. We can use JNI `GlobalRef`s to tell the JVM GC not to free our `Promise` before we use it. JNI also requires us to connect to the JVM before accessing a `GlobalRef` we do this via the `jni` crates `attach_current_thread_as_daemon` method. 
+Finally, we use `jni`'s `call_method` to actually call the resolve method on the `Promise`.
+The `jni` implementation actually manages releasing the `GlobalRef` back to the JVM when we drop it for us so we don't need to do anything manual.
+
+```rust
+// packages/rust/frontend/src/platform/android.rs
+pub struct AndroidPromise {
+    vm: JavaVM,
+    promise: GlobalRef,
+}
+
+impl AndroidPromise {
+    pub fn new(vm: JavaVM, promise: GlobalRef) -> AndroidPromise {
+        AndroidPromise { vm, promise }
+    }
+}
+
+impl Promise for AndroidPromise {
+    fn resolve(self, value: &str) {
+        let mut env = self
+            .vm
+            .attach_current_thread_as_daemon()
+            .expect("Couldn't attach thread");
+        let value: JObject = env
+            .new_string(value)
+            .expect("Couldn't create java string!")
+            .into();
+        env.call_method(
+            self.promise,
+            "resolve",
+            "(Ljava/lang/Object;)V",
+            &[value.as_ref().into()],
+        )
+            .expect("Couldn't call resolve");
+    }
+    ...
+}
+```
 
 Cool. Now we have a way for Rust async functions to resolve or reject Promises on the JS side.
 
