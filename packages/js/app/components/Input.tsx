@@ -4,9 +4,10 @@ import {
     View,
     TextInput as RNTextInput,
     TextInputProps as RNTextInputProps,
-    TouchableOpacity, StyleProp,
+    TouchableOpacity,
+    StyleProp,
     ViewStyle,
-    TextStyle
+    TextStyle,
 } from 'react-native';
 import Animated, {
     useAnimatedStyle,
@@ -18,7 +19,6 @@ import { layoutDefaults } from '../constants/Layout';
 import { ThemeContext } from '../lib/Context';
 import StyledText from './StyledText';
 import { Loading } from './display/Loading';
-
 
 interface TextInputProps {
     value: string;
@@ -32,35 +32,35 @@ interface TextInputProps {
     onPress?: () => void;
     secureTextEntry?: boolean;
     textContentType?:
-    | 'none'
-    | 'URL'
-    | 'addressCity'
-    | 'addressCityAndState'
-    | 'addressState'
-    | 'countryName'
-    | 'creditCardNumber'
-    | 'emailAddress'
-    | 'familyName'
-    | 'fullStreetAddress'
-    | 'givenName'
-    | 'jobTitle'
-    | 'location'
-    | 'middleName'
-    | 'name'
-    | 'namePrefix'
-    | 'nameSuffix'
-    | 'nickname'
-    | 'organizationName'
-    | 'postalCode'
-    | 'streetAddressLine1'
-    | 'streetAddressLine2'
-    | 'sublocality'
-    | 'telephoneNumber'
-    | 'username'
-    | 'password'
-    | 'newPassword'
-    | 'oneTimeCode'
-    | undefined;
+        | 'none'
+        | 'URL'
+        | 'addressCity'
+        | 'addressCityAndState'
+        | 'addressState'
+        | 'countryName'
+        | 'creditCardNumber'
+        | 'emailAddress'
+        | 'familyName'
+        | 'fullStreetAddress'
+        | 'givenName'
+        | 'jobTitle'
+        | 'location'
+        | 'middleName'
+        | 'name'
+        | 'namePrefix'
+        | 'nameSuffix'
+        | 'nickname'
+        | 'organizationName'
+        | 'postalCode'
+        | 'streetAddressLine1'
+        | 'streetAddressLine2'
+        | 'sublocality'
+        | 'telephoneNumber'
+        | 'username'
+        | 'password'
+        | 'newPassword'
+        | 'oneTimeCode'
+        | undefined;
 }
 export function StyledInput(props: TextInputProps) {
     const {
@@ -133,8 +133,8 @@ export function StyledInput(props: TextInputProps) {
                         styles.input,
                         showSubmit
                             ? {
-                                paddingRight: 50,
-                            }
+                                  paddingRight: 50,
+                              }
                             : undefined,
                     ]}
                     placeholder={label}

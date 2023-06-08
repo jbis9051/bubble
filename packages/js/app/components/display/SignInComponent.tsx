@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-    StyleSheet,
-    SafeAreaView,
-    Alert,
-    ScrollView,
-} from 'react-native';
+import { StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
 import { UserLocal, UserService } from '../../lib/bubbleApi/user';
 import { LoggingService } from '../../lib/bubbleApi/logging';
 import StyledButton, { TextButton } from '../bubbleUI/Button';

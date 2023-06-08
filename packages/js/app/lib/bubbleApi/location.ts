@@ -18,7 +18,7 @@ export class MapService {
     ): Promise<number> {
         return 0;
     }
-    
+
     static async send_location(
         group_uuid: uuid,
         longitude: number,
