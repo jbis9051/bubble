@@ -1,16 +1,11 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import {
     TouchableOpacity,
     Text,
     StyleProp,
-    Platform,
-    ViewStyle,
-    View,
+    Platform, ActivityIndicator
 } from 'react-native';
-import { ThemeContext } from '../Context';
-import { ActivityIndicator } from 'react-native';
-import GLogo from '../assets/svgs/glogo.svg';
-import * as Haptics from 'expo-haptics';
+import { ThemeContext } from '../lib/Context';
 
 interface StyledButtonProps {
     color: ColorTypes;
@@ -23,10 +18,9 @@ interface StyledButtonProps {
     fontSize?: number;
 }
 
-const isAndroid = Platform.OS === 'android';
-
 type ColorTypes = 'primary' | 'secondary' | 'danger';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FilledButton(props: StyledButtonProps) {
     const { color, children, style, onPress, loading, disabled, fontSize } =
         props;
@@ -65,7 +59,7 @@ function FilledButton(props: StyledButtonProps) {
                             color: disabled
                                 ? theme.colors.secondaryPaper
                                 : theme.complementColors[color],
-                            fontSize: fontSize,
+                            fontSize,
                         }}
                     >
                         {children}

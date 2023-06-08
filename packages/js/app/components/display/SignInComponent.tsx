@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { UserLocal, UserService } from '../../lib/bubbleApi/user';
 import {
-    View,
-    TouchableOpacity,
     StyleSheet,
     SafeAreaView,
     Alert,
     ScrollView,
 } from 'react-native';
-import { Text } from '../Themed';
+import { UserLocal, UserService } from '../../lib/bubbleApi/user';
 import { LoggingService } from '../../lib/bubbleApi/logging';
 import StyledButton, { TextButton } from '../bubbleUI/Button';
 import StyledText from '../StyledText';
@@ -35,6 +32,14 @@ export default function SignInScreen({ setUser }: SignInScreenProps) {
         setPassword('');
         setPasswordConfirmation('');
     }, [signingUp]);
+
+    const refreshUser = () => {
+        UserService.retrieveSession()
+            .then((s) => {
+                setUser(s);
+            })
+            .catch(LoggingService.error);
+    };
 
     const submitSignUp = async () => {
         if (
@@ -75,14 +80,6 @@ export default function SignInScreen({ setUser }: SignInScreenProps) {
             .then(() =>
                 Alert.alert('Check your email for a password reset link')
             )
-            .catch(LoggingService.error);
-    };
-
-    const refreshUser = () => {
-        UserService.retrieveSession()
-            .then((s) => {
-                setUser(s);
-            })
             .catch(LoggingService.error);
     };
 

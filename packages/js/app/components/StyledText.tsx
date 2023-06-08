@@ -92,8 +92,10 @@ function Mini(props: TextProps) {
 export default function StyledText(props: TextProps & CustomTextProps) {
     const { variant } = props;
 
+    let usedProps = { ...props };
+
     if (props.nomargin) {
-        props = {
+        usedProps = {
             ...props,
             style: {
                 marginTop: 0,
@@ -106,14 +108,14 @@ export default function StyledText(props: TextProps & CustomTextProps) {
 
     switch (variant) {
         case 'h1':
-            return <Heading1 {...props} />;
+            return <Heading1 {...usedProps} />;
         case 'h2':
-            return <Heading2 {...props} />;
+            return <Heading2 {...usedProps} />;
         case 'body':
-            return <Body {...props} />;
+            return <Body {...usedProps} />;
         case 'mini':
-            return <Mini {...props} />;
+            return <Mini {...usedProps} />;
         default:
-            return <Body {...props} />;
+            return <Body {...usedProps} />;
     }
 }

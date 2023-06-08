@@ -7,11 +7,8 @@ import {
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
-import { TouchableOpacity, View, useColorScheme } from 'react-native';
+import { useColorScheme } from 'react-native';
 import { UserContext, UserLocal, useSession } from '../lib/bubbleApi/user';
-import SignIn from './(auth)/signin';
-import { Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SignInScreen from '../components/display/SignInComponent';
 import { ThemeContext } from '../lib/Context';
 import Colors from '../constants/Colors';

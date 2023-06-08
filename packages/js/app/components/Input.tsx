@@ -4,29 +4,21 @@ import {
     View,
     TextInput as RNTextInput,
     TextInputProps as RNTextInputProps,
-    TouchableOpacity,
-    Image,
-    ImageBase,
-    ScrollView,
-    StyleProp,
+    TouchableOpacity, StyleProp,
     ViewStyle,
-    TextStyle,
+    TextStyle
 } from 'react-native';
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withTiming,
 } from 'react-native-reanimated';
+import { Feather, FontAwesome } from '@expo/vector-icons';
 import { layoutDefaults } from '../constants/Layout';
 import { ThemeContext } from '../lib/Context';
 import StyledText from './StyledText';
-import * as ImagePicker from 'expo-image-picker';
-import { AntDesign, Feather, FontAwesome } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Layout from '../constants/Layout';
 import { Loading } from './display/Loading';
-import { ImageDisplay } from './display/ImageDisplay';
-import * as Haptics from 'expo-haptics';
+
 
 interface TextInputProps {
     value: string;
@@ -40,35 +32,35 @@ interface TextInputProps {
     onPress?: () => void;
     secureTextEntry?: boolean;
     textContentType?:
-        | 'none'
-        | 'URL'
-        | 'addressCity'
-        | 'addressCityAndState'
-        | 'addressState'
-        | 'countryName'
-        | 'creditCardNumber'
-        | 'emailAddress'
-        | 'familyName'
-        | 'fullStreetAddress'
-        | 'givenName'
-        | 'jobTitle'
-        | 'location'
-        | 'middleName'
-        | 'name'
-        | 'namePrefix'
-        | 'nameSuffix'
-        | 'nickname'
-        | 'organizationName'
-        | 'postalCode'
-        | 'streetAddressLine1'
-        | 'streetAddressLine2'
-        | 'sublocality'
-        | 'telephoneNumber'
-        | 'username'
-        | 'password'
-        | 'newPassword'
-        | 'oneTimeCode'
-        | undefined;
+    | 'none'
+    | 'URL'
+    | 'addressCity'
+    | 'addressCityAndState'
+    | 'addressState'
+    | 'countryName'
+    | 'creditCardNumber'
+    | 'emailAddress'
+    | 'familyName'
+    | 'fullStreetAddress'
+    | 'givenName'
+    | 'jobTitle'
+    | 'location'
+    | 'middleName'
+    | 'name'
+    | 'namePrefix'
+    | 'nameSuffix'
+    | 'nickname'
+    | 'organizationName'
+    | 'postalCode'
+    | 'streetAddressLine1'
+    | 'streetAddressLine2'
+    | 'sublocality'
+    | 'telephoneNumber'
+    | 'username'
+    | 'password'
+    | 'newPassword'
+    | 'oneTimeCode'
+    | undefined;
 }
 export function StyledInput(props: TextInputProps) {
     const {
@@ -89,19 +81,15 @@ export function StyledInput(props: TextInputProps) {
 
     const labelScale = useSharedValue(0);
     const labelHeight = useSharedValue(0);
-    const animatedLabelStyle = useAnimatedStyle(() => {
-        return {
-            height: labelHeight.value,
-            transform: [{ scale: labelScale.value }],
-        };
-    });
+    const animatedLabelStyle = useAnimatedStyle(() => ({
+        height: labelHeight.value,
+        transform: [{ scale: labelScale.value }],
+    }));
 
     const textFieldMarginTop = useSharedValue(12);
-    const animatedTextFieldStyle = useAnimatedStyle(() => {
-        return {
-            marginTop: textFieldMarginTop.value,
-        };
-    });
+    const animatedTextFieldStyle = useAnimatedStyle(() => ({
+        marginTop: textFieldMarginTop.value,
+    }));
 
     useEffect(() => {
         if (focused && value.length) {
@@ -145,8 +133,8 @@ export function StyledInput(props: TextInputProps) {
                         styles.input,
                         showSubmit
                             ? {
-                                  paddingRight: 50,
-                              }
+                                paddingRight: 50,
+                            }
                             : undefined,
                     ]}
                     placeholder={label}
