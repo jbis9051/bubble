@@ -1,7 +1,6 @@
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import EditScreenInfo from '../../components/EditScreenInfo';
 
 interface CustomMarkerProps {
     coordinate: LatLng;
