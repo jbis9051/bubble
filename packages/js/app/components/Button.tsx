@@ -3,7 +3,7 @@ import {
     TouchableOpacity,
     Text,
     StyleProp,
-    Platform, ActivityIndicator
+    ActivityIndicator
 } from 'react-native';
 import { ThemeContext } from '../lib/Context';
 
