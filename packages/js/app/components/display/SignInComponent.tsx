@@ -17,6 +17,7 @@ export default function SignInScreen({ setUser }: SignInScreenProps) {
     const [password, setPassword] = useState("");
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
+    const [forgotPassword, setForgotPassword] = useState(false);
     const [signingUp, setSigningUp] = useState(true);
 
     useEffect(() => {
@@ -45,6 +46,14 @@ export default function SignInScreen({ setUser }: SignInScreenProps) {
             .catch(LoggingService.error);
     }
 
+    const submitForgotPassword = () => {
+        if (!email) { Alert.alert("Please fill out all fields"); return; }
+        UserService
+            .forgot(email)
+            .then(() => Alert.alert("Check your email for a password reset link"))
+            .catch(LoggingService.error);
+    }
+
     const refreshUser = () => {
         UserService
             .retrieveSession()
@@ -55,6 +64,31 @@ export default function SignInScreen({ setUser }: SignInScreenProps) {
     }
 
     const toggleSignUp = () => setSigningUp(!signingUp);
+
+    if (forgotPassword) {
+        return (
+            <ScrollView>
+                <SafeAreaView style={styles.container}>
+                    <StyledText variant="h1">Reset password</StyledText>
+                    <StyledText variant="body">Enter the email that you used to sign up.</StyledText>
+                    <StyledInput
+                        viewStyle={styles.textInput}
+                        value={email}
+                        onChange={setEmail}
+                        label="Email"
+                    />
+                    <StyledButton
+                        color="primary"
+                        onPress={submitForgotPassword}
+                        style={{
+                            marginHorizontal: 15,
+                        }}
+                    >Submit</StyledButton>
+                    <TextButton color="primary" onPress={() => setForgotPassword(false)}>Back</TextButton>
+                </SafeAreaView>
+            </ScrollView>
+        )
+    }
 
     if (signingUp) {
         return (
@@ -133,6 +167,7 @@ export default function SignInScreen({ setUser }: SignInScreenProps) {
                         marginHorizontal: 15,
                     }}
                 >Sign In</StyledButton>
+                <TextButton color="primary" onPress={() => setForgotPassword(true)}>Forgot password</TextButton>
                 <StyledText>Don't have an account yet?</StyledText>
                 <TextButton color="primary" onPress={toggleSignUp}>Create an account</TextButton>
             </SafeAreaView>
