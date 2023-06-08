@@ -1,6 +1,22 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, View, TextInput as RNTextInput, TextInputProps as RNTextInputProps, TouchableOpacity, Image, ImageBase, ScrollView, StyleProp, ViewStyle, TextStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import {
+    StyleSheet,
+    View,
+    TextInput as RNTextInput,
+    TextInputProps as RNTextInputProps,
+    TouchableOpacity,
+    Image,
+    ImageBase,
+    ScrollView,
+    StyleProp,
+    ViewStyle,
+    TextStyle,
+} from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
 import { layoutDefaults } from '../constants/Layout';
 import { ThemeContext } from '../lib/Context';
 import StyledText from './StyledText';
@@ -24,35 +40,35 @@ interface TextInputProps {
     onPress?: () => void;
     secureTextEntry?: boolean;
     textContentType?:
-    | 'none'
-    | 'URL'
-    | 'addressCity'
-    | 'addressCityAndState'
-    | 'addressState'
-    | 'countryName'
-    | 'creditCardNumber'
-    | 'emailAddress'
-    | 'familyName'
-    | 'fullStreetAddress'
-    | 'givenName'
-    | 'jobTitle'
-    | 'location'
-    | 'middleName'
-    | 'name'
-    | 'namePrefix'
-    | 'nameSuffix'
-    | 'nickname'
-    | 'organizationName'
-    | 'postalCode'
-    | 'streetAddressLine1'
-    | 'streetAddressLine2'
-    | 'sublocality'
-    | 'telephoneNumber'
-    | 'username'
-    | 'password'
-    | 'newPassword'
-    | 'oneTimeCode'
-    | undefined;
+        | 'none'
+        | 'URL'
+        | 'addressCity'
+        | 'addressCityAndState'
+        | 'addressState'
+        | 'countryName'
+        | 'creditCardNumber'
+        | 'emailAddress'
+        | 'familyName'
+        | 'fullStreetAddress'
+        | 'givenName'
+        | 'jobTitle'
+        | 'location'
+        | 'middleName'
+        | 'name'
+        | 'namePrefix'
+        | 'nameSuffix'
+        | 'nickname'
+        | 'organizationName'
+        | 'postalCode'
+        | 'streetAddressLine1'
+        | 'streetAddressLine2'
+        | 'sublocality'
+        | 'telephoneNumber'
+        | 'username'
+        | 'password'
+        | 'newPassword'
+        | 'oneTimeCode'
+        | undefined;
 }
 export function StyledInput(props: TextInputProps) {
     const {
@@ -76,15 +92,15 @@ export function StyledInput(props: TextInputProps) {
     const animatedLabelStyle = useAnimatedStyle(() => {
         return {
             height: labelHeight.value,
-            transform: [{ scale: labelScale.value }]
-        }
+            transform: [{ scale: labelScale.value }],
+        };
     });
 
     const textFieldMarginTop = useSharedValue(12);
     const animatedTextFieldStyle = useAnimatedStyle(() => {
         return {
             marginTop: textFieldMarginTop.value,
-        }
+        };
     });
 
     useEffect(() => {
@@ -102,24 +118,36 @@ export function StyledInput(props: TextInputProps) {
     const displaySubmit = showSubmit && value.length > 0;
 
     return (
-        <View style={[{
-            backgroundColor: theme.colors.primaryPaper,
-            height: 70,
-            borderRadius: layoutDefaults.paperBorderRadius
-        }, viewStyle]}>
+        <View
+            style={[
+                {
+                    backgroundColor: theme.colors.primaryPaper,
+                    height: 70,
+                    borderRadius: layoutDefaults.paperBorderRadius,
+                },
+                viewStyle,
+            ]}
+        >
             <Animated.View style={animatedLabelStyle}>
-                <StyledText variant="mini" style={{
-                    marginLeft: 20,
-                    color: theme.colors.secondaryPaper,
-                }}>{label}</StyledText>
+                <StyledText
+                    variant="mini"
+                    style={{
+                        marginLeft: 20,
+                        color: theme.colors.secondaryPaper,
+                    }}
+                >
+                    {label}
+                </StyledText>
             </Animated.View>
             <Animated.View style={animatedTextFieldStyle}>
                 <RNTextInput
                     style={[
                         styles.input,
-                        showSubmit ? {
-                            paddingRight: 50
-                        } : undefined,
+                        showSubmit
+                            ? {
+                                  paddingRight: 50,
+                              }
+                            : undefined,
                     ]}
                     placeholder={label}
                     onFocus={() => setFocused(true)}
@@ -135,25 +163,29 @@ export function StyledInput(props: TextInputProps) {
             {displaySubmit && (
                 <TouchableOpacity
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         right: 20,
-                        height: "100%",
-                        display: "flex",
-                        justifyContent: "center",
+                        height: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
                     }}
                     onPress={onSubmit}
                 >
-                    {submitLoading ? <Loading /> : <Feather name="send" size={24} color="black" />}
+                    {submitLoading ? (
+                        <Loading />
+                    ) : (
+                        <Feather name="send" size={24} color="black" />
+                    )}
                 </TouchableOpacity>
             )}
-            {(disableEdit && !onPress) && (
+            {disableEdit && !onPress && (
                 <View
                     style={{
-                        position: "absolute",
+                        position: 'absolute',
                         right: 20,
-                        height: "100%",
-                        display: "flex",
-                        justifyContent: "center",
+                        height: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
                     }}
                 >
                     <FontAwesome name="lock" size={24} color="black" />
@@ -167,9 +199,7 @@ interface BasicTextInputProps extends RNTextInputProps {
     style?: StyleProp<TextStyle>;
 }
 export function BasicTextInput(props: BasicTextInputProps) {
-    const {
-        style
-    } = props;
+    const { style } = props;
 
     return (
         <RNTextInput

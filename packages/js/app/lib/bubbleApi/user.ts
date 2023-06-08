@@ -1,8 +1,6 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
-import { LoggingService } from "./logging";
-
-
+import React, { useEffect } from 'react';
+import { useState } from 'react';
+import { LoggingService } from './logging';
 
 export class UserService {
     // static async signup({ email, username, password, name }:
@@ -16,12 +14,14 @@ export class UserService {
 
     // static async forgotPassword({ email }: { email: string }) {}
 
-    static async register(username: string, password: string, name: string) { }
-    static async login(username: string, password: string) { }
-    static async logout() { }
-    static async forgot(email: string) { }
+    static async register(username: string, password: string, name: string) {}
+    static async login(username: string, password: string) {}
+    static async logout() {}
+    static async forgot(email: string) {}
 
-    static async retrieveSession(): Promise<UserLocal | null> { return null; };
+    static async retrieveSession(): Promise<UserLocal | null> {
+        return null;
+    }
 }
 
 export interface UserLocal {
@@ -33,13 +33,12 @@ export function useSession() {
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
-        UserService
-            .retrieveSession()
-            .then(u => {
+        UserService.retrieveSession()
+            .then((u) => {
                 setUser(u);
                 setLoaded(true);
             })
-            .catch(e => {
+            .catch((e) => {
                 LoggingService.error(e);
             });
     }, []);

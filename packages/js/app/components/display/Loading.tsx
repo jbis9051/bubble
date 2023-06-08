@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 interface LoadingProps {
     shouldCenter?: boolean;
@@ -9,14 +9,16 @@ interface LoadingProps {
 const DEFAULT_DELAY = 1000;
 export function Loading(props: LoadingProps) {
     const { shouldCenter, delay, defaultDelay } = props;
-    const [show, setShow] = useState<boolean>((defaultDelay || delay) ? false : true);
+    const [show, setShow] = useState<boolean>(
+        defaultDelay || delay ? false : true
+    );
     const cdelay = defaultDelay ? DEFAULT_DELAY : delay;
 
     useEffect(() => {
         if (!show) {
             setTimeout(() => {
                 setShow(true);
-            }, cdelay)
+            }, cdelay);
         }
     }, []);
 
@@ -28,18 +30,18 @@ export function Loading(props: LoadingProps) {
         <View style={viewStyle}>
             <ActivityIndicator />
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
     centerView: {
         display: 'flex',
         alignItems: 'center',
-        justifyContent: "center",
-        height: "100%",
-        width: "100%",
+        justifyContent: 'center',
+        height: '100%',
+        width: '100%',
     },
-})
+});
 
 export function FlatListLoadingFooter() {
     return (
