@@ -20,4 +20,4 @@ cfg-if = "1.0"
 jni = "0.21"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "cdylib"]
