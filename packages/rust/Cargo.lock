@@ -2117,6 +2117,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "axum",
+ "axum-test-helper",
+ "base64 0.21.0",
+ "common",
+ "ed25519-dalek",
+ "once_cell",
+ "openmls",
+ "openmls_rust_crypto",
+ "rand_core 0.5.1",
+ "rand_core 0.6.3",
+ "sendgrid",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "sha-1"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

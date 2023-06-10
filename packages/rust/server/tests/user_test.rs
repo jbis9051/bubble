@@ -1,17 +1,17 @@
 use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
 use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
-use bubble::models::confirmation::Confirmation;
-use bubble::models::forgot::Forgot;
-use bubble::models::session::Session;
-use bubble::models::user::User;
-use bubble::services::password;
 use common::base64::Base64;
 use common::http_types::{
     ChangeEmail, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login, PasswordReset,
     PublicUser, UpdateIdentity,
 };
 use ed25519_dalek::PublicKey;
+use server::models::confirmation::Confirmation;
+use server::models::forgot::Forgot;
+use server::models::session::Session;
+use server::models::user::User;
+use server::services::password;
 use uuid::Uuid;
 
 mod crypto_helper;
@@ -31,7 +31,7 @@ async fn test_register() {
     };
 
     let res = client
-        .post("/user/register")
+        .post("/v1/user/register")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&created_user).unwrap())
         .send()
@@ -60,7 +60,7 @@ async fn test_register() {
     assert_eq!(confirmation.email, created_user.email);
 
     let confirm_res = client
-        .patch("/user/confirm")
+        .patch("/v1/user/confirm")
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&ConfirmEmail {
@@ -158,7 +158,7 @@ async fn test_forgot_password() {
     };
 
     let res = client
-        .post("/user/forgot")
+        .post("/v1/user/forgot")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&email_in).unwrap())
         .send()
@@ -175,7 +175,7 @@ async fn test_forgot_password() {
     assert_eq!(forgot.user_id, user.id);
 
     let res = client
-        .get(&format!("/user/reset?token={}", forgot.token))
+        .get(&format!("/v1/user/reset?token={}", forgot.token))
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&email_in).unwrap())
         .send()
@@ -189,7 +189,7 @@ async fn test_forgot_password() {
     };
 
     let res = client
-        .patch("/user/reset")
+        .patch("/v1/user/reset")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&confirm).unwrap())
         .send()
@@ -198,7 +198,7 @@ async fn test_forgot_password() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let res = client
-        .get(&format!("/user/reset?token={}", forgot.token))
+        .get(&format!("/v1/user/reset?token={}", forgot.token))
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&email_in).unwrap())
         .send()
@@ -256,7 +256,7 @@ async fn test_change_email() {
     };
 
     let res = client
-        .patch("/user/confirm")
+        .patch("/v1/user/confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&confirm).unwrap())
         .send()
@@ -298,7 +298,7 @@ async fn test_delete_user() {
 
     let bearer = format!("Bearer {}", token);
     let res = client
-        .delete("/user")
+        .delete("/v1/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete_in).unwrap())
         .header("Authorization", bearer)
@@ -328,7 +328,7 @@ async fn test_get_user() {
 
     let bearer = format!("Bearer {}", token);
     let res = client
-        .get(&format!("/user/{}", user.uuid))
+        .get(&format!("/v1/user/{}", user.uuid))
         .header("Authorization", bearer)
         .send()
         .await;
@@ -367,7 +367,7 @@ async fn test_replace_identity() {
 
     let bearer = format!("Bearer {}", token);
     let res = client
-        .put("/user/identity")
+        .put("/v1/user/identity")
         .json(&update_identity)
         .header("Authorization", bearer)
         .send()
@@ -400,7 +400,7 @@ async fn test_register_bad_identity() {
     };
 
     let res = client
-        .post("/user/register")
+        .post("/v1/user/register")
         .header("Content-Type", "application/json")
         .json(&created_user)
         .send()
@@ -435,7 +435,7 @@ async fn test_register_conflict() {
     };
 
     let res = client
-        .post("/user/register")
+        .post("/v1/user/register")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&register).unwrap())
         .send()
@@ -447,7 +447,7 @@ async fn test_register_conflict() {
     register.username = created_user.username;
 
     let res = client
-        .post("/user/register")
+        .post("/v1/user/register")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&register).unwrap())
         .send()
@@ -479,7 +479,7 @@ async fn test_login_bad_credentials() {
     };
 
     let res = client
-        .post("/user/session")
+        .post("/v1/user/session")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&login).unwrap())
         .send()
@@ -490,7 +490,7 @@ async fn test_login_bad_credentials() {
     login.email = "bad@gmail.com".to_string();
 
     let res = client
-        .post("/user/session")
+        .post("/v1/user/session")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&login).unwrap())
         .send()
@@ -509,7 +509,7 @@ async fn test_forgot_bad_email() {
     };
 
     let res = client
-        .post("/user/forgot")
+        .post("/v1/user/forgot")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&forgot).unwrap())
         .send()
@@ -540,7 +540,7 @@ async fn test_delete_bad_password() {
 
     let bearer = format!("Bearer {}", token);
     let res = client
-        .delete("/user")
+        .delete("/v1/user")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&delete_user).unwrap())
         .header("Authorization", bearer)
@@ -574,7 +574,7 @@ async fn test_change_email_bad_password() {
 
     let bearer = format!("Bearer {}", token);
     let res = client
-        .post("/user/email")
+        .post("/v1/user/email")
         .json(&change)
         .header("Authorization", bearer)
         .send()
@@ -605,7 +605,7 @@ async fn test_replace_identity_bad_identity() {
 
     let bearer = format!("Bearer {}", token);
     let res = client
-        .put("/user/identity")
+        .put("/v1/user/identity")
         .json(&update_identity)
         .header("Authorization", bearer)
         .send()

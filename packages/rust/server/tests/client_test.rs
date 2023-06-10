@@ -12,11 +12,11 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::crypto_helper::{PRIVATE, PUBLIC};
-use bubble::types::{CIPHERSUITES, SIGNATURE_SCHEME};
 use common::base64::Base64;
 use common::http_types::{
     ClientsResponse, CreateClient, CreateUser, KeyPackagePublic, PublicClient, ReplaceKeyPackages,
 };
+use server::types::{CIPHERSUITES, SIGNATURE_SCHEME};
 
 mod crypto_helper;
 mod helper;
@@ -41,7 +41,7 @@ async fn test_client_crud() {
 
     // Ensure there are no clients
     let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
+        .get(&format!("/v1/user/{}/clients", user.uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -71,7 +71,7 @@ async fn test_client_crud() {
     };
 
     let res = client
-        .post("/client")
+        .post("/v1/client")
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -83,7 +83,7 @@ async fn test_client_crud() {
 
     // Ensure the client is created
     let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
+        .get(&format!("/v1/user/{}/clients", user.uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -107,7 +107,7 @@ async fn test_client_crud() {
     // Check that the client can be retrieved
 
     let res = client
-        .get(&format!("/client/{}", client_uuid))
+        .get(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -135,7 +135,7 @@ async fn test_client_crud() {
     };
 
     let res = client
-        .patch(&format!("/client/{}", client_uuid))
+        .patch(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -146,7 +146,7 @@ async fn test_client_crud() {
     // Ensure the client is updated
 
     let res = client
-        .get(&format!("/client/{}", client_uuid))
+        .get(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -163,7 +163,7 @@ async fn test_client_crud() {
     // Delete the Client
 
     let res = client
-        .delete(&format!("/client/{}", client_uuid))
+        .delete(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -173,7 +173,7 @@ async fn test_client_crud() {
     // Ensure the client is deleted
 
     let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
+        .get(&format!("/v1/user/{}/clients", user.uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -187,7 +187,7 @@ async fn test_client_crud() {
     // Ensure the client cannot be retrieved
 
     let res = client
-        .get(&format!("/client/{}", client_uuid))
+        .get(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -221,7 +221,7 @@ async fn test_key_packages() {
     // Ensure there are no key packages
 
     let res = client
-        .get(&format!("/client/{}/key_package", client_uuid))
+        .get(&format!("/v1/client/{}/key_package", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -250,7 +250,7 @@ async fn test_key_packages() {
     let payload = ReplaceKeyPackages { key_packages };
 
     let res = client
-        .post(&format!("/client/{}/key_packages", client_uuid))
+        .post(&format!("/v1/client/{}/key_packages", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&payload)
         .send()
@@ -261,7 +261,7 @@ async fn test_key_packages() {
     // Get a Key Package
 
     let res = client
-        .get(&format!("/client/{}/key_package", client_uuid))
+        .get(&format!("/v1/client/{}/key_package", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -317,7 +317,7 @@ async fn test_create_client_bad_signature() {
     };
 
     let res = client
-        .post("/client")
+        .post("/v1/client")
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -382,7 +382,7 @@ async fn test_update_client_bad_auth() {
     };
 
     let res = client
-        .patch(&format!("/client/{}", client_uuid))
+        .patch(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bad_bearer.clone())
         .json(&create_client)
         .send()
@@ -430,7 +430,7 @@ async fn test_update_client_bad_signature() {
     };
 
     let res = client
-        .patch(&format!("/client/{}", client_uuid))
+        .patch(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -478,7 +478,7 @@ async fn test_delete_client_bad_auth() {
     // try to delete the client with the second user's token
 
     let res = client
-        .delete(&format!("/client/{}", client_uuid))
+        .delete(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bad_bearer.clone())
         .send()
         .await;
@@ -544,7 +544,7 @@ async fn test_replace_key_packages_bad_auth() {
     let payload = ReplaceKeyPackages { key_packages };
 
     let res = client
-        .post(&format!("/client/{}/key_packages", client_uuid))
+        .post(&format!("/v1/client/{}/key_packages", client_uuid))
         .header("Authorization", bad_bearer.clone())
         .json(&payload)
         .send()
@@ -595,7 +595,7 @@ async fn test_replace_key_packages_id() {
     let payload = ReplaceKeyPackages { key_packages };
 
     let res = client
-        .post(&format!("/client/{}/key_packages", client_uuid))
+        .post(&format!("/v1/client/{}/key_packages", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&payload)
         .send()

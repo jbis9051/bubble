@@ -4,21 +4,21 @@ use std::env;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use bubble::models::user::User;
-use bubble::router;
+use server::models::user::User;
+use server::router;
 
-use bubble::types::{DbPool, SIGNATURE_SCHEME};
+use server::types::{DbPool, SIGNATURE_SCHEME};
 use sqlx::postgres::PgPoolOptions;
 
 use axum::http::StatusCode;
-use bubble::models::confirmation::Confirmation;
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
 use openmls::prelude::SignatureKeypair;
 use openmls_rust_crypto::OpenMlsRustCrypto;
+use server::models::confirmation::Confirmation;
 
-use bubble::models::session::Session;
-use bubble::services::email::EmailService;
-use bubble::services::email::PrinterEmailService;
+use server::models::session::Session;
+use server::services::email::EmailService;
+use server::services::email::PrinterEmailService;
 
 use common::base64::Base64;
 use common::http_types::{
@@ -70,7 +70,7 @@ pub async fn register(
     user_in: &CreateUser,
 ) -> Result<(User, Uuid), StatusCode> {
     let res = client
-        .post("/user/register")
+        .post("/v1/user/register")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(user_in).unwrap())
         .send()
@@ -91,7 +91,7 @@ pub async fn confirm_user(
     user_in: &User,
 ) -> Result<(User, Uuid), StatusCode> {
     let res = client
-        .patch("/user/confirm")
+        .patch("/v1/user/confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(confirm).unwrap())
         .send()
@@ -106,7 +106,7 @@ pub async fn confirm_user(
 
 pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<Uuid, StatusCode> {
     let res = client
-        .post("/user/session")
+        .post("/v1/user/session")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&login).unwrap())
         .send()
@@ -127,7 +127,7 @@ pub async fn logout(
     };
     let bearer = format!("Bearer {}", token.token);
     let res = client
-        .delete("/user/session")
+        .delete("/v1/user/session")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&token).unwrap())
         .header("Authorization", bearer)
@@ -146,7 +146,7 @@ pub async fn change_email(
 ) -> Result<Uuid, StatusCode> {
     let bearer = format!("Bearer {}", session.token);
     let res = client
-        .post("/user/email")
+        .post("/v1/user/email")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&change).unwrap())
         .header("Authorization", bearer)
@@ -209,7 +209,7 @@ pub async fn create_client(
     };
 
     let res = client
-        .post("/client")
+        .post("/v1/client")
         .header("Authorization", bearer)
         .json(&create_client)
         .send()

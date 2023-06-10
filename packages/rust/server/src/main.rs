@@ -1,8 +1,8 @@
 #[cfg(test)]
-use bubble::services::email::PrinterEmailService;
+use server::services::email::PrinterEmailService;
 #[cfg(not(test))]
-use bubble::services::email::SendGridEmailService;
-use bubble::{config, router};
+use server::services::email::SendGridEmailService;
+use server::{config, router};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 

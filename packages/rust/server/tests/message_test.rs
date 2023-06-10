@@ -31,7 +31,7 @@ async fn test_single_message() {
         client_uuid: client_uuid.to_string(),
     };
     let res = client
-        .get("/message")
+        .get("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bearer.clone())
@@ -46,7 +46,7 @@ async fn test_single_message() {
         message: Base64(testmessage1.as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
         .header("Authorization", bearer.clone())
@@ -56,7 +56,7 @@ async fn test_single_message() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let res = client
-        .get("/message")
+        .get("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bearer.clone())
@@ -92,7 +92,7 @@ async fn test_multiple_messages() {
         message: Base64("test message 1".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message_1).unwrap())
         .header("Authorization", bearer.clone())
@@ -106,7 +106,7 @@ async fn test_multiple_messages() {
         message: Base64("test message 2".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message_2).unwrap())
         .header("Authorization", bearer.clone())
@@ -120,7 +120,7 @@ async fn test_multiple_messages() {
         message: Base64("test message 3".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message_3).unwrap())
         .header("Authorization", bearer.clone())
@@ -133,7 +133,7 @@ async fn test_multiple_messages() {
         client_uuid: client_uuid.to_string(),
     };
     let res = client
-        .get("/message")
+        .get("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bearer.clone())
@@ -173,7 +173,7 @@ async fn test_invalid_uuid() {
         client_uuid: bad_uuid.clone(),
     };
     let res = client
-        .get("/message")
+        .get("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bearer.clone())
@@ -186,7 +186,7 @@ async fn test_invalid_uuid() {
         client_uuid: "bad uuid".to_string(),
     };
     let res = client
-        .get("/message")
+        .get("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bearer.clone())
@@ -200,7 +200,7 @@ async fn test_invalid_uuid() {
         message: Base64("test message".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
         .header("Authorization", bearer.clone())
@@ -214,7 +214,7 @@ async fn test_invalid_uuid() {
         message: Base64("test message".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
         .header("Authorization", bearer.clone())
@@ -228,7 +228,7 @@ async fn test_invalid_uuid() {
         message: Base64("test message".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
         .header("Authorization", bearer.clone())
@@ -242,7 +242,7 @@ async fn test_invalid_uuid() {
         message: Base64("test message".as_bytes().to_vec()),
     };
     let res = client
-        .post("/message")
+        .post("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&message).unwrap())
         .header("Authorization", bearer.clone())
@@ -304,7 +304,7 @@ async fn test_bad_user() {
         client_uuid: client_uuid.to_string(),
     };
     let res = client
-        .get("/message")
+        .get("/v1/message")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&request_messages).unwrap())
         .header("Authorization", bad_bearer.clone())

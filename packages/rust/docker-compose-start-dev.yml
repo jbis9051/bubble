@@ -17,12 +17,16 @@ services:
     depends_on:
       - postgres
   server:
-    build: server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     ports:
       - "${PORT}:3000"
     environment:
       DB_URL: postgres://user:pass@postgres:5432/db
       LISTEN_ADDR: "0.0.0.0:3000"
+      SENDGRID_API_KEY: "${SENDGRID_API_KEY}"
+      SENDER_EMAIL: "${SENDER_EMAIL}"
     depends_on:
       - postgres
       - migrate
