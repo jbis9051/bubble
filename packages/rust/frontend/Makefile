@@ -21,5 +21,3 @@ android-docker:
 	docker build --platform linux/amd64 -t rust-android .
 	docker run --platform linux/amd64 --rm -v $(shell pwd)/../:/home/rust -v $(shell pwd)/../../js/bubble_rust/android/src/main/jniLibs:/home/out rust-android \
     "cargo ndk --platform 23 -t armeabi-v7a -t arm64-v8a -o ../out build --release -v"
-	make set_crate_type CRATE=staticlib
-
