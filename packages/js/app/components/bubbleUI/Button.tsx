@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import {
     TouchableOpacity,
     Text,
@@ -118,6 +118,17 @@ interface StyledButtonProps {
 }
 export default function StyledButton(props: StyledButtonProps) {
     const { variant, loading } = props;
+    const firstUpdate = useRef(true);
+
+    useEffect(() => {
+        if (firstUpdate.current) {
+            firstUpdate.current = false;
+            return;
+        }
+        if (loading) {
+            Haptics.selectionAsync();
+        }
+    }, [loading]);
 
     const onPressHaptic = () => {
         Haptics.selectionAsync();
@@ -142,6 +153,7 @@ interface TextButtonProps {
     nomargin?: boolean;
     fontSize?: number;
     inHeader?: boolean;
+    underlined?: boolean;
 }
 export function TextButton(props: TextButtonProps) {
     const {
@@ -153,6 +165,7 @@ export function TextButton(props: TextButtonProps) {
         nomargin,
         fontSize,
         inHeader,
+        underlined,
     } = props;
 
     let noMarginStyle: typeof style = {};
@@ -187,6 +200,7 @@ export function TextButton(props: TextButtonProps) {
                     style={{
                         fontSize: _fontSize,
                         color: color === 'secondary' ? 'black' : '#007AFF',
+                        textDecorationLine: underlined ? "underline" : undefined,
                     }}
                 >
                     {children}

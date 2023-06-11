@@ -1,6 +1,7 @@
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 
 interface CustomMarkerProps {
     coordinate: LatLng;
@@ -53,26 +54,28 @@ export default function MapScreen() {
                         paddingHorizontal: 10,
                     }}
                 >
-                    <View
-                        style={{
-                            backgroundColor: 'white',
-                            borderRadius: 30,
-                            height: '100%',
-                            width: '100%',
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            paddingHorizontal: 15,
-                            gap: 15,
-                        }}
-                    >
-                        <MaterialCommunityIcons
-                            name="chart-bubble"
-                            size={24}
-                            color="black"
-                        />
-                        <Text>Go Blue's Bubble</Text>
-                    </View>
+                    <Link href="/bubbleListModal" asChild>
+                        <Pressable
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: 30,
+                                height: '100%',
+                                width: '100%',
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                paddingHorizontal: 15,
+                                gap: 15,
+                            }}
+                        >
+                            <MaterialCommunityIcons
+                                name="chart-bubble"
+                                size={24}
+                                color="black"
+                            />
+                            <Text>Go Blue's Bubble</Text>
+                        </Pressable>
+                    </Link>
                 </View>
                 <View
                     style={{

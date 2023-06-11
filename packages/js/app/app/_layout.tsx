@@ -8,10 +8,14 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { Provider as ReduxProvider, useSelector, } from 'react-redux';
+
 import { UserContext, UserLocal, useSession } from '../lib/bubbleApi/user';
 import SignInScreen from '../components/display/SignInComponent';
 import { ThemeContext } from '../lib/Context';
 import Colors from '../constants/Colors';
+import store from '../redux/store';
+import { selectUser } from '../redux/slices/authSlice';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -23,14 +27,14 @@ export const unstable_settings = {
     initialRouteName: '(tabs)',
 };
 
-export default function RootLayout() {
+function RootLayout() {
     const [fontsLoaded, error] = useFonts({
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
-    const { user, loaded: userLoading, setUser } = useSession();
+    const { loaded: userLoading, } = useSession();
+    const user = useSelector(selectUser);
 
-    // Expo Router uses Error Boundaries to catch errors in the navigation tree.
     useEffect(() => {
         if (error) throw error;
     }, [error]);
@@ -41,7 +45,7 @@ export default function RootLayout() {
         <>
             {/* Keep the splash screen open until the assets have loaded. In the future, we should just support async font loading with a native version of font-display. */}
             {!loaded && <SplashScreen />}
-            {loaded && !user && <SignInScreen setUser={setUser} />}
+            {loaded && !user && <SignInScreen />}
             {loaded && user && <RootLayoutNav user={user} />}
         </>
     );
@@ -53,26 +57,32 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
 
     return (
         <>
-            <NavThemeProvider
-                value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-            >
-                <ThemeContext.Provider
-                    value={darkMode ? Colors.dark : Colors.light}
-                >
-                    <UserContext.Provider value={user}>
-                        <Stack>
-                            <Stack.Screen
-                                name="(tabs)"
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen
-                                name="modal"
-                                options={{ presentation: 'modal' }}
-                            />
-                        </Stack>
-                    </UserContext.Provider>
+            <NavThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <ThemeContext.Provider value={darkMode ? Colors.dark : Colors.light}>
+                    <Stack>
+                        <Stack.Screen
+                            name="(tabs)"
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="bubbleListModal"
+                            options={{ presentation: 'modal', title: "Your Bubbles" }}
+                        />
+                        <Stack.Screen
+                            name="bubbleSettingsModal"
+                            options={{ presentation: 'modal', title: "Bubble Settings" }}
+                        />
+                    </Stack>
                 </ThemeContext.Provider>
             </NavThemeProvider>
         </>
     );
+}
+
+export default function WithReduxLayout() {
+    return (
+        <ReduxProvider store={store}>
+            <RootLayout />
+        </ReduxProvider>
+    )
 }

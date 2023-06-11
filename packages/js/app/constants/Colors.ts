@@ -2,8 +2,8 @@ const tintColorLight = '#2f95dc';
 const tintColorDark = '#fff';
 
 const palette = {
-    primary: '#B90E0A', // red
-    secondary: '#DD571C', // orange
+    primary: '#FF6339', // red
+    secondary: '#FF3A66', // orange
     primaryPaper: '#FFFFFF', // white
     secondaryPaper: '#4B4B4B', // dark grey
     grey0: '#F5F8F9', // light grey
