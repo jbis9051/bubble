@@ -6,6 +6,7 @@ mod models;
 mod platform;
 mod promise;
 mod types;
+mod user;
 
 use crate::helper::account_url;
 // export all platform specific functions
