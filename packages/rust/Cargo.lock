@@ -773,6 +773,8 @@ dependencies = [
  "cfg-if",
  "jni",
  "once_cell",
+ "openmls",
+ "openmls_rust_crypto",
  "reqwest",
  "serde",
  "serde_json",
