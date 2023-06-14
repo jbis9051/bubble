@@ -1,4 +1,4 @@
 pub mod email;
-pub mod leaky;
+pub mod token;
 pub mod password;
 pub mod session;
