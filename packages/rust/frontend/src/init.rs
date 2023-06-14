@@ -91,11 +91,13 @@ pub async fn init_async(data_directory: &str) -> Result<(), Error> {
             .await?;
 
         let bearer = AccountKv::get(&account_database, "bearer").await?;
+        let domain = AccountKv::get(&account_database, "domain").await?;
 
         if let Some(bearer) = bearer {
             let mut write = crate::GLOBAL_ACCOUNT_DATA.write().await;
             *write = Some(GlobalAccountData {
                 bearer: RwLock::new(bearer),
+                domain: domain.unwrap_or_default(),
                 database: account_database,
             });
             drop(write);

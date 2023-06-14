@@ -1,11 +1,13 @@
 mod call;
 mod export_macro;
-mod init;
+mod helper;
+pub mod init;
 mod models;
 mod platform;
 mod promise;
 mod types;
 
+use crate::helper::account_url;
 // export all platform specific functions
 pub use platform::export::*;
 
@@ -45,6 +47,7 @@ pub struct GlobalStaticData {
 #[derive(Debug)]
 pub struct GlobalAccountData {
     pub bearer: RwLock<String>,
+    pub domain: String,
     pub database: SqlitePool,
 }
 
@@ -54,7 +57,7 @@ pub static GLOBAL_ACCOUNT_DATA: Lazy<RwLock<Option<GlobalAccountData>>> =
     Lazy::new(|| RwLock::new(None));
 
 pub async fn foo(_abc: String) -> Result<(), ()> {
-    let abc = reqwest::get("bubble.whatever/user/register")
+    let abc = reqwest::get(account_url("/user/register").await)
         .await
         .unwrap()
         .text()
