@@ -1,7 +1,9 @@
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentGroup } from '../../redux/slices/groupSlice';
 
 interface CustomMarkerProps {
     coordinate: LatLng;
@@ -31,6 +33,8 @@ function CustomMarker(props: CustomMarkerProps) {
 }
 
 export default function MapScreen() {
+    const activeGroup = useSelector(selectCurrentGroup);
+
     return (
         <View>
             <MapView style={styles.map}>
@@ -55,7 +59,7 @@ export default function MapScreen() {
                     }}
                 >
                     <Link href="/bubbleListModal" asChild>
-                        <Pressable
+                        <TouchableOpacity
                             style={{
                                 backgroundColor: 'white',
                                 borderRadius: 30,
@@ -73,8 +77,8 @@ export default function MapScreen() {
                                 size={24}
                                 color="black"
                             />
-                            <Text>Go Blue's Bubble</Text>
-                        </Pressable>
+                            <Text numberOfLines={1} style={{ width: "85%" }}>{activeGroup?.name}</Text>
+                        </TouchableOpacity>
                     </Link>
                 </View>
                 <View

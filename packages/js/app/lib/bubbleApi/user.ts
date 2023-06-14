@@ -21,8 +21,8 @@ export class UserService {
     static async forgot(email: string) {}
 
     static async retrieveSession(): Promise<UserLocal | null> {
-        // return { name: 'test' };
-        return null;
+        return { name: 'test' };
+        // return null;
     }
 }
 

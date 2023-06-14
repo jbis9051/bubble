@@ -16,6 +16,7 @@ import { ThemeContext } from '../lib/Context';
 import Colors from '../constants/Colors';
 import store from '../redux/store';
 import { selectUser } from '../redux/slices/authSlice';
+import { useGroups } from '../lib/bubbleApi/group';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -33,13 +34,14 @@ function RootLayout() {
         ...FontAwesome.font,
     });
     const { loaded: userLoading, } = useSession();
+    const { loaded: groupsLoaded } = useGroups();
     const user = useSelector(selectUser);
 
     useEffect(() => {
         if (error) throw error;
     }, [error]);
 
-    const loaded = userLoading && fontsLoaded;
+    const loaded = userLoading && fontsLoaded && groupsLoaded;
 
     return (
         <>
