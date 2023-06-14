@@ -1,8 +1,7 @@
 use sqlx::types::Uuid;
 
 use openmls::prelude::*;
-use openmls_rust_crypto::{OpenMlsRustCrypto};
-
+use openmls_rust_crypto::OpenMlsRustCrypto;
 
 pub async fn create_group(clients: Vec<Uuid>) -> Result<(), ()> {
     Ok(())
