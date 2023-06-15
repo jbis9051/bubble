@@ -22,8 +22,9 @@ pub async fn register(username: String, password: String, name: String) {
         .bind(&user_uuid)
         .fetch_one(db)
         .await
-        .unwrap();
-    let user_id = user_id.get::<i32, _>("id");
+        .unwrap()
+        .get::<i32, _>("id");
+
     // signing_key from client?
     sqlx::query(
         "INSERT INTO client (uuid, user_id, signing_key, validated_date) VALUES ($1, $2, $3, $4)",
@@ -35,6 +36,11 @@ pub async fn register(username: String, password: String, name: String) {
     .execute(db)
     .await
     .unwrap();
+
+    //maybe we need user_data??????
+    let _user_data = GlobalKv::get(db, &format!("user:{}", user_id))
+        .await
+        .unwrap();
 }
 
 pub async fn login(username: String, _password: String) {
@@ -44,16 +50,28 @@ pub async fn login(username: String, _password: String) {
         .fetch_one(db)
         .await
         .unwrap();
+    let _real_password = sqlx::query("SELECT password FROM user WHERE identity = $1")
+        .bind(&username)
+        .fetch_one(db)
+        .await
+        .unwrap();
+    // if _password == _real_password {
+    //     //verify password somehow????? Idk how rn I'm tired I have to wake up 6am fuckkkkkkk
+    // }
 }
 
 pub async fn logout() {
-    GlobalKv::delete(crate::GLOBAL_DATABASE.get().unwrap(), "current_account")
-        .await
-        .unwrap();
+    let db = crate::GLOBAL_DATABASE.get().unwrap();
+
+    GlobalKv::delete(db, "current_account").await.unwrap();
 }
 
 pub async fn forgot(_email: String) {
     //?
+    let db = crate::GLOBAL_DATABASE.get().unwrap();
+
+    GlobalKv::set(db, "forgot_email", &_email).await.unwrap();
+
     let _response = reqwest::get("accounts/user/forgot")
         .await
         .unwrap()
