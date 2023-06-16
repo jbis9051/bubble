@@ -116,3 +116,8 @@ pub struct PublicClient {
 pub struct ClientsResponse {
     pub clients: Vec<PublicClient>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct RegisteredClientsResponse {
+    pub uuid: String,
+}
