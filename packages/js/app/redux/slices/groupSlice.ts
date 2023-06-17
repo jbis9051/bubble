@@ -18,7 +18,7 @@ export const authSlice = createSlice({
     reducers: {
         setGroups: (state, action) => {
             state.status = 'fulfilled';
-            if (action.payload.length > 0) {
+            if (action.payload.length > 0 && (!state.activeGroupUuid || !state.ids.includes(state.activeGroupUuid))) {
                 state.activeGroupUuid = action.payload[0].uuid;
             }
             groupsAdapter.setAll(state, action.payload);

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LoggingService } from './logging';
 import { useDispatch } from 'react-redux';
 import { setAuth } from '../../redux/slices/authSlice';
+import { uuid } from './group';
 
 export class UserService {
     // static async signup({ email, username, password, name }:
@@ -21,13 +22,14 @@ export class UserService {
     static async forgot(email: string) {}
 
     static async retrieveSession(): Promise<UserLocal | null> {
-        return { name: 'test' };
+        return { name: 'test', user_uuid: 'user-uuid-1' };
         // return null;
     }
 }
 
 export interface UserLocal {
     name: string;
+    user_uuid: uuid;
 }
 
 export function useSession() {

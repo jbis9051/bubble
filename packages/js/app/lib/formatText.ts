@@ -2,7 +2,7 @@
 
 export function summarizeNames(names: string[]): string {
     const length = names.length;
-    names.sort();
+    [...names].sort();
 
     switch (length) {
         case 0:

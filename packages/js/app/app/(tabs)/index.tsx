@@ -58,7 +58,7 @@ export default function MapScreen() {
                         paddingHorizontal: 10,
                     }}
                 >
-                    <Link href="/bubbleListModal" asChild>
+                    <Link href="/allGroupsModal" asChild>
                         <TouchableOpacity
                             style={{
                                 backgroundColor: 'white',
@@ -88,19 +88,21 @@ export default function MapScreen() {
                         paddingHorizontal: 12,
                     }}
                 >
-                    <View
-                        style={{
-                            backgroundColor: 'white',
-                            borderRadius: 9999,
-                            width: '100%',
-                            aspectRatio: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <Ionicons name="settings" size={24} color="black" />
-                    </View>
+                    <Link href="/groupSettingsModal" asChild>
+                        <TouchableOpacity
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: 9999,
+                                width: '100%',
+                                aspectRatio: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Ionicons name="settings" size={24} color="black" />
+                        </TouchableOpacity>
+                    </Link>
                 </View>
             </SafeAreaView>
         </View>

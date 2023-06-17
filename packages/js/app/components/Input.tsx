@@ -19,7 +19,7 @@ import { Feather, FontAwesome } from '@expo/vector-icons';
 import { layoutDefaults } from '../constants/Layout';
 import { ThemeContext } from '../lib/Context';
 import StyledText from './StyledText';
-import { Loading } from './display/Loading';
+import { Loading } from './Loading';
 
 interface TextInputProps {
     value: string;

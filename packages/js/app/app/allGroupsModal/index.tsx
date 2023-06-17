@@ -1,17 +1,15 @@
 import { StatusBar } from 'expo-status-bar';
 import { FlatList, Platform, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, View } from '../components/Themed';
+import { Text, View } from '../../components/Themed';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectGroups, setActiveGroup } from '../redux/slices/groupSlice';
+import { selectCurrentGroup, selectGroups, setActiveGroup } from '../../redux/slices/groupSlice';
 import { useContext, useEffect } from 'react';
-import { Group } from '../lib/bubbleApi/group';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ThemeContext } from '../lib/Context';
-import StyledText from '../components/StyledText';
+import { Group } from '../../lib/bubbleApi/group';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { ThemeContext } from '../../lib/Context';
+import StyledText from '../../components/StyledText';
 import { useNavigation } from 'expo-router';
-import { summarizeNames } from '../lib/formatText';
-
-const NEW_UUID = 'new';
+import { summarizeNames } from '../../lib/formatText';
 
 function BubbleDisplay({
   group,
@@ -24,10 +22,9 @@ function BubbleDisplay({
 
   const handleSetActive = () => {
     navigation.goBack();
-    dispatch(setActiveGroup(group.uuid))
+    dispatch(setActiveGroup(group.uuid));
   }
 
-  const isNewButton = group.uuid === NEW_UUID;
 
   return (
     <TouchableOpacity
@@ -40,19 +37,11 @@ function BubbleDisplay({
       }}
       onPress={handleSetActive}
     >
-      {isNewButton ? (
-        <MaterialCommunityIcons
-          name="plus-circle"
-          size={48}
-          color={theme.colors.secondary}
-        />
-      ) : (
-        <MaterialCommunityIcons
-          name="chart-bubble"
-          size={48}
-          color="black"
-        />
-      )}
+      <MaterialCommunityIcons
+        name="chart-bubble"
+        size={48}
+        color="black"
+      />
       <View style={{
         display: 'flex',
         flexDirection: 'column',
@@ -69,14 +58,30 @@ function BubbleDisplay({
 
 export default function BubbleListModal() {
   const groups = useSelector(selectGroups);
+  const currentGroup = useSelector(selectCurrentGroup);
   const theme = useContext(ThemeContext);
+
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => {
+          // @ts-ignore
+          navigation.navigate('allGroupsModal', { screen: 'newGroup' });
+        }}>
+          <Ionicons name="ios-add-sharp" size={24} color="black" />
+        </TouchableOpacity>
+      )
+    })
+  }, []);
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={[...groups, { uuid: NEW_UUID, name: 'Create New Bubble', members: [] }]}
+        data={groups}
         renderItem={({ item, index }) => (
-          <View style={[(index % 2 === (groups.length % 2 === 1 ? 1 : 0)) ? ({
+          <View style={[(index % 2 === (groups.length % 2 === 1 ? 0 : 1)) ? ({
             borderTopColor: theme.colors.secondaryPaper,
             borderTopWidth: 1,
             borderBottomColor: theme.colors.secondaryPaper,
@@ -85,9 +90,6 @@ export default function BubbleListModal() {
           }) : undefined]}>
             <BubbleDisplay group={item} />
           </View>
-        )}
-        ListFooterComponent={() => (
-          <></>
         )}
       />
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />

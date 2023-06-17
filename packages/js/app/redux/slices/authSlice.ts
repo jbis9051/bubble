@@ -9,9 +9,7 @@ export const authSlice = createSlice({
     },
     reducers: {
         setAuth: (state, action) => {
-            // eslint-disable-next-line no-param-reassign
             state.status = 'fulfilled';
-            // eslint-disable-next-line no-param-reassign
             state.user = action.payload;
         },
     },

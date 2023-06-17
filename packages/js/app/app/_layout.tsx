@@ -5,7 +5,7 @@ import {
     ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
+import { SplashScreen, Stack, } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { Provider as ReduxProvider, useSelector, } from 'react-redux';
@@ -17,6 +17,7 @@ import Colors from '../constants/Colors';
 import store from '../redux/store';
 import { selectUser } from '../redux/slices/authSlice';
 import { useGroups } from '../lib/bubbleApi/group';
+import { AndroidPromptProvider } from '../components/PromptProvider';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -61,18 +62,19 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
         <>
             <NavThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                 <ThemeContext.Provider value={darkMode ? Colors.dark : Colors.light}>
+                    <AndroidPromptProvider />
                     <Stack>
                         <Stack.Screen
                             name="(tabs)"
                             options={{ headerShown: false }}
                         />
                         <Stack.Screen
-                            name="bubbleListModal"
-                            options={{ presentation: 'modal', title: "Your Bubbles" }}
+                            name="allGroupsModal"
+                            options={{ presentation: 'modal', headerShown: false, }}
                         />
                         <Stack.Screen
-                            name="bubbleSettingsModal"
-                            options={{ presentation: 'modal', title: "Bubble Settings" }}
+                            name="groupSettingsModal"
+                            options={{ presentation: 'modal', headerShown: false, }}
                         />
                     </Stack>
                 </ThemeContext.Provider>
