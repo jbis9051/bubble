@@ -4,6 +4,14 @@ use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::ops::Deref;
 
+pub fn deserialize(data: &str) -> Vec<u8> {
+    general_purpose::STANDARD.decode(data).unwrap()
+}
+
+pub fn serialize(data: &[u8]) -> String {
+    general_purpose::STANDARD.encode(data)
+}
+
 // https://users.rust-lang.org/t/serialize-a-vec-u8-to-json-as-base64/57781/5
 pub struct Base64(pub Vec<u8>);
 

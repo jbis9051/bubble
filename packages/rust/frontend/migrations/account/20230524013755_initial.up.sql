@@ -40,7 +40,8 @@ CREATE TABLE kv (
 
 CREATE TABLE keystore (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    "key" TEXT NOT NULL UNIQUE,
-    value TEXT NOT NULL UNIQUE,
+    "key" BLOB NOT NULL UNIQUE,
+    value BLOB NOT NULL UNIQUE,
+    type_name  TEXT NOT NULL,
     created_date INTEGER NOT NULL
 );

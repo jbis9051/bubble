@@ -4,7 +4,7 @@ use crate::{Error, GlobalAccountData};
 use common::base64::Base64;
 use common::http_types::{CreateUser, RegisteredClientsResponse};
 use ed25519_dalek::Keypair;
-use rand_core_2::OsRng;
+use rand_core::OsRng;
 
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::types::{chrono, Uuid};
