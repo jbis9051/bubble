@@ -6,6 +6,7 @@ import EditScreenInfo from '../../components/EditScreenInfo';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface CurrentBubbleDisplayProps {}
+
 function CurrentBubbleDisplay(props: CurrentBubbleDisplayProps) {
     // eslint-disable-next-line no-empty-pattern
     const {} = props;
@@ -37,6 +38,7 @@ function CurrentBubbleDisplay(props: CurrentBubbleDisplayProps) {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface BubbleSettingsProps {}
+
 function BubbleSettings(props: BubbleSettingsProps) {
     // eslint-disable-next-line no-empty-pattern
     const {} = props;
@@ -64,6 +66,7 @@ interface CustomMarkerProps {
     onPress?: () => void;
     photoUrl?: string; // if there, is a photoUrl, display it. Otherwise, display initials
 }
+
 function CustomMarker(props: CustomMarkerProps) {
     const { coordinate, onPress } = props;
 

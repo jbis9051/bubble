@@ -1,3 +1,4 @@
 **/build
 **/Pods
 **/.expo
+bubble_rust/src/gen.ts

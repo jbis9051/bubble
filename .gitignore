@@ -4,3 +4,6 @@
 **/target/
 **/.DS_Store
 **/index.node
+packages/js/bubble_rust/rust/*
+packages/js/bubble_rust/android/src/main/jniLibs
+**/local.properties
