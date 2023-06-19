@@ -49,3 +49,7 @@ pub async fn create_group() -> Result<Uuid, ()> {
     group.save(&mls_provider).unwrap();
     Ok(uuid)
 }
+
+pub async fn add_member(_group_uuid: Uuid, _user: Uuid) -> Result<(), ()> {
+    todo!()
+}
