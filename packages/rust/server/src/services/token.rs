@@ -1,67 +1,140 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::{Duration, Instant};
 
-struct Limiters {
-    id: str,
-    isDynamic: bool,
-    
+use std::sync::{Mutex};
 
-} // TODO: ADD SIGNAL CONFIGS
+use std::time::{Instant};
 
-pub struct Service {
-    name: String,
-    rate_limiter: Arc<TokenBucket>,
+pub struct LimiterConfig<'a> {
+    name: &'a str,
+    size: usize,
+    rate: f64,
 }
 
-pub trait Actions {
-    fn forward(&self, pings: i64);
-    fn queue(&self, pings: i64);
+#[non_exhaustive]
+struct Configs;
+
+impl Configs {
+    pub const MESSAGES: LimiterConfig<'_> = LimiterConfig {
+        name: "messages",
+        size: 60,
+        rate: 60.0 / 0.017,
+    };
+    pub const CLIENT_CREATE: LimiterConfig<'_> = LimiterConfig {
+        name: "messages",
+        size: 2,
+        rate: 1.0,
+    };
+    pub const CLIENT_UPDATE: LimiterConfig<'_> = LimiterConfig {
+        name: "messages",
+        size: 4,
+        rate: 2.0,
+    };
+    pub const CLIENT_DELETE: LimiterConfig<'_> = LimiterConfig {
+        name: "messages",
+        size: 2,
+        rate: 1.0,
+    };
+
+    pub const USER_REGISTRATION: LimiterConfig<'_> = LimiterConfig {
+        name: "registration",
+        size: 6,
+        rate: 12.0,
+    };
+    pub const USER_CONFIRM_REGISTRATION: LimiterConfig<'_> = LimiterConfig {
+        name: "confirm_registration",
+        size: 5,
+        rate: 10.0,
+    };
+    pub const USER_LOGIN_ATTEMPT: LimiterConfig<'_> = LimiterConfig {
+        name: "login",
+        size: 10,
+        rate: 10.0 / 144.0,
+    };
+    pub const USER_FORGOT_PASSWORD: LimiterConfig<'_> = LimiterConfig {
+        name: "forgot",
+        size: 10,
+        rate: 10.0 / 144.0,
+    };
+    pub const USER_CHANGE_EMAIL: LimiterConfig<'_> = LimiterConfig {
+        name: "change",
+        size: 6,
+        rate: 6.0 / 10.0,
+    };
+    pub const USER_DELETE_USER: LimiterConfig<'_> = LimiterConfig {
+        name: "delete_user",
+        size: 6,
+        rate: 6.0 / 10.0,
+    };
+}
+
+pub struct Bucket {
+    capacity: usize,
+    refill_rate: f64,
+    last_refill_time: Instant,
+    current_tokens: usize,
+}
+
+impl Bucket {
+    fn new(capacity: usize, refill_rate: f64) -> Bucket {
+        Bucket {
+            capacity,
+            refill_rate,
+            current_tokens: 0,
+            last_refill_time: Instant::now(),
+        }
+    }
 }
 
 pub struct TokenBucket {
-    capacity: usize,
-    refill_rate: usize,
-    last_refill_time: Instant,
-    buckets: Mutex<HashMap<String, usize>>, // todo map to limiter config
+    buckets: Mutex<HashMap<String, Bucket>>,
 }
 
 impl TokenBucket {
-    fn new(capacity: usize, refill_rate: usize) -> TokenBucket {
+    fn new() -> TokenBucket {
         TokenBucket {
-            capacity,
-            refill_rate,
-            last_refill_time: Instant::now(),
             buckets: Mutex::new(HashMap::new()),
         }
     }
 
-    fn update(&self, buckets: &mut HashMap<String, usize>) {
-        let now = Instant::now();
-        let elapsed = now.duration_since(self.last_refill_time);
-        let tokens_to_add = (elapsed.as_secs_f64() * self.refill_rate as f64) as usize;
-        if tokens_to_add > 0 {
-            for (_, tokens) in buckets.iter_mut() {
-                *tokens = std::cmp::min(self.capacity, *tokens + tokens_to_add);
-            }
-            self.last_refill_time = now;
+    fn add_bucket(&self, capacity: usize, refill_rate: f64, name: &str) {
+        self.buckets
+            .lock()
+            .unwrap()
+            .insert(name.to_string(), Bucket::new(capacity, refill_rate));
+    }
+
+    fn seed_buckets(&self, configs: &[LimiterConfig]) {
+        for config in configs {
+            self.add_bucket(config.size, config.rate, config.name);
         }
     }
 
-    fn handle(&self, service: &str, num_tokens: usize) -> bool {
+    fn update(&self, to_update: &str) {
         let mut buckets = self.buckets.lock().unwrap();
-        self.update(&mut buckets);
-        let tokens_in_bucket = *buckets.get(service).unwrap_or(&0);
+        let mut bucket = buckets.get_mut(to_update).unwrap();
+        let now = Instant::now();
+        let elapsed = now.duration_since(bucket.last_refill_time);
+
+        let tokens_to_add =
+            (elapsed.as_secs_f64() * bucket.refill_rate / 1000000000.0) as usize;
+        if tokens_to_add > 0 {
+            bucket.current_tokens =
+                std::cmp::min(bucket.capacity, bucket.current_tokens + tokens_to_add);
+            bucket.last_refill_time = now;
+        }
+    }
+
+    fn handle(&self, num_tokens: usize, to_update: &str) -> bool {
+        let mut buckets = self.buckets.lock().unwrap();
+        let mut bucket = buckets.get_mut(to_update).unwrap();
+        self.update(to_update);
+
+        let tokens_in_bucket = bucket.current_tokens;
         if tokens_in_bucket >= num_tokens {
-            buckets.insert(service.to_string(), tokens_in_bucket - num_tokens);
+            bucket.current_tokens -= num_tokens;
             true
         } else {
             false
         }
     }
-
-
-
-
 }
