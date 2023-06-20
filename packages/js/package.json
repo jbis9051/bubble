@@ -1,9 +1,10 @@
 {
-    "name": "@life256/life256",
+    "name": "@bubble/bubble",
     "version": "0.0.0",
     "private": true,
     "workspaces": [
-        "app"
+        "app",
+        "bubble_rust"
     ],
     "scripts": {
         "lint": "eslint . --ext '.ts,.tsx' ",
@@ -11,6 +12,7 @@
         "prettier": "prettier --check .",
         "prettier:fix": "prettier --write --check .",
         "fix": "yarn run prettier:fix && yarn run lint:fix && yarn run prettier:fix",
+        "lint:check": "yarn run prettier",
         "build": "lerna run build --stream",
         "build:ci": "yarn run build"
     },
