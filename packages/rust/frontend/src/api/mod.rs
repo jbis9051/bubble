@@ -1,4 +1,5 @@
 mod client;
+mod message;
 mod user;
 
 pub struct BubbleApi {

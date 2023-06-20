@@ -7,7 +7,7 @@ function leave_group(group_uuid: uuid){}
  */
 
 use crate::api::BubbleApi;
-use crate::helper::get_user_with_cache_check;
+use crate::helper::{get_group_members, get_user_with_cache_check};
 use crate::mls_provider::MlsProvider;
 use crate::models::kv::Kv;
 use crate::types::SIGNATURE_SCHEME;
@@ -18,7 +18,8 @@ use ed25519_dalek::{PublicKey, Signature};
 use openmls::credentials::CredentialType;
 use openmls::group::MlsGroup;
 use openmls::prelude::{
-    Credential, CredentialWithKey, GroupId, MlsGroupConfig, SignaturePublicKey,
+    Credential, CredentialWithKey, GroupId, InnerState, MlsGroupConfig, SignaturePublicKey,
+    TlsSerializeTrait,
 };
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
@@ -94,13 +95,31 @@ pub async fn add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
         }
     }
     let mut key_packages = Vec::with_capacity(clients.len());
+    let mut client_uuids = Vec::with_capacity(clients.len());
     for client in &clients {
         let client_uuid = Uuid::from_str(&client.uuid).unwrap();
+        client_uuids.push(client_uuid);
         let key_package = api.request_key_package(&client_uuid).await.unwrap();
         key_packages.push(key_package);
     }
-    let (_mls_message_out, _welcome_out, _group_info) = group
+    let old_members = get_group_members(&group);
+    let (mls_message_out, welcome_out, _group_info) = group
         .add_members(&mls_provider, &signature, &key_packages)
+        .unwrap(); // TODO what happens if we add a member that is already in the group?
+    let mls_message_out = mls_message_out.tls_serialize_detached().unwrap();
+    let welcome_out = welcome_out.tls_serialize_detached().unwrap();
+
+    // we send the welcome message to the new members first, because if it fails, it's easier to recover from
+
+    api.send_message(&client_uuids, welcome_out).await.unwrap();
+    api.send_message(&old_members, mls_message_out)
+        .await
         .unwrap();
-    todo!()
+
+    if matches!(group.state_changed(), InnerState::Changed) {
+        // it certainly did but we check anyway
+        group.save(&mls_provider).unwrap();
+    }
+
+    Ok(())
 }
