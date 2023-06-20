@@ -1,4 +1,3 @@
-use crate::helper::account_url;
 use crate::models::kv::{AccountKv, GlobalKv};
 use crate::{Error, GlobalAccountData};
 use common::base64::Base64;
@@ -32,9 +31,9 @@ pub async fn register(
     let account_key = Keypair::generate(&mut csprng);
 
     // api request
-    let path = "/v1/user/register";
-    let url = account_url(path).await;
-
+    let _path = "/v1/user/register";
+    // let url = account_url(path).await;
+    let url = "".to_string();
     let created_user = CreateUser {
         email: email.clone(),
         username: username.clone(),
