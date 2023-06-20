@@ -19,20 +19,22 @@ use openmls::prelude::{
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 use uuid::Uuid;
+use crate::Error;
 
 pub async fn create_group() -> Result<Uuid, ()> {
-    let global = GLOBAL_ACCOUNT_DATA.read().await;
-    let account_db = &global.as_ref().unwrap().database;
+    let global = &GLOBAL_ACCOUNT_DATA.read().await;
+    let account_db = &global.as_ref().ok_or_else(|| Error::TestingError)?.database;
+
     let mls_provider = MlsProvider::new(account_db.clone());
     let client_public = base64::deserialize(
         &Kv::get(account_db, "client_public_signature_key")
             .await
-            .unwrap()
-            .unwrap(),
+            .map_err(|| Error::TestingError)?
+            .ok_or_else(|| Error::TestingError)?,
     );
     let signature =
-        SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME).unwrap();
-    let credential = Credential::new(b"".to_vec(), CredentialType::Basic).unwrap();
+        SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME).ok_or_else(|| Error::TestingError);
+    let credential = Credential::new(client_public, CredentialType::Basic).map_err(|| Error::TestingError)?;
     let credential_with_key = CredentialWithKey {
         credential,
         signature_key: SignaturePublicKey::from(signature.public()),
@@ -45,8 +47,8 @@ pub async fn create_group() -> Result<Uuid, ()> {
         GroupId::from_slice((uuid).as_ref()),
         credential_with_key,
     )
-    .unwrap();
-    group.save(&mls_provider).unwrap();
+    .map_err(|| Error::TestingError)?;
+    group.save(&mls_provider).map_err(|| Error::TestingError)?;
     Ok(uuid)
 }
 

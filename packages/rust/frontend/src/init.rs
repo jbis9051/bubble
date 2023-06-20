@@ -54,10 +54,9 @@ pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error>
 
     GLOBAL_STATIC_DATA
         .set(global_data)
-        .map(|_| ())
         .map_err(|_| Error::GlobalAlreadyInitialized)?;
 
-    promise.resolve(json!({"status": true, "value": null}).to_string().as_str());
+    promise.resolve(&json!({"status": true, "value": null}).to_string());
 
     Ok(())
 }

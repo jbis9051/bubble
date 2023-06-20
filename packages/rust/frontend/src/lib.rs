@@ -32,6 +32,8 @@ pub enum Error {
     SqlxMigrate(#[from] sqlx::migrate::MigrateError),
     #[error("global oneshot initialized, you probably called init twice")]
     GlobalAlreadyInitialized,
+    #[error("don't know what to return for this error yet")]
+    TestingError,
 }
 
 impl Serialize for Error {
