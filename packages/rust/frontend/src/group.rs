@@ -9,6 +9,7 @@ function leave_group(group_uuid: uuid){}
 use crate::mls_provider::MlsProvider;
 use crate::models::kv::Kv;
 use crate::types::SIGNATURE_SCHEME;
+use crate::Error;
 use crate::GLOBAL_ACCOUNT_DATA;
 use common::base64;
 use openmls::credentials::CredentialType;
@@ -19,9 +20,8 @@ use openmls::prelude::{
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 use uuid::Uuid;
-use crate::Error;
 
-pub async fn create_group() -> Result<Uuid, ()> {
+pub async fn create_group() -> Result<Uuid, Error> {
     let global = &GLOBAL_ACCOUNT_DATA.read().await;
     let account_db = &global.as_ref().ok_or_else(|| Error::TestingError)?.database;
 
@@ -29,12 +29,14 @@ pub async fn create_group() -> Result<Uuid, ()> {
     let client_public = base64::deserialize(
         &Kv::get(account_db, "client_public_signature_key")
             .await
-            .map_err(|| Error::TestingError)?
+            .map_err(|_| Error::TestingError)?
             .ok_or_else(|| Error::TestingError)?,
     );
     let signature =
-        SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME).ok_or_else(|| Error::TestingError);
-    let credential = Credential::new(client_public, CredentialType::Basic).map_err(|| Error::TestingError)?;
+        SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME)
+            .ok_or_else(|| Error::TestingError)?;
+    let credential =
+        Credential::new(client_public, CredentialType::Basic).map_err(|_| Error::TestingError)?;
     let credential_with_key = CredentialWithKey {
         credential,
         signature_key: SignaturePublicKey::from(signature.public()),
@@ -47,8 +49,8 @@ pub async fn create_group() -> Result<Uuid, ()> {
         GroupId::from_slice((uuid).as_ref()),
         credential_with_key,
     )
-    .map_err(|| Error::TestingError)?;
-    group.save(&mls_provider).map_err(|| Error::TestingError)?;
+    .map_err(|_| Error::TestingError)?;
+    group.save(&mls_provider).map_err(|_| Error::TestingError)?;
     Ok(uuid)
 }
 
