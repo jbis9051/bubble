@@ -58,7 +58,6 @@ function BubbleDisplay({
 
 export default function BubbleListModal() {
   const groups = useSelector(selectGroups);
-  const currentGroup = useSelector(selectCurrentGroup);
   const theme = useContext(ThemeContext);
 
   const navigation = useNavigation();

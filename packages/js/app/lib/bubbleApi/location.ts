@@ -28,6 +28,6 @@ export class MapService {
 
 export interface IUserLocation {
     coordinate: LatLng;
-    userInfo: number;
+    userInfo: uuid;
 }
 type uuid = string;

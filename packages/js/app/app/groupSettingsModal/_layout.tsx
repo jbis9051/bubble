@@ -20,7 +20,7 @@ export default function GroupListModalLayout() {
             />
             <Stack.Screen
                 name="memberDisplay"
-                options={{ presentation: "card", title: "View Member" }}
+                options={{ presentation: "card", title: "Group Member" }}
             />
         </Stack>
     );
