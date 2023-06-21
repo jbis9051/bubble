@@ -171,7 +171,7 @@ impl Service {
 }
 
 #[test]
-fn test_token_bucket() { // TODO FIX ISSUES WITH MOVE AND ARC
+fn test_token_bucket() {
     let token_bucket = Arc::new(TokenBucket::new());
 
     // Seed the token bucket with predefined configurations
