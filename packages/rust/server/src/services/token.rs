@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
-use std::sync::{Mutex};
+use std::sync::{Arc, Mutex};
 
-use std::time::{Instant};
+use std::thread;
+
+use std::time::{Duration, Instant};
 
 pub struct LimiterConfig<'a> {
     name: &'a str,
@@ -115,8 +117,7 @@ impl TokenBucket {
         let now = Instant::now();
         let elapsed = now.duration_since(bucket.last_refill_time);
 
-        let tokens_to_add =
-            (elapsed.as_secs_f64() * bucket.refill_rate / 1000000000.0) as usize;
+        let tokens_to_add = (elapsed.as_secs_f64() * bucket.refill_rate) as usize;
         if tokens_to_add > 0 {
             bucket.current_tokens =
                 std::cmp::min(bucket.capacity, bucket.current_tokens + tokens_to_add);
@@ -136,5 +137,92 @@ impl TokenBucket {
         } else {
             false
         }
+    }
+}
+
+#[derive(Clone)]
+struct Service {
+    name: String,
+    token_bucket: Arc<TokenBucket>,
+}
+
+impl Service {
+    fn new(name: String, token_bucket: Arc<TokenBucket>) -> Service {
+        Service { name, token_bucket }
+    }
+
+    fn handle_request(&self, num_tokens: usize) {
+        if self.token_bucket.handle(num_tokens, &self.name) {
+            println!(
+                "Request handled by {}: {:?}",
+                self.name,
+                thread::current().id()
+            );
+        } else {
+            println!(
+                "Rate limit exceeded for {}: {:?}",
+                self.name,
+                thread::current().id()
+            );
+        }
+    }
+}
+
+#[test]
+fn test_token_bucket() { // TODO FIX ISSUES WITH MOVE AND ARC
+    let token_bucket = Arc::new(TokenBucket::new());
+
+    // Seed the token bucket with predefined configurations
+    let configs = [
+        Configs::MESSAGES,
+        Configs::CLIENT_CREATE,
+        Configs::CLIENT_UPDATE,
+        Configs::CLIENT_DELETE,
+        Configs::USER_REGISTRATION,
+        Configs::USER_CONFIRM_REGISTRATION,
+        Configs::USER_LOGIN_ATTEMPT,
+        Configs::USER_FORGOT_PASSWORD,
+        Configs::USER_CHANGE_EMAIL,
+        Configs::USER_DELETE_USER,
+    ];
+    token_bucket.seed_buckets(&configs);
+
+    // Create service instances
+    let messages_service = Service::new("messages".to_string(), token_bucket.clone());
+    let registration_service = Service::new("registration".to_string(), token_bucket.clone());
+
+    // Perform requests to the services
+    for _ in 0..10 {
+        // Handle requests for the "messages" service
+        thread::spawn(move || {
+            messages_service.handle_request(1);
+        });
+
+        // Handle requests for the "registration" service
+        thread::spawn(move || {
+            registration_service.handle_request(1);
+        });
+
+        // Sleep for a short duration between requests
+        thread::sleep(Duration::from_millis(100));
+    }
+
+    // Sleep for a longer duration to allow token refilling
+    thread::sleep(Duration::from_secs(2));
+
+    // Perform more requests after token refilling
+    for _ in 0..5 {
+        // Handle requests for the "messages" service
+        thread::spawn(move || {
+            messages_service.handle_request(1);
+        });
+
+        // Handle requests for the "registration" service
+        thread::spawn(move || {
+            registration_service.handle_request(1);
+        });
+
+        // Sleep for a short duration between requests
+        thread::sleep(Duration::from_millis(100));
     }
 }
