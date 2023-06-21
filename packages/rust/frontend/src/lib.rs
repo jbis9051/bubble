@@ -1,4 +1,5 @@
 mod api;
+mod bubble_group;
 mod call;
 mod export_macro;
 mod group;
