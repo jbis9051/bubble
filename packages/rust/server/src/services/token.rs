@@ -156,14 +156,16 @@ impl Service {
     fn handle_request(&self, num_tokens: usize, bucket_to_handle: &str) {
         if self.token_bucket.handle(num_tokens, bucket_to_handle) {
             println!(
-                "Request handled by {}: {:?}",
+                "Request handled by service {} for configuration {}: {:?}",
                 self.name,
+                bucket_to_handle,
                 thread::current().id()
             );
         } else {
             println!(
-                "Rate limit exceeded for {}: {:?}",
+                "Rate limit exceeded by service {} for configuration {}: {:?}",
                 self.name,
+                bucket_to_handle,
                 thread::current().id()
             );
         }
