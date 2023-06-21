@@ -69,6 +69,7 @@ impl Configs {
     };
 }
 
+#[derive(Copy, Clone)]
 pub struct Bucket {
     capacity: usize,
     refill_rate: f64,
@@ -86,6 +87,7 @@ impl Bucket {
         }
     }
 }
+
 
 pub struct TokenBucket {
     buckets: Mutex<HashMap<String, Bucket>>,
@@ -188,19 +190,21 @@ fn test_token_bucket() { // TODO FIX ISSUES WITH MOVE AND ARC
     token_bucket.seed_buckets(&configs);
 
     // Create service instances
-    let messages_service = Service::new("messages".to_string(), token_bucket.clone());
-    let registration_service = Service::new("registration".to_string(), token_bucket.clone());
+    let service_a = Service::new("A".to_string(), token_bucket.clone());
+    let service_b = Service::new("B".to_string(), token_bucket.clone());
 
     // Perform requests to the services
     for _ in 0..10 {
         // Handle requests for the "messages" service
+        let service_a = service_a.clone();
         thread::spawn(move || {
-            messages_service.handle_request(1);
+            service_a.handle_request(1);
         });
 
         // Handle requests for the "registration" service
+        let service_b = service_b.clone();
         thread::spawn(move || {
-            registration_service.handle_request(1);
+            service_b.handle_request(1);
         });
 
         // Sleep for a short duration between requests
@@ -213,13 +217,15 @@ fn test_token_bucket() { // TODO FIX ISSUES WITH MOVE AND ARC
     // Perform more requests after token refilling
     for _ in 0..5 {
         // Handle requests for the "messages" service
+        let service_a = service_a.clone();
         thread::spawn(move || {
-            messages_service.handle_request(1);
+            service_a.handle_request(1);
         });
 
         // Handle requests for the "registration" service
+        let service_b = service_b.clone();
         thread::spawn(move || {
-            registration_service.handle_request(1);
+            service_b.handle_request(1);
         });
 
         // Sleep for a short duration between requests
