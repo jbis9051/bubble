@@ -153,8 +153,8 @@ impl Service {
         Service { name, token_bucket }
     }
 
-    fn handle_request(&self, num_tokens: usize) {
-        if self.token_bucket.handle(num_tokens, &self.name) {
+    fn handle_request(&self, num_tokens: usize, bucket_to_handle: &str) {
+        if self.token_bucket.handle(num_tokens, bucket_to_handle) {
             println!(
                 "Request handled by {}: {:?}",
                 self.name,
@@ -198,13 +198,13 @@ fn test_token_bucket() {
         // Handle requests for the "messages" service
         let service_a = service_a.clone();
         thread::spawn(move || {
-            service_a.handle_request(1);
+            service_a.handle_request(1, Configs::MESSAGES.name);
         });
 
         // Handle requests for the "registration" service
         let service_b = service_b.clone();
         thread::spawn(move || {
-            service_b.handle_request(1);
+            service_b.handle_request(1, Configs::USER_REGISTRATION.name);
         });
 
         // Sleep for a short duration between requests
@@ -219,13 +219,13 @@ fn test_token_bucket() {
         // Handle requests for the "messages" service
         let service_a = service_a.clone();
         thread::spawn(move || {
-            service_a.handle_request(1);
+            service_a.handle_request(1, Configs::MESSAGES.name);
         });
 
         // Handle requests for the "registration" service
         let service_b = service_b.clone();
         thread::spawn(move || {
-            service_b.handle_request(1);
+            service_b.handle_request(1, Configs::USER_REGISTRATION.name);
         });
 
         // Sleep for a short duration between requests
