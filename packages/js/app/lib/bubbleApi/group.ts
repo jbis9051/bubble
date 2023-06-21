@@ -6,10 +6,10 @@ export class GroupService {
     static async get_groups(): Promise<Group[]> {
         return [
             {
-                members: [{ name: "Apple" }],
-                name: "Bubble One",
-                uuid: "uuid-1"
-            }
+                members: [{ name: 'Apple' }],
+                name: 'Bubble One',
+                uuid: 'uuid-1',
+            },
         ];
     }
     static async create_group(): Promise<uuid> {
@@ -24,9 +24,7 @@ export function useGroups() {
     const [loaded, setLoaded] = useState(false);
     const dispatch = useDispatch();
 
-    useEffect(() => {
-        
-    }, []);
+    useEffect(() => {}, []);
 
     return { loaded };
 }

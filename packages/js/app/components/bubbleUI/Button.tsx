@@ -200,7 +200,9 @@ export function TextButton(props: TextButtonProps) {
                     style={{
                         fontSize: _fontSize,
                         color: color === 'secondary' ? 'black' : '#007AFF',
-                        textDecorationLine: underlined ? "underline" : undefined,
+                        textDecorationLine: underlined
+                            ? 'underline'
+                            : undefined,
                     }}
                 >
                     {children}

@@ -8,7 +8,7 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { Provider as ReduxProvider, useSelector, } from 'react-redux';
+import { Provider as ReduxProvider, useSelector } from 'react-redux';
 
 import { UserContext, UserLocal, useSession } from '../lib/bubbleApi/user';
 import SignInScreen from '../components/display/SignInComponent';
@@ -32,7 +32,7 @@ function RootLayout() {
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
-    const { loaded: userLoading, } = useSession();
+    const { loaded: userLoading } = useSession();
     const user = useSelector(selectUser);
 
     useEffect(() => {
@@ -57,8 +57,12 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
 
     return (
         <>
-            <NavThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <ThemeContext.Provider value={darkMode ? Colors.dark : Colors.light}>
+            <NavThemeProvider
+                value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+            >
+                <ThemeContext.Provider
+                    value={darkMode ? Colors.dark : Colors.light}
+                >
                     <Stack>
                         <Stack.Screen
                             name="(tabs)"
@@ -66,11 +70,17 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
                         />
                         <Stack.Screen
                             name="bubbleListModal"
-                            options={{ presentation: 'modal', title: "Your Bubbles" }}
+                            options={{
+                                presentation: 'modal',
+                                title: 'Your Bubbles',
+                            }}
                         />
                         <Stack.Screen
                             name="bubbleSettingsModal"
-                            options={{ presentation: 'modal', title: "Bubble Settings" }}
+                            options={{
+                                presentation: 'modal',
+                                title: 'Bubble Settings',
+                            }}
                         />
                     </Stack>
                 </ThemeContext.Provider>
@@ -84,5 +94,5 @@ export default function WithReduxLayout() {
         <ReduxProvider store={store}>
             <RootLayout />
         </ReduxProvider>
-    )
+    );
 }
