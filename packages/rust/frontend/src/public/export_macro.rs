@@ -26,7 +26,7 @@ macro_rules! convert_func {
         {
             $(let $arg: $atype = serde_json::from_value($args_[stringify!($arg)].take()).unwrap();)*
             $crate::GLOBAL_STATIC_DATA.get().unwrap().tokio.handle.spawn(
-                $crate::promise::promisify::<$rtype, $err>(
+                $crate::public::promise::promisify::<$rtype, $err>(
                     $promise,
                     $crate::$name($($arg),*)
                 )

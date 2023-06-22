@@ -7,14 +7,13 @@ function leave_group(group_uuid: uuid){}
  */
 
 use crate::api::BubbleApi;
-use crate::bubble_group::BubbleGroup;
-use crate::helper::{get_clients_authenticated, get_this_client_mls_resources};
+use crate::helper::bubble_group::BubbleGroup;
+use crate::helper::helper::{get_clients_authenticated, get_this_client_mls_resources};
 use crate::mls_provider::MlsProvider;
 use crate::Error;
 use crate::GLOBAL_ACCOUNT_DATA;
 use openmls::group::MlsGroup;
 use openmls::prelude::{GroupId, MlsGroupConfig, TlsSerializeTrait};
-
 use std::str::FromStr;
 use uuid::Uuid;
 

@@ -1,6 +1,6 @@
 use crate::models::kv::{AccountKv, GlobalKv};
 use crate::platform::DevicePromise;
-use crate::promise::Promise;
+use crate::public::promise::Promise;
 use crate::{Error, GlobalAccountData, GlobalStaticData, GLOBAL_STATIC_DATA};
 use serde_json::json;
 use sqlx::SqlitePool;

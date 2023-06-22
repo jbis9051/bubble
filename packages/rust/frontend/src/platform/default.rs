@@ -1,4 +1,4 @@
-use crate::promise::Promise;
+use crate::public::promise::Promise;
 
 pub type DevicePromise = DefaultPromise;
 
@@ -15,9 +15,9 @@ impl Promise for DefaultPromise {
 }
 
 pub mod export {
-    use crate::call as call_impl;
-    use crate::init as init_impl;
     use crate::platform::DevicePromise;
+    use crate::public::call as call_impl;
+    use crate::public::init as init_impl;
 
     pub fn init(data_directory: String) {
         let promise = DevicePromise {};

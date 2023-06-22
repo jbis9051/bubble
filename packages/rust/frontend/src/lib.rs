@@ -1,26 +1,21 @@
 mod api;
-mod bubble_group;
-mod call;
-mod export_macro;
-mod group;
 mod helper;
-pub mod init;
-mod mls_helper;
+mod js_interface;
 mod mls_provider;
 mod models;
 mod platform;
-mod promise;
+mod public;
 mod types;
-mod user;
 
 // export all platform specific functions
 pub use platform::export::*;
 
-use crate::init::TokioThread;
+use crate::public::init::TokioThread;
 use bridge_macro::bridge;
 use once_cell::sync::{Lazy, OnceCell};
 use serde::{Serialize, Serializer};
 use serde_json::json;
+use sqlx::migrate::MigrateError;
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -30,7 +25,7 @@ pub enum Error {
     #[error("sqlx error: {0}")]
     Sqlx(#[from] sqlx::Error),
     #[error("sqlx migrate error: {0}")]
-    SqlxMigrate(#[from] sqlx::migrate::MigrateError),
+    SqlxMigrate(#[from] MigrateError),
     #[error("global oneshot initialized, you probably called init twice")]
     GlobalAlreadyInitialized,
     #[error("don't know what to return for this error yet")]
