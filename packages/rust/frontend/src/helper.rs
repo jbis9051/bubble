@@ -6,9 +6,7 @@ use crate::types::{DbPool, SIGNATURE_SCHEME};
 use common::base64;
 use common::http_types::{PublicClient, PublicUser};
 use ed25519_dalek::{PublicKey, Signature};
-use openmls::prelude::{
-    Credential, CredentialType, CredentialWithKey, SignaturePublicKey,
-};
+use openmls::prelude::{Credential, CredentialType, CredentialWithKey, SignaturePublicKey};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 use uuid::Uuid;
@@ -35,6 +33,7 @@ pub async fn get_this_client_mls_resources(
     mls_provider: &MlsProvider,
 ) -> Result<(SignatureKeyPair, CredentialWithKey), ()> {
     let client_public = base64::deserialize(
+        // TODO: consider storing this directly in GlobalAccountData
         &Kv::get(account_db, "client_public_signature_key")
             .await
             .unwrap()

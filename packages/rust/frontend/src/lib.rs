@@ -23,6 +23,7 @@ use serde::{Serialize, Serializer};
 use serde_json::json;
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -34,6 +35,8 @@ pub enum Error {
     GlobalAlreadyInitialized,
     #[error("don't know what to return for this error yet")]
     TestingError,
+    #[error("unable to parse uuid for field '{0}': {1}")]
+    UuidParseError(&'static str, uuid::Error),
 }
 
 impl Serialize for Error {
@@ -53,9 +56,11 @@ pub struct GlobalStaticData {
 
 #[derive(Debug)]
 pub struct GlobalAccountData {
-    pub bearer: RwLock<String>,
-    pub domain: String,
     pub database: SqlitePool,
+    pub bearer: RwLock<String>,            // cached value
+    pub domain: String,                    // cached value
+    pub user_uuid: Uuid,                   // cached value
+    pub client_uuid: RwLock<Option<Uuid>>, // cached value
 }
 
 pub static GLOBAL_STATIC_DATA: OnceCell<GlobalStaticData> = OnceCell::new();

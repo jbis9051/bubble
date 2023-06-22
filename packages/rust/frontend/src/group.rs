@@ -13,14 +13,10 @@ use crate::mls_provider::MlsProvider;
 use crate::Error;
 use crate::GLOBAL_ACCOUNT_DATA;
 use openmls::group::MlsGroup;
-use openmls::prelude::{
-    GroupId, MlsGroupConfig,
-    TlsSerializeTrait,
-};
-
+use openmls::prelude::{GroupId, MlsGroupConfig, TlsSerializeTrait};
 
 use std::str::FromStr;
-use uuid::{Uuid};
+use uuid::Uuid;
 
 pub async fn create_group() -> Result<Uuid, Error> {
     let global = &GLOBAL_ACCOUNT_DATA.read().await;
@@ -107,6 +103,7 @@ pub async fn remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> 
         global_data.domain.clone(),
         global_data.bearer.read().await.clone(),
     );
+    let my_client_uuid = &global_data.client_uuid.read().await.unwrap();
 
     let (signature, _) = get_this_client_mls_resources(account_db, &mls_provider)
         .await
@@ -129,13 +126,78 @@ pub async fn remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> 
         .map(|(_, index)| index)
         .collect::<Vec<_>>();
 
-    group
+    let (mls_message_out, welcome_out, _group_info) = group
         .remove_members(&mls_provider, &signature, &members_to_remove)
         .unwrap();
+
+    if welcome_out.is_some() {
+        // we do not support proposals so no proposals should exist
+        panic!("We should not have a welcome message when removing members");
+    }
+
+    group
+        .send_message(&api, &mls_message_out, &[*my_client_uuid])
+        .await
+        .unwrap();
+
+    Ok(())
+}
+
+pub async fn leave_group(group_uuid: Uuid) -> Result<(), ()> {
+    let global = GLOBAL_ACCOUNT_DATA.read().await;
+    let global_data = global.as_ref().unwrap();
+    let account_db = &global_data.database;
+    let mls_provider = MlsProvider::new(account_db.clone());
+    let api = BubbleApi::new(
+        global_data.domain.clone(),
+        global_data.bearer.read().await.clone(),
+    );
+
+    let (signature, _) = get_this_client_mls_resources(account_db, &mls_provider)
+        .await
+        .unwrap();
+    let mut group = BubbleGroup::new(
+        MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider).unwrap(),
+    );
+
+    let my_user_uuid = &global_data.user_uuid;
+    let my_client_uuid = &global_data.client_uuid.read().await.unwrap();
+
+    // get all clients for our user
+    let client_uuids = get_clients_authenticated(my_user_uuid, &api, account_db)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|client| Uuid::from_str(&client.uuid).unwrap())
+        .collect::<Vec<_>>();
+
+    // all client indexes for our user with the exception of our own client
+    let members_to_remove = group
+        .get_group_members()
+        .into_iter()
+        .filter(|(uuid, _)| uuid != my_client_uuid && client_uuids.contains(uuid))
+        .map(|(_, index)| index)
+        .collect::<Vec<_>>();
+
+    let (mls_message_out, welcome_out, _group_info) = group
+        .remove_members(&mls_provider, &signature, &members_to_remove)
+        .unwrap();
+
+    if welcome_out.is_some() {
+        // we do not support proposals so no proposals should exist
+        panic!("We should not have a welcome message when removing members");
+    }
+
+    group
+        .send_message(&api, &mls_message_out, &[*my_client_uuid])
+        .await
+        .unwrap();
+
+    let leave_message = group.leave_group(&mls_provider, &signature).unwrap();
+
+    group.send_message(&api, &leave_message, &[]).await.unwrap();
 
     group.save_if_needed(&mls_provider).unwrap();
 
     Ok(())
 }
-
-

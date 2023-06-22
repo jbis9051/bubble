@@ -1,5 +1,7 @@
+use crate::api::BubbleApi;
 use crate::mls_provider::MlsProvider;
-use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup};
+use openmls::framing::MlsMessageOut;
+use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
@@ -42,6 +44,23 @@ impl BubbleGroup {
         if matches!(self.group.state_changed(), InnerState::Changed) {
             self.group.save(mls_provider).unwrap()
         }
+        Ok(())
+    }
+
+    pub async fn send_message(
+        &self,
+        api: &BubbleApi,
+        message: &MlsMessageOut,
+        exclude: &[Uuid],
+    ) -> Result<(), ()> {
+        let members = self.get_group_members();
+        let recipients = members
+            .into_iter()
+            .filter(|(uuid, _)| !exclude.contains(uuid))
+            .map(|(uuid, _)| uuid)
+            .collect::<Vec<_>>();
+        let bytes = message.tls_serialize_detached().unwrap();
+        api.send_message(&recipients, bytes).await.unwrap();
         Ok(())
     }
 }

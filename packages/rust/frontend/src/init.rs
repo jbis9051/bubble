@@ -5,10 +5,12 @@ use crate::{Error, GlobalAccountData, GlobalStaticData, GLOBAL_STATIC_DATA};
 use serde_json::json;
 use sqlx::SqlitePool;
 use std::path::Path;
+use std::str::FromStr;
 use std::{sync, thread};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::oneshot::Sender;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct TokioThread {
@@ -91,13 +93,27 @@ pub async fn init_async(data_directory: &str) -> Result<(), Error> {
 
         let bearer = AccountKv::get(&account_database, "bearer").await?;
         let domain = AccountKv::get(&account_database, "domain").await?;
+        let client_uuid = {
+            let client_uuid = AccountKv::get(&account_database, "client_uuid").await?;
+            if let Some(client_uuid) = client_uuid {
+                Some(
+                    Uuid::from_str(&client_uuid)
+                        .map_err(|err| Error::UuidParseError("client_uuid", err))?,
+                )
+            } else {
+                None
+            }
+        };
 
         if let Some(bearer) = bearer {
             let mut write = crate::GLOBAL_ACCOUNT_DATA.write().await;
             *write = Some(GlobalAccountData {
                 bearer: RwLock::new(bearer),
                 domain: domain.unwrap_or_default(),
+                user_uuid: Uuid::from_str(&current_account)
+                    .map_err(|err| Error::UuidParseError("current_account", err))?,
                 database: account_database,
+                client_uuid: RwLock::new(client_uuid),
             });
             drop(write);
         }

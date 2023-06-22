@@ -1,5 +1,5 @@
 use crate::models::kv::{AccountKv, GlobalKv};
-use crate::{Error, GlobalAccountData};
+use crate::Error;
 use common::base64::Base64;
 use common::http_types::{CreateUser, RegisteredClientsResponse};
 use ed25519_dalek::Keypair;
@@ -8,8 +8,6 @@ use rand_core::OsRng;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::types::{chrono, Uuid};
 use sqlx::Row;
-
-use tokio::sync::RwLock;
 
 //create a database with sqlite
 //set database to
@@ -66,16 +64,17 @@ pub async fn register(
 
     //assign new account_db to global account data var, clone when writing to it? or use a mutex
     let bearer = AccountKv::get(&account_db, "bearer").await?;
-    let domain = AccountKv::get(&account_db, "domain").await?;
+    let _domain = AccountKv::get(&account_db, "domain").await?;
 
-    if let Some(bearer) = bearer {
-        let mut write = crate::GLOBAL_ACCOUNT_DATA.write().await;
-        *write = Some(GlobalAccountData {
-            bearer: RwLock::new(bearer),
-            domain: domain.unwrap_or_default(),
-            database: account_db.clone(),
-        });
-        drop(write);
+    if let Some(_bearer) = bearer {
+        let _write = crate::GLOBAL_ACCOUNT_DATA.write().await;
+        /*   *write = Some(GlobalAccountData {
+                    bearer: RwLock::new(bearer),
+                    domain: domain.unwrap_or_default(),
+                    database: account_db.clone(),
+                });
+                drop(write);
+        */
     }
 
     // update account db
