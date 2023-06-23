@@ -12,11 +12,13 @@ use crate::helper::helper::{get_clients_authenticated, get_this_client_mls_resou
 use crate::mls_provider::MlsProvider;
 use crate::Error;
 use crate::GLOBAL_ACCOUNT_DATA;
+use bridge_macro::bridge;
 use openmls::group::MlsGroup;
 use openmls::prelude::{GroupId, MlsGroupConfig, TlsSerializeTrait};
 use std::str::FromStr;
 use uuid::Uuid;
 
+#[bridge]
 pub async fn create_group() -> Result<Uuid, Error> {
     let global = &GLOBAL_ACCOUNT_DATA.read().await;
     let account_db = &global.as_ref().ok_or_else(|| Error::TestingError)?.database;
@@ -38,6 +40,7 @@ pub async fn create_group() -> Result<Uuid, Error> {
     Ok(uuid)
 }
 
+#[bridge]
 pub async fn add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
     let global = GLOBAL_ACCOUNT_DATA.read().await;
     let global_data = global.as_ref().unwrap();
@@ -93,6 +96,7 @@ pub async fn add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
     Ok(())
 }
 
+#[bridge]
 pub async fn remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
     let global = GLOBAL_ACCOUNT_DATA.read().await;
     let global_data = global.as_ref().unwrap();
@@ -142,6 +146,7 @@ pub async fn remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> 
     Ok(())
 }
 
+#[bridge]
 pub async fn leave_group(group_uuid: Uuid) -> Result<(), ()> {
     let global = GLOBAL_ACCOUNT_DATA.read().await;
     let global_data = global.as_ref().unwrap();

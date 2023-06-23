@@ -1,4 +1,5 @@
 mod api;
+mod application_message;
 mod helper;
 mod js_interface;
 mod mls_provider;

@@ -9,19 +9,20 @@ CREATE TABLE user (
 CREATE TABLE client (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
-    user_id INTEGER NOT NULL REFERENCES user (id) ON DELETE CASCADE,
+    user_uuid TEXT NOT NULL,
     signing_key TEXT NOT NULL,
     validated_date INTEGER NULL
 );
 
 CREATE TABLE location (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER NOT NULL REFERENCES client (id) ON DELETE CASCADE,
+    client_uuid TEXT NOT NULL,
+    group_uuid TEXT NOT NULL,
     longitude REAL NOT NULL,
     latitude REAL NOT NULL,
-    raw TEXT NOT NULL,
-    created_date INTEGER NOT NULL,
-    group_uuid TEXT NOT NULL
+    location_date INTEGER NOT NULL,
+    raw BLOB NOT NULL,
+    created_date INTEGER NOT NULL
 );
 
 CREATE TABLE "group" (

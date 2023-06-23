@@ -1,7 +1,9 @@
 use crate::api::BubbleApi;
+use crate::application_message::Message;
 use crate::mls_provider::MlsProvider;
 use openmls::framing::MlsMessageOut;
 use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
+use openmls_basic_credential::SignatureKeyPair;
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
@@ -61,6 +63,23 @@ impl BubbleGroup {
             .collect::<Vec<_>>();
         let bytes = message.tls_serialize_detached().unwrap();
         api.send_message(&recipients, bytes).await.unwrap();
+        Ok(())
+    }
+
+    pub async fn send_application_message(
+        &mut self,
+        mls_provider: &MlsProvider,
+        api: &BubbleApi,
+        signer: &SignatureKeyPair,
+        message: &Message,
+    ) -> Result<(), ()> {
+        let mls_message = serde_json::to_string(message).unwrap();
+        let mls_message_bytes = mls_message.as_bytes();
+        let mls_out = self
+            .group
+            .create_message(mls_provider, signer, mls_message_bytes)
+            .unwrap();
+        self.send_message(api, &mls_out, &[]).await.unwrap();
         Ok(())
     }
 }
