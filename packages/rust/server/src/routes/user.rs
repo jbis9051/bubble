@@ -26,7 +26,7 @@ use common::base64::Base64;
 use common::http_types::{
     ChangeEmail, ClientsResponse, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login,
     PasswordReset, PasswordResetCheck, PublicClient, PublicUser, SessionTokenResponse,
-    UpdateIdentity,
+    UpdateIdentity, UserProfile,
 };
 
 pub fn router() -> Router {
@@ -41,6 +41,7 @@ pub fn router() -> Router {
         .route("/identity", put(update_identity))
         .route("/:uuid", get(get_user))
         .route("/:uuid/clients", get(get_clients))
+        .route("/profile", put(update_profile))
 }
 
 async fn register(
@@ -79,6 +80,7 @@ async fn register(
         email: None,
         name: payload.name,
         identity: payload.identity.0,
+        primary_client_id: None,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
@@ -357,11 +359,17 @@ async fn get_user(
 ) -> Result<Json<PublicUser>, StatusCode> {
     let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
+    let primary_client_uuid = user
+        .client(&db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map(|c| c.uuid.to_string());
 
     Ok(Json(PublicUser {
         uuid: user.uuid.to_string(),
         username: user.username,
         name: user.name,
+        primary_client_uuid,
         identity: Base64(user.identity),
     }))
 }
@@ -390,4 +398,25 @@ async fn get_clients(
                     .collect(),
             })
         })
+}
+
+async fn update_profile(
+    db: Extension<DbPool>,
+    Json(payload): Json<UserProfile>,
+    mut user: AuthenticatedUser,
+) -> Result<StatusCode, StatusCode> {
+    user.name = payload.name;
+
+    if let Some(client_uuid) = payload.primary_client_uuid {
+        let uuid = Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+        let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
+        if client.user_id != user.id {
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+        user.primary_client_id = Some(client.id);
+    }
+
+    user.update(&db).await.map_err(map_sqlx_err)?;
+
+    Ok(StatusCode::OK)
 }

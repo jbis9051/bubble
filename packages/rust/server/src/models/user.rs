@@ -4,6 +4,7 @@ use sqlx::types::Uuid;
 use sqlx::Row;
 use std::borrow::Borrow;
 
+use crate::models::client::Client;
 use sqlx::types::chrono::NaiveDateTime;
 
 pub struct User {
@@ -14,6 +15,7 @@ pub struct User {
     pub email: Option<String>,
     pub name: String,
     pub identity: Vec<u8>,
+    pub primary_client_id: Option<i32>,
     pub created: NaiveDateTime,
 }
 
@@ -27,6 +29,7 @@ impl From<&PgRow> for User {
             email: row.get("email"),
             name: row.get("name"),
             identity: row.get("identity"),
+            primary_client_id: row.get("primary_client_id"),
             created: row.get("created"),
         }
     }
@@ -111,8 +114,9 @@ impl User {
                       password = $3,
                       email = $4,
                       name = $5,
-                      identity = $6
-                  WHERE id = $7;",
+                      identity = $6,
+                      primary_client_id = $7
+                  WHERE id = $8;",
         )
         .bind(self.uuid)
         .bind(&self.username)
@@ -120,6 +124,7 @@ impl User {
         .bind(&self.email)
         .bind(&self.name)
         .bind(&self.identity)
+        .bind(self.primary_client_id)
         .bind(self.id)
         .execute(db)
         .await?;
@@ -132,5 +137,13 @@ impl User {
             .execute(db)
             .await?;
         Ok(())
+    }
+
+    pub async fn client(&self, db: &DbPool) -> Result<Option<Client>, sqlx::Error> {
+        if let Some(client_id) = self.primary_client_id {
+            Ok(Some(Client::from_id(db, client_id).await?))
+        } else {
+            Ok(None)
+        }
     }
 }

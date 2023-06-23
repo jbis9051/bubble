@@ -101,6 +101,7 @@ pub struct PublicUser {
     pub uuid: String,
     pub username: String,
     pub name: String,
+    pub primary_client_uuid: Option<String>,
     pub identity: Base64,
 }
 
@@ -120,4 +121,10 @@ pub struct ClientsResponse {
 #[derive(Serialize, Deserialize)]
 pub struct RegisteredClientsResponse {
     pub uuid: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserProfile {
+    pub name: String,
+    pub primary_client_uuid: Option<String>,
 }

@@ -1,10 +1,10 @@
-use crate::crypto_helper::{generate_ed25519_keypair, PUBLIC};
-use crate::helper::{start_server, TempDatabase};
+use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
+use crate::helper::{create_client, start_server, TempDatabase};
 use axum::http::StatusCode;
 use common::base64::Base64;
 use common::http_types::{
     ChangeEmail, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login, PasswordReset,
-    PublicUser, UpdateIdentity,
+    PublicUser, UpdateIdentity, UserProfile,
 };
 use ed25519_dalek::PublicKey;
 use server::models::confirmation::Confirmation;
@@ -341,6 +341,7 @@ async fn test_get_user() {
     assert_eq!(payload.username, user.username);
     assert_eq!(payload.name, user.name);
     assert_eq!(payload.identity.0, user.identity);
+    assert_eq!(payload.primary_client_uuid, None);
 }
 
 #[tokio::test]
@@ -378,6 +379,69 @@ async fn test_replace_identity() {
     let user = User::from_uuid(db.pool(), &user.uuid).await.unwrap();
 
     assert_eq!(user.identity, public_2);
+}
+
+#[tokio::test]
+async fn test_update_profile() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let bearer = format!("Bearer {}", token);
+    let res = client
+        .get(&format!("/v1/user/{}", user.uuid))
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let payload: PublicUser = res.json().await;
+
+    assert_eq!(payload.name, created_user.name);
+    assert_eq!(payload.primary_client_uuid, None);
+
+    let (_, client_uuid) = create_client(PUBLIC, PRIVATE, &bearer, &client).await;
+
+    let update_profile = UserProfile {
+        name: "testname2".to_string(),
+        primary_client_uuid: Some(client_uuid.to_string()),
+    };
+
+    let res = client
+        .put("/v1/user/profile")
+        .json(&update_profile)
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let res = client
+        .get(&format!("/v1/user/{}", user.uuid))
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let payload: PublicUser = res.json().await;
+
+    assert_eq!(payload.name, update_profile.name);
+    assert_eq!(
+        payload.primary_client_uuid,
+        update_profile.primary_client_uuid
+    );
 }
 
 // negative tests
@@ -612,4 +676,51 @@ async fn test_replace_identity_bad_identity() {
         .await;
 
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_update_profile_bad_client() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, _user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let created_user_2 = CreateUser {
+        email: "test2@gmail.com".to_string(),
+        username: "testusername2".to_string(),
+        password: "testpassword2".to_string(),
+        name: "testname2".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token_2, _user_2) = helper::initialize_user(db.pool(), &client, &created_user_2)
+        .await
+        .unwrap();
+
+    let bearer = format!("Bearer {}", token);
+    let bearer_2 = format!("Bearer {}", token_2);
+
+    let (_, client_uuid) = create_client(PUBLIC, PRIVATE, &bearer_2, &client).await;
+
+    let update_profile = UserProfile {
+        name: "testname2".to_string(),
+        primary_client_uuid: Some(client_uuid.to_string()),
+    };
+
+    let res = client
+        .put("/v1/user/profile")
+        .json(&update_profile)
+        .header("Authorization", bearer.clone())
+        .send()
+        .await;
+
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 }

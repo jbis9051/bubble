@@ -6,6 +6,7 @@ CREATE TABLE "user" (
     email VARCHAR(255) UNIQUE NULL,
     name VARCHAR(255) NOT NULL,
     identity BYTEA NOT NULL,
+    primary_client_id INT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -39,6 +40,13 @@ CREATE TABLE client (
     signature BYTEA NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE
+    "user"
+ADD
+    CONSTRAINT fk_user_primary_client_id FOREIGN KEY (primary_client_id) REFERENCES client (id) ON DELETE
+SET
+    NULL;
 
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,
