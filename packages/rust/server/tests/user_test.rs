@@ -64,7 +64,7 @@ async fn test_register() {
         .header("Content-Type", "application/json")
         .body(
             serde_json::to_string(&ConfirmEmail {
-                token: confirmation.token.to_string(),
+                token: confirmation.token,
             })
             .unwrap(),
         )
@@ -185,7 +185,7 @@ async fn test_forgot_password() {
 
     let confirm = PasswordReset {
         password: "newtestpassword".to_string(),
-        token: forgot.token.to_string(),
+        token: forgot.token,
     };
 
     let res = client
@@ -251,9 +251,7 @@ async fn test_change_email() {
     assert_eq!(confirmation.token, link_id);
     assert_eq!(confirmation.email, change.new_email);
 
-    let confirm = ConfirmEmail {
-        token: link_id.to_string(),
-    };
+    let confirm = ConfirmEmail { token: link_id };
 
     let res = client
         .patch("/v1/user/confirm")
@@ -337,7 +335,7 @@ async fn test_get_user() {
 
     let payload: PublicUser = res.json().await;
 
-    assert_eq!(payload.uuid, user.uuid.to_string());
+    assert_eq!(payload.uuid, user.uuid);
     assert_eq!(payload.username, user.username);
     assert_eq!(payload.name, user.name);
     assert_eq!(payload.identity.0, user.identity);
@@ -415,7 +413,7 @@ async fn test_update_profile() {
 
     let update_profile = UserProfile {
         name: "testname2".to_string(),
-        primary_client_uuid: Some(client_uuid.to_string()),
+        primary_client_uuid: Some(client_uuid),
     };
 
     let res = client
@@ -712,7 +710,7 @@ async fn test_update_profile_bad_client() {
 
     let update_profile = UserProfile {
         name: "testname2".to_string(),
-        primary_client_uuid: Some(client_uuid.to_string()),
+        primary_client_uuid: Some(client_uuid),
     };
 
     let res = client

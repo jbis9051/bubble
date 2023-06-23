@@ -1,5 +1,6 @@
 use crate::base64::Base64;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateClient {
@@ -25,13 +26,13 @@ pub struct KeyPackagePublic {
 
 #[derive(Serialize, Deserialize)]
 pub struct SendMessage {
-    pub client_uuids: Vec<String>,
+    pub client_uuids: Vec<Uuid>,
     pub message: Base64,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct CheckMessages {
-    pub client_uuid: String,
+    pub client_uuid: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -50,12 +51,12 @@ pub struct CreateUser {
 
 #[derive(Serialize, Deserialize)]
 pub struct ConfirmEmail {
-    pub token: String,
+    pub token: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct SessionTokenResponse {
-    pub token: String,
+    pub token: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -72,12 +73,12 @@ pub struct ForgotEmail {
 #[derive(Serialize, Deserialize)]
 pub struct PasswordReset {
     pub password: String,
-    pub token: String,
+    pub token: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetCheck {
-    pub token: String,
+    pub token: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -98,17 +99,17 @@ pub struct UpdateIdentity {
 
 #[derive(Serialize, Deserialize)]
 pub struct PublicUser {
-    pub uuid: String,
+    pub uuid: Uuid,
     pub username: String,
     pub name: String,
-    pub primary_client_uuid: Option<String>,
+    pub primary_client_uuid: Option<Uuid>,
     pub identity: Base64,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct PublicClient {
-    pub user_uuid: String,
-    pub uuid: String,
+    pub user_uuid: Uuid,
+    pub uuid: Uuid,
     pub signing_key: Base64,
     pub signature: Base64,
 }
@@ -120,11 +121,11 @@ pub struct ClientsResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct RegisteredClientsResponse {
-    pub uuid: String,
+    pub uuid: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct UserProfile {
     pub name: String,
-    pub primary_client_uuid: Option<String>,
+    pub primary_client_uuid: Option<Uuid>,
 }

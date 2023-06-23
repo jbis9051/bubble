@@ -79,7 +79,7 @@ pub async fn register(
 
     // update account db
     sqlx::query("INSERT INTO user (uuid, name, identity, updated_date) VALUES ($1, $2, $3, $4);")
-        .bind(&user_uuid)
+        .bind(user_uuid)
         .bind(&name)
         .bind(&username)
         .bind(chrono::Utc::now().timestamp())
@@ -88,7 +88,7 @@ pub async fn register(
         .unwrap();
 
     let user_id = sqlx::query("SELECT id FROM user WHERE uuid = $1")
-        .bind(&user_uuid)
+        .bind(user_uuid)
         .fetch_one(&account_db)
         .await
         .unwrap()

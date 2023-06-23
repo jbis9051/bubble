@@ -89,18 +89,17 @@ pub async fn update(
 
 pub async fn get_client(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<PublicClient>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     let user = User::from_id(&db, client.user_id)
         .await
         .map_err(map_sqlx_err)?;
 
     Ok(Json(PublicClient {
-        user_uuid: user.uuid.to_string(),
-        uuid: client.uuid.to_string(),
+        user_uuid: user.uuid,
+        uuid: client.uuid,
         signing_key: Base64(client.signing_key),
         signature: Base64(client.signature),
     }))
@@ -125,11 +124,10 @@ pub async fn delete_client(
 
 pub async fn replace_key_packages(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     Json(payload): Json<ReplaceKeyPackages>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     if client.user_id != user.id {
         return Err(StatusCode::FORBIDDEN);
@@ -165,10 +163,9 @@ pub async fn replace_key_packages(
 
 pub async fn get_key_package(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<KeyPackagePublic>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     let (key_package, count) = KeyPackageModel::get_one_with_count(&db, client.id)
         .await

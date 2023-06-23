@@ -133,12 +133,9 @@ async fn confirm(
     db: Extension<DbPool>,
     Json(payload): Json<ConfirmEmail>,
 ) -> Result<(StatusCode, Json<SessionTokenResponse>), StatusCode> {
-    let confirmation = Confirmation::from_token(
-        &db,
-        &Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?,
-    )
-    .await
-    .map_err(|_| StatusCode::NOT_FOUND)?;
+    let confirmation = Confirmation::from_token(&db, &payload.token)
+        .await
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     confirmation.delete(&db).await.map_err(map_sqlx_err)?;
 
@@ -156,12 +153,7 @@ async fn confirm(
 
     let token = create_session(&db, user.id).await.map_err(map_sqlx_err)?;
 
-    Ok((
-        StatusCode::OK,
-        Json(SessionTokenResponse {
-            token: token.to_string(),
-        }),
-    ))
+    Ok((StatusCode::OK, Json(SessionTokenResponse { token })))
 }
 
 async fn login(
@@ -180,12 +172,7 @@ async fn login(
 
     let token = create_session(&db, user.id).await.map_err(map_sqlx_err)?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(SessionTokenResponse {
-            token: token.to_string(),
-        }),
-    ))
+    Ok((StatusCode::CREATED, Json(SessionTokenResponse { token })))
 }
 
 async fn logout(
@@ -198,8 +185,7 @@ async fn logout(
     // but in reality if you have another users session token, you could repeat this request with that token
     // and delete their session token anyway, so it's not really a problem
 
-    let token = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let session = Session::from_token(&db, &token)
+    let session = Session::from_token(&db, &payload.token)
         .await
         .map_err(map_sqlx_err)?;
     session.delete(&db).await.map_err(map_sqlx_err)?;
@@ -245,7 +231,7 @@ async fn reset(
     db: Extension<DbPool>,
     Json(payload): Json<PasswordReset>,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = payload.token;
     let forgot = Forgot::from_token(&db, &uuid).await.map_err(map_sqlx_err)?;
 
     let mut user = User::from_id(&db, forgot.user_id)
@@ -274,7 +260,7 @@ async fn reset_check(
     db: Extension<DbPool>,
     Query(payload): Query<PasswordResetCheck>,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = payload.token;
     if Forgot::from_token(&db, &uuid).await.is_err() {
         return Err(StatusCode::NOT_FOUND);
     }
@@ -354,19 +340,18 @@ async fn update_identity(
 
 async fn get_user(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<PublicUser>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     let primary_client_uuid = user
         .client(&db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .map(|c| c.uuid.to_string());
+        .map(|c| c.uuid);
 
     Ok(Json(PublicUser {
-        uuid: user.uuid.to_string(),
+        uuid: user.uuid,
         username: user.username,
         name: user.name,
         primary_client_uuid,
@@ -376,10 +361,9 @@ async fn get_user(
 
 async fn get_clients(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<ClientsResponse>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
 
     Client::filter_user_id(&db, user.id)
@@ -390,8 +374,8 @@ async fn get_clients(
                 clients: clients
                     .into_iter()
                     .map(|c| PublicClient {
-                        user_uuid: user.uuid.to_string(),
-                        uuid: c.uuid.to_string(),
+                        user_uuid: user.uuid,
+                        uuid: c.uuid,
                         signing_key: Base64(c.signing_key),
                         signature: Base64(c.signature),
                     })
@@ -408,8 +392,9 @@ async fn update_profile(
     user.name = payload.name;
 
     if let Some(client_uuid) = payload.primary_client_uuid {
-        let uuid = Uuid::parse_str(&client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
-        let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
+        let client = Client::from_uuid(&db, &client_uuid)
+            .await
+            .map_err(map_sqlx_err)?;
         if client.user_id != user.id {
             return Err(StatusCode::UNAUTHORIZED);
         }

@@ -28,7 +28,7 @@ fn main() {
     let mut output = r#"/* WARNING: This file is auto-generated. Do not modify. */
 
 import { NativeModules, Platform } from 'react-native';
-import { Result } from './index';
+import { Result, Uuid } from './index';
 
 const LINKING_ERROR =
     `The package 'react-native-bubble-rust' doesn't seem to be linked. Make sure: \n\n${Platform.select(
@@ -196,7 +196,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
 fn convert_type_to_ts(in_type: &str) -> String {
     let mut out_type = String::new();
 
-    let vec_regex = Regex::new(r"^Vec< (.*) >$").unwrap();
+    let vec_regex = Regex::new(r"^Vec < (.*) >$").unwrap();
 
     if let Some(captures) = vec_regex.captures(in_type) {
         let inner_type = captures.get(1).unwrap().as_str();

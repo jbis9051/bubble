@@ -101,7 +101,7 @@ pub async fn confirm_user(
 
     let user = User::from_id(db, user_in.id).await.unwrap();
     let token: SessionTokenResponse = res.json().await;
-    Ok((user, Uuid::parse_str(&token.token).unwrap()))
+    Ok((user, token.token))
 }
 
 pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<Uuid, StatusCode> {
@@ -114,7 +114,7 @@ pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<U
     assert_eq!(res.status(), StatusCode::CREATED);
 
     let token: SessionTokenResponse = res.json().await;
-    Ok(Uuid::parse_str(&token.token).unwrap())
+    Ok(token.token)
 }
 
 pub async fn logout(
@@ -123,7 +123,7 @@ pub async fn logout(
     session: &Session,
 ) -> Result<(), StatusCode> {
     let token = SessionTokenResponse {
-        token: session.token.to_string(),
+        token: session.token,
     };
     let bearer = format!("Bearer {}", token.token);
     let res = client
@@ -172,16 +172,9 @@ pub async fn initialize_user(
     user_in: &CreateUser,
 ) -> Result<(Uuid, User), StatusCode> {
     let (user, link_id) = register(db, client, user_in).await.unwrap();
-    let (user, token) = confirm_user(
-        db,
-        client,
-        &ConfirmEmail {
-            token: link_id.to_string(),
-        },
-        &user,
-    )
-    .await
-    .unwrap();
+    let (user, token) = confirm_user(db, client, &ConfirmEmail { token: link_id }, &user)
+        .await
+        .unwrap();
 
     Ok((token, user))
 }

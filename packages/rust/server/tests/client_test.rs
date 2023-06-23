@@ -93,8 +93,8 @@ async fn test_client_crud() {
     let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 1);
-    assert_eq!(payload.clients[0].user_uuid, user.uuid.to_string());
-    assert_eq!(payload.clients[0].uuid, client_uuid.to_string());
+    assert_eq!(payload.clients[0].user_uuid, user.uuid);
+    assert_eq!(payload.clients[0].uuid, client_uuid);
     assert_eq!(
         payload.clients[0].signing_key.0,
         signature_pubkey.as_slice()
@@ -116,8 +116,8 @@ async fn test_client_crud() {
 
     let payload: PublicClient = res.json().await;
 
-    assert_eq!(payload.user_uuid, user.uuid.to_string());
-    assert_eq!(payload.uuid, client_uuid.to_string());
+    assert_eq!(payload.user_uuid, user.uuid);
+    assert_eq!(payload.uuid, client_uuid);
     assert_eq!(payload.signing_key.0, signature_pubkey.as_slice());
     assert_eq!(payload.signature.0, &signature_of_signing_key.to_bytes());
 
@@ -155,8 +155,8 @@ async fn test_client_crud() {
 
     let payload: PublicClient = res.json().await;
 
-    assert_eq!(payload.user_uuid, user.uuid.to_string());
-    assert_eq!(payload.uuid, client_uuid.to_string());
+    assert_eq!(payload.user_uuid, user.uuid);
+    assert_eq!(payload.uuid, client_uuid);
     assert_eq!(payload.signing_key.0, signature_pubkey.as_slice());
     assert_eq!(payload.signature.0, &signature_of_signing_key.to_bytes());
 

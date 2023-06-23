@@ -10,7 +10,6 @@ use axum::{Extension, Json};
 use common::base64::Base64;
 use common::http_types::{CheckMessages, MessagesResponse, SendMessage};
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::types::Uuid;
 use std::iter::Iterator;
 
 pub fn router() -> Router {
@@ -22,12 +21,7 @@ async fn send_message(
     Json(payload): Json<SendMessage>,
     _: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuids = payload
-        .client_uuids
-        .into_iter()
-        .map(|uuid| Uuid::parse_str(&uuid))
-        .collect::<Result<Vec<Uuid>, uuid::Error>>()
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuids = payload.client_uuids;
     if uuids.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
     }
@@ -43,7 +37,7 @@ async fn send_message(
     let mut message = Message {
         id: Default::default(),
         message: payload.message.0,
-        created: NaiveDateTime::from_timestamp(0, 0),
+        created: NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), // unwrap is safe because timestamp is 0
     };
     message
         .create(&db, &client_ids)
@@ -59,7 +53,7 @@ async fn receive_message(
     user: AuthenticatedUser,
 ) -> Result<(StatusCode, Json<MessagesResponse>), StatusCode> {
     // Get client
-    let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = payload.client_uuid;
     let client = Client::from_uuid(&db, &uuid)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;

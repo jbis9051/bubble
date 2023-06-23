@@ -12,6 +12,8 @@ export type Result<T, E> =
           value: E;
       };
 
+export type Uuid = string;
+
 export function init(dataDir: string): Promise<void> {
     return RustInterop.init(dataDir);
 }

@@ -62,7 +62,7 @@ impl BubbleGroup {
             .map(|(uuid, _)| uuid)
             .collect::<Vec<_>>();
         let bytes = message.tls_serialize_detached().unwrap();
-        api.send_message(&recipients, bytes).await.unwrap();
+        api.send_message(recipients, bytes).await.unwrap();
         Ok(())
     }
 

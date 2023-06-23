@@ -27,9 +27,7 @@ async fn test_single_message() {
     let bearer = format!("Bearer {}", token);
     let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
 
-    let request_messages = CheckMessages {
-        client_uuid: client_uuid.to_string(),
-    };
+    let request_messages = CheckMessages { client_uuid };
     let res = client
         .get("/v1/message")
         .header("Content-Type", "application/json")
@@ -42,7 +40,7 @@ async fn test_single_message() {
     assert_eq!(res.json::<MessagesResponse>().await.messages.len(), 0);
     let testmessage1 = "test message";
     let message = SendMessage {
-        client_uuids: vec![client_uuid.to_string()],
+        client_uuids: vec![client_uuid],
         message: Base64(testmessage1.as_bytes().to_vec()),
     };
     let res = client
@@ -88,7 +86,7 @@ async fn test_multiple_messages() {
     let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
 
     let message_1 = SendMessage {
-        client_uuids: vec![client_uuid.to_string()],
+        client_uuids: vec![client_uuid],
         message: Base64("test message 1".as_bytes().to_vec()),
     };
     let res = client
@@ -102,7 +100,7 @@ async fn test_multiple_messages() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let message_2 = SendMessage {
-        client_uuids: vec![client_uuid.to_string()],
+        client_uuids: vec![client_uuid],
         message: Base64("test message 2".as_bytes().to_vec()),
     };
     let res = client
@@ -116,7 +114,7 @@ async fn test_multiple_messages() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let message_3 = SendMessage {
-        client_uuids: vec![client_uuid.to_string()],
+        client_uuids: vec![client_uuid],
         message: Base64("test message 3".as_bytes().to_vec()),
     };
     let res = client
@@ -129,9 +127,7 @@ async fn test_multiple_messages() {
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let request_messages = CheckMessages {
-        client_uuid: client_uuid.to_string(),
-    };
+    let request_messages = CheckMessages { client_uuid };
     let res = client
         .get("/v1/message")
         .header("Content-Type", "application/json")
@@ -167,10 +163,10 @@ async fn test_invalid_uuid() {
     let bearer = format!("Bearer {}", token);
     let (_, client_uuid) = helper::create_client(PUBLIC, PRIVATE, &bearer, &client).await;
 
-    let bad_uuid = Uuid::new_v4().to_string();
+    let bad_uuid = Uuid::new_v4();
 
     let request_messages = CheckMessages {
-        client_uuid: bad_uuid.clone(),
+        client_uuid: bad_uuid,
     };
     let res = client
         .get("/v1/message")
@@ -182,21 +178,8 @@ async fn test_invalid_uuid() {
 
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
-    let request_messages = CheckMessages {
-        client_uuid: "bad uuid".to_string(),
-    };
-    let res = client
-        .get("/v1/message")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&request_messages).unwrap())
-        .header("Authorization", bearer.clone())
-        .send()
-        .await;
-
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
-
     let message = SendMessage {
-        client_uuids: vec![bad_uuid.clone()],
+        client_uuids: vec![bad_uuid],
         message: Base64("test message".as_bytes().to_vec()),
     };
     let res = client
@@ -210,7 +193,7 @@ async fn test_invalid_uuid() {
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 
     let message = SendMessage {
-        client_uuids: vec![client_uuid.to_string(), bad_uuid],
+        client_uuids: vec![client_uuid, bad_uuid],
         message: Base64("test message".as_bytes().to_vec()),
     };
     let res = client
@@ -222,20 +205,6 @@ async fn test_invalid_uuid() {
         .await;
 
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
-
-    let message = SendMessage {
-        client_uuids: vec!["bad uuid".to_string()],
-        message: Base64("test message".as_bytes().to_vec()),
-    };
-    let res = client
-        .post("/v1/message")
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&message).unwrap())
-        .header("Authorization", bearer.clone())
-        .send()
-        .await;
-
-    assert_eq!(res.status(), StatusCode::BAD_REQUEST);
 
     let message = SendMessage {
         client_uuids: vec![],
@@ -300,9 +269,7 @@ async fn test_bad_user() {
     )
     .await;
 
-    let request_messages = CheckMessages {
-        client_uuid: client_uuid.to_string(),
-    };
+    let request_messages = CheckMessages { client_uuid };
     let res = client
         .get("/v1/message")
         .header("Content-Type", "application/json")

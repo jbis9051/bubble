@@ -15,7 +15,6 @@ use crate::GLOBAL_ACCOUNT_DATA;
 use bridge_macro::bridge;
 use openmls::group::MlsGroup;
 use openmls::prelude::{GroupId, MlsGroupConfig, TlsSerializeTrait};
-use std::str::FromStr;
 use uuid::Uuid;
 
 #[bridge]
@@ -65,9 +64,8 @@ pub async fn add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
     let mut key_packages = Vec::with_capacity(clients.len());
     let mut client_uuids = Vec::with_capacity(clients.len());
     for client in &clients {
-        let client_uuid = Uuid::from_str(&client.uuid).unwrap();
-        client_uuids.push(client_uuid);
-        let key_package = api.request_key_package(&client_uuid).await.unwrap();
+        client_uuids.push(client.uuid);
+        let key_package = api.request_key_package(&client.uuid).await.unwrap();
         key_packages.push(key_package);
     }
 
@@ -86,8 +84,8 @@ pub async fn add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
 
     // we send the welcome message to the new members first, because if it fails, it's easier to recover from
 
-    api.send_message(&client_uuids, welcome_out).await.unwrap();
-    api.send_message(&old_members, mls_message_out)
+    api.send_message(client_uuids, welcome_out).await.unwrap();
+    api.send_message(old_members, mls_message_out)
         .await
         .unwrap();
 
@@ -119,7 +117,7 @@ pub async fn remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> 
         .await
         .unwrap()
         .into_iter()
-        .map(|client| Uuid::from_str(&client.uuid).unwrap())
+        .map(|client| client.uuid)
         .collect::<Vec<_>>();
 
     let members_to_remove = group
@@ -172,7 +170,7 @@ pub async fn leave_group(group_uuid: Uuid) -> Result<(), ()> {
         .await
         .unwrap()
         .into_iter()
-        .map(|client| Uuid::from_str(&client.uuid).unwrap())
+        .map(|client| client.uuid)
         .collect::<Vec<_>>();
 
     // all client indexes for our user with the exception of our own client

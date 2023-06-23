@@ -5,10 +5,14 @@ use reqwest::Error;
 use uuid::Uuid;
 
 impl BubbleApi {
-    pub async fn send_message(&self, client_uuids: &[Uuid], message: Vec<u8>) -> Result<(), Error> {
+    pub async fn send_message(
+        &self,
+        client_uuids: Vec<Uuid>,
+        message: Vec<u8>,
+    ) -> Result<(), Error> {
         let message = Base64(message);
         let message = SendMessage {
-            client_uuids: client_uuids.iter().map(|uuid| uuid.to_string()).collect(),
+            client_uuids,
             message,
         };
         self.client
