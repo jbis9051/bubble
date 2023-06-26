@@ -106,7 +106,7 @@ pub struct PublicUser {
     pub identity: Base64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct PublicClient {
     pub user_uuid: Uuid,
     pub uuid: Uuid,

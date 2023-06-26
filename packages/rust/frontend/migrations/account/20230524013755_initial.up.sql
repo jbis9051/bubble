@@ -11,7 +11,8 @@ CREATE TABLE client (
     uuid TEXT NOT NULL UNIQUE,
     user_uuid TEXT NOT NULL,
     signing_key TEXT NOT NULL,
-    validated_date INTEGER NULL
+    validated_date INTEGER NULL,
+    created_date INTEGER NULL
 );
 
 CREATE TABLE location (

@@ -1,4 +1,5 @@
 use crate::types::DbPool;
+use common::http_types::PublicUser;
 use sqlx::sqlite::SqliteRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
@@ -24,7 +25,32 @@ impl From<&SqliteRow> for User {
     }
 }
 
+impl From<PublicUser> for User {
+    fn from(user: PublicUser) -> Self {
+        Self {
+            id: 0,
+            uuid: user.uuid,
+            name: user.name,
+            identity: user.identity.0,
+            updated_date: Default::default(),
+        }
+    }
+}
+
 impl User {
+    pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        *self = (&sqlx::query(
+            "INSERT INTO \"user\" (uuid, name, identity) VALUES ($1, $2, $3) RETURNING *;",
+        )
+        .bind(self.uuid)
+        .bind(&self.name)
+        .bind(&self.identity)
+        .fetch_one(db)
+        .await?)
+            .into();
+        Ok(())
+    }
+
     pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<User, sqlx::Error> {
         Ok((&sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
             .bind(uuid)

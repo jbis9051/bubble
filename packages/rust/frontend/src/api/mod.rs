@@ -2,6 +2,7 @@ mod client;
 mod message;
 mod user;
 
+#[derive(Clone)]
 pub struct BubbleApi {
     domain: String,
     bearer: String,

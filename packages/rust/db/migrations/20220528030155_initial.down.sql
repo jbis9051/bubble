@@ -9,7 +9,7 @@ ALTER TABLE
 
 DROP TABLE client;
 
-DROP TABLE SESSION;
+DROP TABLE "session";
 
 DROP TABLE confirmation;
 

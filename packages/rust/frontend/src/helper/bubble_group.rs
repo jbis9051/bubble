@@ -1,5 +1,6 @@
 use crate::api::BubbleApi;
 use crate::application_message::Message;
+use crate::helper::resource_fetcher::{ResourceError, ResourceFetcher};
 use crate::mls_provider::MlsProvider;
 use openmls::framing::MlsMessageOut;
 use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
@@ -40,6 +41,24 @@ impl BubbleGroup {
             client_uuids.push((client_uuid, member.index));
         }
         client_uuids
+    }
+
+    pub async fn get_group_members_by_user_uuid(
+        &self,
+        user_uuid: &Uuid,
+        resource_fetcher: &ResourceFetcher,
+    ) -> Result<Vec<(Uuid, LeafNodeIndex)>, ResourceError> {
+        let members = self.get_group_members();
+        let mut out = Vec::with_capacity(members.len());
+        for (client_uuid, index) in members {
+            let client = resource_fetcher
+                .get_client_partial_authentication(&client_uuid)
+                .await?;
+            if &client.user_uuid == user_uuid {
+                out.push((client_uuid, index));
+            }
+        }
+        Ok(out)
     }
 
     pub fn save_if_needed(&mut self, mls_provider: &MlsProvider) -> Result<(), ()> {

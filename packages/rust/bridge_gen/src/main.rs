@@ -69,7 +69,7 @@ export const RustInterop = NativeModules.Bubble
 }
 
 fn get_all_rust_files_in_dir(dir: &Path, rust_paths: &mut Vec<PathBuf>) {
-    for entry in std::fs::read_dir(dir).unwrap() {
+    for entry in fs::read_dir(dir).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
         if path.is_dir() {
@@ -111,7 +111,7 @@ impl<'ast> Visit<'ast> for ParsedFile {
 }
 
 fn parse_file(path: &Path) -> ParsedFile {
-    let source_code = std::fs::read_to_string(path).unwrap();
+    let source_code = fs::read_to_string(path).unwrap();
     let syntax_tree = syn::parse_str(&source_code).expect("Failed to parse source code");
 
     let mut parsed_file = ParsedFile {
@@ -187,7 +187,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
     })).then((res: string) => JSON.parse(res));
 }
 
-    "#,
+"#,
     );
 
     out_func
@@ -213,6 +213,19 @@ fn convert_type_to_ts(in_type: &str) -> String {
             "Result<{}, {}>",
             convert_type_to_ts(ok_type),
             convert_type_to_ts(err_type)
+        ));
+        return out_type;
+    }
+
+    let hash_map_regex = Regex::new(r"^HashMap < (.*) , (.*) >$").unwrap();
+
+    if let Some(captures) = hash_map_regex.captures(in_type) {
+        let key_type = captures.get(1).unwrap().as_str();
+        let value_type = captures.get(2).unwrap().as_str();
+        out_type.push_str(&format!(
+            "{{ [key: {}]: {} }}",
+            convert_type_to_ts(key_type),
+            convert_type_to_ts(value_type)
         ));
         return out_type;
     }
