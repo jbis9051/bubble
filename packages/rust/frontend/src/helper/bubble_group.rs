@@ -5,6 +5,7 @@ use crate::mls_provider::MlsProvider;
 use openmls::framing::MlsMessageOut;
 use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
 use openmls_basic_credential::SignatureKeyPair;
+use openmls_traits::types::Error;
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
@@ -33,14 +34,14 @@ impl DerefMut for BubbleGroup {
 }
 
 impl BubbleGroup {
-    pub fn get_group_members(&self) -> Vec<(Uuid, LeafNodeIndex)> {
+    pub fn get_group_members(&self) -> Result<Vec<(Uuid, LeafNodeIndex)>, Error> {
         let members: Vec<Member> = self.group.members().collect();
         let mut client_uuids = Vec::with_capacity(members.len());
         for member in members {
-            let client_uuid = Uuid::from_slice(member.credential.identity()).unwrap();
+            let client_uuid = Uuid::from_slice(member.credential.identity())?;
             client_uuids.push((client_uuid, member.index));
         }
-        client_uuids
+        Ok(client_uuids)
     }
 
     pub async fn get_group_members_by_user_uuid(
@@ -61,9 +62,9 @@ impl BubbleGroup {
         Ok(out)
     }
 
-    pub fn save_if_needed(&mut self, mls_provider: &MlsProvider) -> Result<(), ()> {
+    pub fn save_if_needed(&mut self, mls_provider: &MlsProvider) -> Result<(), Error> {
         if matches!(self.group.state_changed(), InnerState::Changed) {
-            self.group.save(mls_provider).unwrap()
+            self.group.save(mls_provider)?
         }
         Ok(())
     }
@@ -73,7 +74,7 @@ impl BubbleGroup {
         api: &BubbleApi,
         message: &MlsMessageOut,
         exclude: &[Uuid],
-    ) -> Result<(), ()> {
+    ) -> Result<(), Error> {
         let members = self.get_group_members();
         let recipients = members
             .into_iter()
