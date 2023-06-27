@@ -7,19 +7,18 @@ mod models;
 mod platform;
 mod public;
 mod types;
+mod virtual_memory;
 
+use once_cell::sync::Lazy;
+use std::sync::Arc;
 // export all platform specific functions
 pub use platform::export::*;
 
-use crate::public::init::TokioThread;
-use bridge_macro::bridge;
-use once_cell::sync::{Lazy, OnceCell};
+use crate::js_interface::FrontendInstance;
+use crate::virtual_memory::VirtualMemory;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
-use sqlx::SqlitePool;
-use tokio::sync::RwLock;
-use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -44,31 +43,5 @@ impl Serialize for Error {
     }
 }
 
-#[derive(Debug)]
-pub struct GlobalStaticData {
-    pub data_directory: String,
-    pub tokio: TokioThread,
-}
-
-#[derive(Debug)]
-pub struct GlobalAccountData {
-    pub database: SqlitePool,
-    pub bearer: RwLock<String>,            // cached value
-    pub domain: String,                    // cached value
-    pub user_uuid: Uuid,                   // cached value
-    pub client_uuid: RwLock<Option<Uuid>>, // cached value
-}
-
-pub static GLOBAL_STATIC_DATA: OnceCell<GlobalStaticData> = OnceCell::new();
-pub static GLOBAL_DATABASE: OnceCell<SqlitePool> = OnceCell::new();
-pub static GLOBAL_ACCOUNT_DATA: Lazy<RwLock<Option<GlobalAccountData>>> =
-    Lazy::new(|| RwLock::new(None));
-
-#[bridge]
-pub async fn multiply(a: i32, b: i32) -> Result<i32, ()> {
-    Ok(a * b)
-}
-
-export!(
-    multiply(a: i32, b: i32) -> Result<i32, ()>;
-);
+pub static VIRTUAL_MEMORY: Lazy<VirtualMemory<Arc<FrontendInstance>>> =
+    Lazy::new(VirtualMemory::new);

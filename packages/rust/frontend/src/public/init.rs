@@ -1,10 +1,12 @@
+use crate::js_interface::{FrontendInstance, GlobalAccountData, GlobalStaticData};
 use crate::models::kv::{AccountKv, GlobalKv};
 use crate::platform::DevicePromise;
 use crate::public::promise::promisify;
-use crate::{Error, GlobalAccountData, GlobalStaticData, GLOBAL_STATIC_DATA};
+use crate::{Error, VIRTUAL_MEMORY};
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::{sync, thread};
 use tokio::runtime::{Handle, Runtime};
 use tokio::sync::oneshot::Sender;
@@ -41,37 +43,28 @@ impl TokioThread {
 
 pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
     let tokio_thread = TokioThread::spawn();
+    let handle = tokio_thread.handle.clone();
 
-    let data_directory_2 = data_directory.clone();
-
-    tokio_thread
-        .handle
-        .block_on(promisify::<(), Error>(promise, async move {
-            init_async(&data_directory_2).await?;
-            Ok(())
-        }));
-
-    let global_data = GlobalStaticData {
-        data_directory,
-        tokio: tokio_thread,
-    };
-
-    GLOBAL_STATIC_DATA
-        .set(global_data)
-        .map_err(|_| Error::GlobalAlreadyInitialized)?;
+    handle.block_on(promisify::<usize, Error>(promise, async move {
+        let (pool, account_data) = init_async(&data_directory).await?;
+        let global_data = GlobalStaticData {
+            data_directory,
+            tokio: tokio_thread,
+        };
+        let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
+        let address = VIRTUAL_MEMORY.push(Arc::new(frontend_instance));
+        Ok(address)
+    }));
 
     Ok(())
 }
 
-pub async fn init_async(data_directory: &str) -> Result<(), Error> {
+pub async fn init_async(
+    data_directory: &str,
+) -> Result<(SqlitePool, Option<GlobalAccountData>), Error> {
     let database =
         SqlitePool::connect(&format!("sqlite:{}/global.db?mode=rwc", &data_directory)).await?;
     sqlx::migrate!("./migrations/global").run(&database).await?;
-
-    crate::GLOBAL_DATABASE
-        .set(database.clone())
-        .map(|_| ())
-        .map_err(|_| Error::GlobalAlreadyInitialized)?;
 
     let current_account = GlobalKv::get(&database, "current_account").await?;
 
@@ -82,7 +75,7 @@ pub async fn init_async(data_directory: &str) -> Result<(), Error> {
             GlobalKv::delete(&database, "current_account")
                 .await
                 .unwrap();
-            return Ok(());
+            return Ok((database, None));
         }
 
         let account_database = SqlitePool::connect(&format!("sqlite:{}", &path)).await?;
@@ -106,18 +99,19 @@ pub async fn init_async(data_directory: &str) -> Result<(), Error> {
         };
 
         if let Some(bearer) = bearer {
-            let mut write = crate::GLOBAL_ACCOUNT_DATA.write().await;
-            *write = Some(GlobalAccountData {
-                bearer: RwLock::new(bearer),
-                domain: domain.unwrap_or_default(),
-                user_uuid: Uuid::from_str(&current_account)
-                    .map_err(|err| Error::UuidParseError("current_account", err))?,
-                database: account_database,
-                client_uuid: RwLock::new(client_uuid),
-            });
-            drop(write);
+            return Ok((
+                database,
+                Some(GlobalAccountData {
+                    bearer: RwLock::new(bearer),
+                    domain: domain.unwrap_or_default(),
+                    user_uuid: Uuid::from_str(&current_account)
+                        .map_err(|err| Error::UuidParseError("current_account", err))?,
+                    database: account_database,
+                    client_uuid: RwLock::new(client_uuid),
+                }),
+            ));
         }
     }
 
-    Ok(())
+    Ok((database, None))
 }
