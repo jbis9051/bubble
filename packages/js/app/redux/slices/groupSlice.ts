@@ -24,6 +24,7 @@ export const authSlice = createSlice({
             groupsAdapter.setAll(state, action.payload);
         },
         setActiveGroup: (state, action) => {
+            console.log(state);
             state.activeGroupUuid = action.payload;
         },
     },

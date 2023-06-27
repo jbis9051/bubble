@@ -63,7 +63,7 @@ export default function GroupSettingsModal() {
           // @ts-ignore
           navigation.navigate('groupSettingsModal', { screen: "shareBubble" });
         }}>
-          <Ionicons name="share-outline" size={24} color="black" />
+          <Ionicons name="ios-add-sharp" size={24} color="black" />
         </TouchableOpacity>
       )
     });

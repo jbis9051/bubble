@@ -22,13 +22,14 @@ export class UserService {
     static async forgot(email: string) {}
 
     static async retrieveSession(): Promise<UserLocal | null> {
-        return { name: 'test', user_uuid: 'user-uuid-1' };
+        return { name: 'test', user_uuid: 'user-uuid-1', primary_client_uuid: 'client-uuid-1' };
         // return null;
     }
 }
 
 export interface UserLocal {
     name: string;
+    primary_client_uuid: uuid;
     user_uuid: uuid;
 }
 
