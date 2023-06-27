@@ -9,14 +9,12 @@ use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::types::{chrono, Uuid};
 use sqlx::Row;
 
-//create a database with sqlite
-//set database to
-// update global db with user entry
+// create a database with sqlite
+// set database to update global db with user entry
 // identity = key
-//make a key and store in db
-// send an api route to create a user
-//from uuid create account db
-//not updating global var
+// make a key and store in db
+// send an api route to create a user from uuid create account db
+// not updating global var
 
 pub async fn register(
     username: String,
@@ -46,13 +44,14 @@ pub async fn register(
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&created_user).unwrap())
         .send()
-        .await
-        .unwrap();
-    let response: RegisteredClientsResponse = response.json().await.unwrap();
+        .await?
+        .json::<RegisteredClientsResponse>()
+        .await?;
+
     let user_uuid = response.uuid;
     let client_uuid = Uuid::new_v4().to_string();
 
-    let _global_db = crate::GLOBAL_DATABASE.get().unwrap();
+
 
     // create an account db based on up in migrations
     let account_db = SqlitePoolOptions::new()
@@ -61,6 +60,8 @@ pub async fn register(
     sqlx::migrate!("./migrations/account")
         .run(&account_db)
         .await?;
+
+    let mut temp = account_db.begin().await?;
 
     //assign new account_db to global account data var, clone when writing to it? or use a mutex
     let bearer = AccountKv::get(&account_db, "bearer").await?;
@@ -75,6 +76,8 @@ pub async fn register(
                 });
                 drop(write);
         */
+
+        // I'm lost here fuck
     }
 
     // update account db
@@ -84,8 +87,7 @@ pub async fn register(
         .bind(&username)
         .bind(chrono::Utc::now().timestamp())
         .execute(&account_db)
-        .await
-        .unwrap();
+        .await?;
 
     let user_id = sqlx::query("SELECT id FROM user WHERE uuid = $1")
         .bind(user_uuid)
@@ -101,46 +103,54 @@ pub async fn register(
     .bind(user_id)
     .bind(&account_key.public.to_bytes().to_vec())
     .bind(chrono::Utc::now().timestamp())
-    .execute(&account_db)
-    .await
-    .unwrap();
+    .execute(&mut temp)
+    .await?;
+
+    temp.commit().await?;
 
     Ok(())
-    //todo, remove unwraps()
+
 }
 
 pub async fn login(username: String, _password: String) -> Result<(), Error> {
-    let db = crate::GLOBAL_DATABASE.get().unwrap();
+    // let db = crate::GLOBAL_DATABASE.get().unwrap();
+    let account_db = SqlitePoolOptions::new()
+        .connect("sqlite:accounts.db")
+        .await?;
     let _user_id = sqlx::query("SELECT FROM user WHERE identity = $1")
         .bind(&username)
         .fetch_one(db)
-        .await
-        .unwrap();
+        .await?;
     let _real_password = sqlx::query("SELECT password FROM user WHERE identity = $1")
         .bind(&username)
         .fetch_one(db)
-        .await
-        .unwrap();
+        .await?;
+    /*
+    ???????????? Im sure theres mroe to do but idk
+     */
     Ok(())
 }
 
 pub async fn logout() -> Result<(), Error> {
-    let db = crate::GLOBAL_DATABASE.get().unwrap();
+    let account_db = SqlitePoolOptions::new()
+        .connect("sqlite:accounts.db")
+        .await?;
 
-    GlobalKv::delete(db, "current_account").await.unwrap();
+    AccountKv::delete(&account_db, "current_account").await?;
     Ok(())
 }
 
 pub async fn forgot(_email: String) -> Result<(), Error> {
-    let db = crate::GLOBAL_DATABASE.get().unwrap();
+    let account_db = SqlitePoolOptions::new()
+        .connect("sqlite:accounts.db")
+        .await?;
 
-    GlobalKv::set(db, "forgot_email", &_email).await.unwrap();
+    AccountKv::set(&account_db, "forgot_email", &_email).await?;
 
     let _response = reqwest::get("accounts/user/forgot")
-        .await
-        .unwrap()
+        .await?
         .text()
-        .await
-        .unwrap();
+        .await?;
+
     Ok(())
 }
