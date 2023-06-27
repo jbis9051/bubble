@@ -1,9 +1,6 @@
 name: JavaScript Tests
 
 on:
-  pull_request:
-    paths_ignore:
-      - README.MD
   push:
     branches:
       - master

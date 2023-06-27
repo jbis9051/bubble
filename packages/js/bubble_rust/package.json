@@ -1,0 +1,16 @@
+{
+    "name": "@bubble/react-native-bubble-rust",
+    "version": "0.0.0",
+    "main": "src/index",
+    "module": "src/index",
+    "react-native": "src/index",
+    "peerDependencies": {
+        "react": "*",
+        "react-native": "*"
+    },
+    "author": "",
+    "license": "",
+    "homepage": "http://example.com",
+    "description": "...",
+    "repository": ""
+}

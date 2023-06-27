@@ -8,6 +8,7 @@ interface CustomMarkerProps {
     selected?: boolean;
     onPress?: () => void;
 }
+
 function CustomMarker(props: CustomMarkerProps) {
     const { coordinate } = props;
 
