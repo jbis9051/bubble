@@ -1,7 +1,6 @@
 use crate::api::BubbleApi;
 use common::base64::Base64;
 use common::http_types::SendMessage;
-use reqwest;
 use uuid::Uuid;
 
 impl BubbleApi {

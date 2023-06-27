@@ -2,10 +2,11 @@ use crate::api::BubbleApi;
 use crate::application_message::Message;
 use crate::helper::resource_fetcher::{ResourceError, ResourceFetcher};
 use crate::mls_provider::MlsProvider;
+use crate::Error;
 use openmls::framing::MlsMessageOut;
 use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
 use openmls_basic_credential::SignatureKeyPair;
-use openmls_traits::types::Error;
+
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
@@ -75,14 +76,14 @@ impl BubbleGroup {
         message: &MlsMessageOut,
         exclude: &[Uuid],
     ) -> Result<(), Error> {
-        let members = self.get_group_members();
+        let members = self.get_group_members()?;
         let recipients = members
             .into_iter()
             .filter(|(uuid, _)| !exclude.contains(uuid))
             .map(|(uuid, _)| uuid)
             .collect::<Vec<_>>();
-        let bytes = message.tls_serialize_detached().unwrap();
-        api.send_message(recipients, bytes).await.unwrap();
+        let bytes = message.tls_serialize_detached()?;
+        api.send_message(recipients, bytes).await?;
         Ok(())
     }
 
@@ -92,14 +93,13 @@ impl BubbleGroup {
         api: &BubbleApi,
         signer: &SignatureKeyPair,
         message: &Message,
-    ) -> Result<(), ()> {
-        let mls_message = serde_json::to_string(message).unwrap();
+    ) -> Result<(), Error> {
+        let mls_message = serde_json::to_string(message)?;
         let mls_message_bytes = mls_message.as_bytes();
         let mls_out = self
             .group
-            .create_message(mls_provider, signer, mls_message_bytes)
-            .unwrap();
-        self.send_message(api, &mls_out, &[]).await.unwrap();
+            .create_message(mls_provider, signer, mls_message_bytes)?;
+        self.send_message(api, &mls_out, &[]).await?;
         Ok(())
     }
 }

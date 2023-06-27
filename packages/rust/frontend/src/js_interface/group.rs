@@ -78,23 +78,21 @@ impl FrontendInstance {
         let global = self.account_data.read().await;
         let account_db = &global.as_ref().ok_or_else(|| Error::TestingError)?.database;
 
-        let mls_provider = MlsProvider::new(account_db.clone());
-        let (signature, credential_with_key) =
-            get_this_client_mls_resources(account_db, &mls_provider)
-                .await
-                .unwrap();
-        let uuid = Uuid::new_v4();
-        let mut group = MlsGroup::new_with_group_id(
-            &mls_provider,
-            &signature,
-            &MlsGroupConfig::default(),
-            GroupId::from_slice((uuid).as_ref()),
-            credential_with_key,
-        )
-        .map_err(|_| Error::TestingError)?;
-        group.save(&mls_provider).map_err(|_| Error::TestingError)?;
-        Ok(uuid)
-    }
+    let mls_provider = MlsProvider::new(account_db.clone());
+    let (signature, credential_with_key) =
+        get_this_client_mls_resources(account_db, &mls_provider).await?;
+    let uuid = Uuid::new_v4();
+    let mut group = MlsGroup::new_with_group_id(
+        &mls_provider,
+        &signature,
+        &MlsGroupConfig::default(),
+        GroupId::from_slice((uuid).as_ref()),
+        credential_with_key,
+    )?;
+    group.save(&mls_provider)?;
+
+    Ok(uuid)
+}
 
     #[bridge]
     pub async fn add_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), ()> {
@@ -143,10 +141,8 @@ impl FrontendInstance {
 
         // we send the welcome message to the new members first, because if it fails, it's easier to recover from
 
-        api.send_message(client_uuids, welcome_out).await.unwrap();
-        api.send_message(old_members, mls_message_out)
-            .await
-            .unwrap();
+        api.send_message(client_uuids, welcome_out).await?;
+        api.send_message(old_members, mls_message_out).await?;
 
         group.save_if_needed(&mls_provider).unwrap();
 
@@ -199,7 +195,7 @@ impl FrontendInstance {
     }
 
     #[bridge]
-    pub async fn leave_group(&self, group_uuid: Uuid) -> Result<(), ()> {
+    pub async fn leave_group(&self, group_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;

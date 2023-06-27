@@ -20,10 +20,8 @@ use crate::virtual_memory::VirtualMemory;
 use crate::public::init::TokioThread;
 use bridge_macro::bridge;
 use once_cell::sync::{Lazy, OnceCell};
-use openmls::prelude::OpenMlsKeyStore;
 
-use crate::models::account::keystore::KeyStore;
-use openmls_traits::OpenMlsCryptoProvider;
+use crate::mls_provider::keystore::SqlxError;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
@@ -45,9 +43,26 @@ pub enum Error {
     Signature(#[from] ed25519_dalek::SignatureError),
     #[error("credential error: {0}")]
     Credential(#[from] openmls::prelude::CredentialError),
+    #[error("tls_codec error: {0}")]
+    TLS(#[from] tls_codec::Error),
     #[error("keystore error: {0}")]
-    #[error("error: {0}")]
-    Custom(#[from] String),
+    KeyStore(#[from] mls_provider::keystore::SqlxError),
+    #[error("could not get account db reference")]
+    DBReference,
+    #[error("uuid error: {0}")]
+    Uuid(#[from] uuid::Error),
+    #[error("no client_public_signature found in kv table")]
+    ClientPublicSignatureNotFound,
+    #[error("could not read signature key pair from key store")]
+    KeyStoreRead,
+    #[error("identity mismatch in cache vs api")]
+    IdentityMismatch,
+    #[error("serde_json error {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("mls create message error: {0}")]
+    CreateMessage(#[from] openmls::prelude::CreateMessageError),
+    #[error("mls new group error")]
+    MLSNewGroup(#[from] openmls::prelude::NewGroupError<SqlxError>),
 
     #[error("don't know what to return for this error yet")]
     TestingError,

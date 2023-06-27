@@ -894,6 +894,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror",
+ "tls_codec 0.3.0-pre.4",
  "tokio",
  "uuid",
 ]

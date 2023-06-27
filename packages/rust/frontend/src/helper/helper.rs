@@ -4,7 +4,6 @@ use crate::types::{DbPool, SIGNATURE_SCHEME};
 use common::base64;
 use common::http_types::{PublicClient, PublicUser};
 use ed25519_dalek::{PublicKey, Signature};
-use openmls::prelude::PublicTreeError::SignatureError;
 use openmls::prelude::{Credential, CredentialType, CredentialWithKey, SignaturePublicKey};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
@@ -22,7 +21,7 @@ pub async fn get_user_with_cache_check(
 
     if let Some(user) = local_user {
         if user.identity != *api_user.identity {
-            panic!("User identity mismatch in cache vs api");
+            return Err(Error::IdentityMismatch);
         }
     }
 
@@ -37,19 +36,11 @@ pub async fn get_this_client_mls_resources(
         // TODO: consider storing this directly in GlobalAccountData
         &Kv::get(account_db, "client_public_signature_key")
             .await?
-            .ok_or_else(|| {
-                Error::Custom(String::from(
-                    "client public signature key not found in kv table",
-                ))
-            })?,
+            .ok_or_else(|| Error::ClientPublicSignatureNotFound)?,
     );
     let signature =
         SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME)
-            .ok_or_else(|| {
-                Error::Custom(String::from(
-                    "could not read a signature key pair from key store",
-                ))
-            })?;
+            .ok_or_else(|| Error::KeyStoreRead)?;
     let credential = Credential::new(client_public, CredentialType::Basic)?;
     let credential_with_key = CredentialWithKey {
         credential,

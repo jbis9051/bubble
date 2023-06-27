@@ -1,4 +1,4 @@
-mod keystore;
+pub(crate) mod keystore;
 
 use crate::mls_provider::keystore::MlsKeyStoreProvider;
 use openmls_rust_crypto::RustCrypto;
