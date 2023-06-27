@@ -28,6 +28,8 @@ pub enum ResourceError {
     CacheDoesNotMatchApi(ResourceType, Uuid),
     #[error("invalid client signature: {0:?}")]
     InvalidClientSignature(Uuid),
+    #[error("signature error: {0}")]
+    Signature(#[from] ed25519_dalek::SignatureError),
 }
 
 #[derive(Debug)]
@@ -64,9 +66,9 @@ impl ResourceFetcher {
         user_identity: &[u8],
         clients: impl IntoIterator<Item = &'a PublicClient>,
     ) -> Result<(), ResourceError> {
-        let user_key = PublicKey::from_bytes(user_identity).unwrap();
+        let user_key = PublicKey::from_bytes(user_identity)?;
         for client in clients {
-            let signature = Signature::from_bytes(&client.signature).unwrap();
+            let signature = Signature::from_bytes(&client.signature)?;
             if user_key
                 .verify_strict(&client.signing_key, &signature)
                 .is_err()
@@ -83,9 +85,8 @@ impl ResourceFetcher {
         user_uuid: &Uuid,
     ) -> Result<PublicUser, ResourceError> {
         let local_user = User::try_from_uuid(&self.account_db, user_uuid)
-            .await
-            .unwrap();
-        let api_user = self.api.get_user(user_uuid).await.unwrap();
+            .await?;
+        let api_user = self.api.get_user(user_uuid).await?;
 
         if let Some(cache_user) = local_user {
             if cache_user.identity != *api_user.identity {
@@ -105,14 +106,13 @@ impl ResourceFetcher {
         user_uuid: &Uuid,
     ) -> Result<User, ResourceError> {
         let local_user = User::try_from_uuid(&self.account_db, user_uuid)
-            .await
-            .unwrap();
+            .await?;
         if let Some(cache_user) = local_user {
             return Ok(cache_user);
         }
-        let api_user = self.api.get_user(user_uuid).await.unwrap();
+        let api_user = self.api.get_user(user_uuid).await?;
         let mut user: User = api_user.into();
-        user.create(&self.account_db).await.unwrap();
+        user.create(&self.account_db).await?;
         Ok(user)
     }
 
@@ -122,7 +122,7 @@ impl ResourceFetcher {
         user_uuid: &Uuid,
     ) -> Result<Vec<PublicClient>, ResourceError> {
         let user = self.get_user_partial_authentication(user_uuid).await?;
-        let clients = self.api.get_user_clients(user_uuid).await.unwrap();
+        let clients = self.api.get_user_clients(user_uuid).await?;
         self.authenticate_clients_against_user_identity(&user.identity, &clients)?;
         Ok(clients)
     }
@@ -133,19 +133,17 @@ impl ResourceFetcher {
         client_uuid: &Uuid,
     ) -> Result<Client, ResourceError> {
         let local_client = Client::try_from_uuid(&self.account_db, client_uuid)
-            .await
-            .unwrap();
+            .await?;
         if let Some(cache_client) = local_client {
             return Ok(cache_client);
         }
-        let api_client = self.api.get_client(client_uuid).await.unwrap();
+        let api_client = self.api.get_client(client_uuid).await?;
         let user = self
             .get_user_partial_authentication(&api_client.user_uuid)
-            .await
-            .unwrap();
+            .await?;
         self.authenticate_clients_against_user_identity(&user.identity, &[api_client.clone()])?;
         let mut client: Client = api_client.into();
-        client.create(&self.account_db).await.unwrap();
+        client.create(&self.account_db).await?;
         Ok(client)
     }
 }

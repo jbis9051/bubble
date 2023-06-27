@@ -10,18 +10,18 @@ mod types;
 mod virtual_memory;
 
 use ed25519_dalek;
-use once_cell::sync::Lazy;
 use std::sync::Arc;
 // export all platform specific functions
 pub use platform::export::*;
 
 use crate::js_interface::FrontendInstance;
-use crate::virtual_memory::VirtualMemory;
 use crate::public::init::TokioThread;
+use crate::virtual_memory::VirtualMemory;
 use bridge_macro::bridge;
 use once_cell::sync::{Lazy, OnceCell};
+use openmls::prelude::{AddMembersError, LeaveGroupError, RemoveMembersError};
 
-use crate::mls_provider::keystore::SqlxError;
+use crate::helper::resource_fetcher::ResourceError;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
@@ -36,7 +36,6 @@ pub enum Error {
     GlobalAlreadyInitialized,
     #[error("unable to parse uuid for field '{0}': {1}")]
     UuidParseError(&'static str, uuid::Error),
-
     #[error("reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
     #[error("signature error: {0}")]
@@ -62,7 +61,21 @@ pub enum Error {
     #[error("mls create message error: {0}")]
     CreateMessage(#[from] openmls::prelude::CreateMessageError),
     #[error("mls new group error")]
-    MLSNewGroup(#[from] openmls::prelude::NewGroupError<SqlxError>),
+    MLSNewGroup(#[from] openmls::prelude::NewGroupError<mls_provider::keystore::SqlxError>),
+    #[error("resource error: {0}")]
+    Resource(#[from] ResourceError),
+    #[error("add members error: {0}")]
+    AddMembers(#[from] AddMembersError<mls_provider::keystore::SqlxError>),
+    #[error("mls group loaded nothing")]
+    MLSGroupLoad,
+    #[error("remove members error: {0}")]
+    RemoveMembers(#[from] RemoveMembersError<mls_provider::keystore::SqlxError>),
+    #[error("leave group error: {0}")]
+    LeaveGroup(#[from] LeaveGroupError),
+    #[error("welcome message exists when it shouldn't")]
+    UnexpectedWelcome,
+    #[error("could not read client_uuid")]
+    ReadClientUUID,
 
     #[error("don't know what to return for this error yet")]
     TestingError,

@@ -6,7 +6,6 @@ use crate::Error;
 use openmls::framing::MlsMessageOut;
 use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
 use openmls_basic_credential::SignatureKeyPair;
-
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
@@ -49,8 +48,8 @@ impl BubbleGroup {
         &self,
         user_uuid: &Uuid,
         resource_fetcher: &ResourceFetcher,
-    ) -> Result<Vec<(Uuid, LeafNodeIndex)>, ResourceError> {
-        let members = self.get_group_members();
+    ) -> Result<Vec<(Uuid, LeafNodeIndex)>, Error> {
+        let members = self.get_group_members()?;
         let mut out = Vec::with_capacity(members.len());
         for (client_uuid, index) in members {
             let client = resource_fetcher
