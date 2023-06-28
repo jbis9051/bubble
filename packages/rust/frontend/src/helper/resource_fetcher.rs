@@ -84,8 +84,7 @@ impl ResourceFetcher {
         &self,
         user_uuid: &Uuid,
     ) -> Result<PublicUser, ResourceError> {
-        let local_user = User::try_from_uuid(&self.account_db, user_uuid)
-            .await?;
+        let local_user = User::try_from_uuid(&self.account_db, user_uuid).await?;
         let api_user = self.api.get_user(user_uuid).await?;
 
         if let Some(cache_user) = local_user {
@@ -105,8 +104,7 @@ impl ResourceFetcher {
         &self,
         user_uuid: &Uuid,
     ) -> Result<User, ResourceError> {
-        let local_user = User::try_from_uuid(&self.account_db, user_uuid)
-            .await?;
+        let local_user = User::try_from_uuid(&self.account_db, user_uuid).await?;
         if let Some(cache_user) = local_user {
             return Ok(cache_user);
         }
@@ -132,8 +130,7 @@ impl ResourceFetcher {
         &self,
         client_uuid: &Uuid,
     ) -> Result<Client, ResourceError> {
-        let local_client = Client::try_from_uuid(&self.account_db, client_uuid)
-            .await?;
+        let local_client = Client::try_from_uuid(&self.account_db, client_uuid).await?;
         if let Some(cache_client) = local_client {
             return Ok(cache_client);
         }
