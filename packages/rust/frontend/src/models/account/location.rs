@@ -1,13 +1,16 @@
 use crate::types::DbPool;
+use crate::Error;
+
 use sqlx::sqlite::SqliteRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Row, SqlitePool};
+
 use uuid::Uuid;
 
 pub struct Location {
     pub id: i32,
     pub client_uuid: Uuid,
-    pub group_uuid: String,
+    pub group_uuid: Uuid,
     pub longitude: f64,
     pub latitude: f64,
     pub location_date: NaiveDateTime,
@@ -31,6 +34,18 @@ impl From<&SqliteRow> for Location {
 }
 
 impl Location {
+    pub async fn create(&mut self, db: &DbPool) -> Result<(), Error> {
+        *self = (&sqlx::query("INSERT INTO location (client_uuid, group_uuid, longitude, latitude, location_date, raw) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *")
+            .bind(self.client_uuid)
+            .bind(self.group_uuid)
+            .bind(self.longitude)
+            .bind(self.latitude)
+            .bind(self.location_date)
+            .bind(&self.raw)
+            .fetch_one(db).await?).into();
+        Ok(())
+    }
+
     pub async fn query(
         db: &DbPool,
         group_uuid: &Uuid,

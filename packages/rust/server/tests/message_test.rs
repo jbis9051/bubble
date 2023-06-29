@@ -2,7 +2,7 @@ use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
 use crate::helper::{start_server, TempDatabase};
 use axum::http::StatusCode;
 use common::base64::Base64;
-use common::http_types::{CheckMessages, CreateUser, MessagesResponse, SendMessage};
+use common::http_types::{CheckMessages, CreateUser, Message, MessagesResponse, SendMessage};
 use uuid::Uuid;
 
 mod crypto_helper;
@@ -41,7 +41,10 @@ async fn test_single_message() {
     let testmessage1 = "test message";
     let message = SendMessage {
         client_uuids: vec![client_uuid],
-        message: Base64(testmessage1.as_bytes().to_vec()),
+        message: Message {
+            message: Base64(testmessage1.as_bytes().to_vec()),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")
@@ -64,7 +67,7 @@ async fn test_single_message() {
     assert_eq!(res.status(), StatusCode::OK);
     let messages = res.json::<MessagesResponse>().await.messages;
     assert_eq!(messages.len(), 1);
-    assert_eq!(testmessage1.as_bytes().to_vec(), messages[0].0);
+    assert_eq!(testmessage1.as_bytes().to_vec(), messages[0].message.0);
 }
 
 #[tokio::test]
@@ -87,7 +90,10 @@ async fn test_multiple_messages() {
 
     let message_1 = SendMessage {
         client_uuids: vec![client_uuid],
-        message: Base64("test message 1".as_bytes().to_vec()),
+        message: Message {
+            message: Base64("test message 1".as_bytes().to_vec()),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")
@@ -101,7 +107,10 @@ async fn test_multiple_messages() {
 
     let message_2 = SendMessage {
         client_uuids: vec![client_uuid],
-        message: Base64("test message 2".as_bytes().to_vec()),
+        message: Message {
+            message: Base64("test message 2".as_bytes().to_vec()),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")
@@ -115,7 +124,10 @@ async fn test_multiple_messages() {
 
     let message_3 = SendMessage {
         client_uuids: vec![client_uuid],
-        message: Base64("test message 3".as_bytes().to_vec()),
+        message: Message {
+            message: Base64(vec![]),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")
@@ -139,9 +151,9 @@ async fn test_multiple_messages() {
     assert_eq!(res.status(), StatusCode::OK);
     let messages = res.json::<MessagesResponse>().await.messages;
     assert_eq!(messages.len(), 3);
-    assert_eq!("test message 1".as_bytes().to_vec(), messages[0].0);
-    assert_eq!("test message 2".as_bytes().to_vec(), messages[1].0);
-    assert_eq!("test message 3".as_bytes().to_vec(), messages[2].0);
+    assert_eq!("test message 1".as_bytes().to_vec(), messages[0].message.0);
+    assert_eq!("test message 2".as_bytes().to_vec(), messages[1].message.0);
+    assert_eq!("test message 3".as_bytes().to_vec(), messages[2].message.0);
 }
 
 #[tokio::test]
@@ -180,7 +192,10 @@ async fn test_invalid_uuid() {
 
     let message = SendMessage {
         client_uuids: vec![bad_uuid],
-        message: Base64("test message".as_bytes().to_vec()),
+        message: Message {
+            message: Base64("test message".as_bytes().to_vec()),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")
@@ -194,7 +209,10 @@ async fn test_invalid_uuid() {
 
     let message = SendMessage {
         client_uuids: vec![client_uuid, bad_uuid],
-        message: Base64("test message".as_bytes().to_vec()),
+        message: Message {
+            message: Base64("test message".as_bytes().to_vec()),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")
@@ -208,7 +226,10 @@ async fn test_invalid_uuid() {
 
     let message = SendMessage {
         client_uuids: vec![],
-        message: Base64("test message".as_bytes().to_vec()),
+        message: Message {
+            message: Base64("test message".as_bytes().to_vec()),
+            group_id: Default::default(),
+        },
     };
     let res = client
         .post("/v1/message")

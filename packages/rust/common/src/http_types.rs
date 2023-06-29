@@ -25,9 +25,15 @@ pub struct KeyPackagePublic {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct Message {
+    pub message: Base64,
+    pub group_id: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct SendMessage {
     pub client_uuids: Vec<Uuid>,
-    pub message: Base64,
+    pub message: Message,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -37,7 +43,7 @@ pub struct CheckMessages {
 
 #[derive(Serialize, Deserialize)]
 pub struct MessagesResponse {
-    pub messages: Vec<Base64>,
+    pub messages: Vec<Message>,
 }
 
 #[derive(Deserialize, Serialize)]

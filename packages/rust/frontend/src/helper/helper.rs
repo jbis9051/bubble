@@ -2,12 +2,10 @@ use crate::mls_provider::MlsProvider;
 use crate::models::kv::Kv;
 use crate::types::{DbPool, SIGNATURE_SCHEME};
 use common::base64;
-use common::http_types::{PublicClient, PublicUser};
-use ed25519_dalek::{PublicKey, Signature};
+
 use openmls::prelude::{Credential, CredentialType, CredentialWithKey, SignaturePublicKey};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
-use uuid::Uuid;
 
 use crate::Error;
 

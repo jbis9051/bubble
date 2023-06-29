@@ -51,6 +51,7 @@ SET
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,
     message BYTEA NOT NULL,
+    group_id UUID,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

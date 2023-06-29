@@ -1,21 +1,35 @@
 use crate::api::BubbleApi;
 use crate::application_message::Message;
-use crate::helper::resource_fetcher::{ResourceError, ResourceFetcher};
+use crate::helper::resource_fetcher::ResourceFetcher;
 use crate::mls_provider::MlsProvider;
 use crate::Error;
 use openmls::framing::MlsMessageOut;
-use openmls::prelude::{InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
+use openmls::prelude::{GroupId, InnerState, LeafNodeIndex, Member, MlsGroup, TlsSerializeTrait};
 use openmls_basic_credential::SignatureKeyPair;
+use openmls_traits::OpenMlsCryptoProvider;
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
 pub struct BubbleGroup {
     group: MlsGroup,
+    group_uuid: Uuid,
 }
 
 impl BubbleGroup {
     pub fn new(group: MlsGroup) -> Self {
-        Self { group }
+        let group_uuid = Uuid::from_slice(group.group_id().as_slice()).unwrap();
+        Self { group, group_uuid }
+    }
+
+    pub fn new_from_uuid(
+        group_uuid: &Uuid,
+        mls_provider: &impl OpenMlsCryptoProvider,
+    ) -> Option<Self> {
+        MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), mls_provider).map(Self::new)
+    }
+
+    pub fn group_uuid(&self) -> Uuid {
+        self.group_uuid
     }
 }
 
@@ -38,7 +52,8 @@ impl BubbleGroup {
         let members: Vec<Member> = self.group.members().collect();
         let mut client_uuids = Vec::with_capacity(members.len());
         for member in members {
-            let client_uuid = Uuid::from_slice(member.credential.identity())?;
+            let client_uuid = Uuid::from_slice(member.credential.identity())
+                .map_err(|e| Error::UuidParseError("member.credential", e))?;
             client_uuids.push((client_uuid, member.index));
         }
         Ok(client_uuids)
@@ -82,7 +97,7 @@ impl BubbleGroup {
             .map(|(uuid, _)| uuid)
             .collect::<Vec<_>>();
         let bytes = message.tls_serialize_detached()?;
-        api.send_message(recipients, bytes).await?;
+        api.send_message(recipients, bytes, self.group_uuid).await?;
         Ok(())
     }
 

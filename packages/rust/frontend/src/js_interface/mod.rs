@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 pub mod group;
 pub mod location;
+pub mod message;
 //pub mod user;
 
 #[derive(Debug)]

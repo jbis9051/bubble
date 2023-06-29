@@ -22,6 +22,19 @@ impl From<&SqliteRow> for Group {
 }
 
 impl Group {
+    pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        *self = (&sqlx::query(
+            "INSERT INTO \"group\" (uuid, name, image) VALUES ($1, $2, $3) RETURNING *;",
+        )
+        .bind(self.uuid)
+        .bind(&self.name)
+        .bind(&self.image)
+        .fetch_one(db)
+        .await?)
+            .into();
+        Ok(())
+    }
+
     pub async fn all(db: &DbPool) -> Result<Vec<Group>, sqlx::Error> {
         let locations = sqlx::query("SELECT * FROM group").fetch_all(db).await?;
         Ok(locations.iter().map(Group::from).collect())

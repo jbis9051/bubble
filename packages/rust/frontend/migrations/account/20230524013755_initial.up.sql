@@ -47,3 +47,10 @@ CREATE TABLE keystore (
     type_name  TEXT NOT NULL,
     created_date INTEGER NOT NULL
 );
+
+CREATE TABLE inbox (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message BLOB NOT NULL,
+    group_id TEXT NOT NULL,
+    received_date INTEGER NOT NULL
+)

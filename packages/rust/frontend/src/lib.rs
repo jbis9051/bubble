@@ -9,16 +9,15 @@ mod public;
 mod types;
 mod virtual_memory;
 
-use ed25519_dalek;
 use std::sync::Arc;
 // export all platform specific functions
 pub use platform::export::*;
 
 use crate::js_interface::FrontendInstance;
-use crate::public::init::TokioThread;
+
 use crate::virtual_memory::VirtualMemory;
-use bridge_macro::bridge;
-use once_cell::sync::{Lazy, OnceCell};
+
+use once_cell::sync::Lazy;
 use openmls::prelude::{AddMembersError, LeaveGroupError, RemoveMembersError};
 
 use crate::helper::resource_fetcher::ResourceError;

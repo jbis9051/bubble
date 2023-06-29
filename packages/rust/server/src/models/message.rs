@@ -3,6 +3,7 @@ use sqlx::types::chrono::NaiveDateTime;
 
 use sqlx::Row;
 use std::borrow::Borrow;
+use uuid::Uuid;
 
 use crate::types::DbPool;
 
@@ -27,6 +28,7 @@ impl From<&PgRow> for Recipient {
 pub struct Message {
     pub id: i32,
     pub message: Vec<u8>,
+    pub group_id: Uuid,
     pub created: NaiveDateTime,
 }
 
@@ -35,6 +37,7 @@ impl From<&PgRow> for Message {
         Message {
             id: row.get("id"),
             message: row.get("message"),
+            group_id: row.get("group_id"),
             created: row.get("created"),
         }
     }
@@ -42,8 +45,9 @@ impl From<&PgRow> for Message {
 
 impl Message {
     pub async fn create(&mut self, db: &DbPool, client_ids: &[i32]) -> Result<(), sqlx::Error> {
-        *self = sqlx::query("INSERT INTO message (message) VALUES ($1) RETURNING *;")
+        *self = sqlx::query("INSERT INTO message (message, group_id) VALUES ($1, $2) RETURNING *;")
             .bind(&self.message)
+            .bind(self.group_id)
             .fetch_one(db)
             .await?
             .borrow()

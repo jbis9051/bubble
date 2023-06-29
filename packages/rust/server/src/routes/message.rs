@@ -8,7 +8,7 @@ use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
 use common::base64::Base64;
-use common::http_types::{CheckMessages, MessagesResponse, SendMessage};
+use common::http_types::{CheckMessages, Message as JsonMessage, MessagesResponse, SendMessage};
 use sqlx::types::chrono::NaiveDateTime;
 use std::iter::Iterator;
 
@@ -36,7 +36,8 @@ async fn send_message(
 
     let mut message = Message {
         id: Default::default(),
-        message: payload.message.0,
+        message: payload.message.message.0,
+        group_id: payload.message.group_id,
         created: NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), // unwrap is safe because timestamp is 0
     };
     message
@@ -78,8 +79,11 @@ async fn receive_message(
         .map_err(|_| StatusCode::NOT_FOUND)?;
 
     let messages_to_return = messages
-        .iter()
-        .map(|message| Base64(message.message.clone()))
+        .into_iter()
+        .map(|message| JsonMessage {
+            message: Base64(message.message),
+            group_id: message.group_id,
+        })
         .collect();
 
     Ok((

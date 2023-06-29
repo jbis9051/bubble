@@ -13,10 +13,11 @@ use crate::helper::resource_fetcher::ResourceFetcher;
 use crate::js_interface::FrontendInstance;
 use crate::mls_provider::MlsProvider;
 use crate::models::account::group::Group as GroupModel;
+use crate::types::MLS_GROUP_CONFIG;
 use crate::Error;
 use bridge_macro::bridge;
 use openmls::group::MlsGroup;
-use openmls::prelude::{GroupId, MlsGroupConfig, TlsSerializeTrait};
+use openmls::prelude::{GroupId, TlsSerializeTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -31,7 +32,7 @@ pub struct Group {
 }
 
 impl FrontendInstance {
-    #[bridge]
+    //#[bridge]
     pub async fn get_groups(&self) -> Result<Vec<Group>, Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
@@ -48,10 +49,8 @@ impl FrontendInstance {
         let mut out = Vec::with_capacity(db_groups.len());
 
         for group in db_groups {
-            let mls_group = BubbleGroup::new(
-                MlsGroup::load(&GroupId::from_slice(group.uuid.as_ref()), &mls_provider)
-                    .ok_or_else(|| Error::MLSGroupLoad)?,
-            );
+            let mls_group = BubbleGroup::new_from_uuid(&group.uuid, &mls_provider)
+                .ok_or_else(|| Error::MLSGroupLoad)?;
             let members = mls_group.get_group_members()?;
             let mut out_members: HashMap<_, Vec<_>> = HashMap::with_capacity(members.len());
             for (client_uuid, _) in members {
@@ -73,7 +72,7 @@ impl FrontendInstance {
         Ok(out)
     }
 
-    #[bridge]
+    //#[bridge]
     pub async fn create_group(&self) -> Result<Uuid, Error> {
         let global = self.account_data.read().await;
         let account_db = &global.as_ref().ok_or_else(|| Error::DBReference)?.database;
@@ -85,7 +84,7 @@ impl FrontendInstance {
         let mut group = MlsGroup::new_with_group_id(
             &mls_provider,
             &signature,
-            &MlsGroupConfig::default(),
+            &MLS_GROUP_CONFIG,
             GroupId::from_slice((uuid).as_ref()),
             credential_with_key,
         )?;
@@ -94,7 +93,7 @@ impl FrontendInstance {
         Ok(uuid)
     }
 
-    #[bridge]
+    //#[bridge]
     pub async fn add_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
@@ -134,20 +133,24 @@ impl FrontendInstance {
             group.add_members(&mls_provider, &signature, &key_packages)?;
         // TODO what happens if we add a member that is already in the group?
 
+        group.merge_pending_commit(&mls_provider).unwrap();
+
         let mls_message_out = mls_message_out.tls_serialize_detached()?;
         let welcome_out = welcome_out.tls_serialize_detached()?;
 
         // we send the welcome message to the new members first, because if it fails, it's easier to recover from
 
-        api.send_message(client_uuids, welcome_out).await?;
-        api.send_message(old_members, mls_message_out).await?;
+        api.send_message(client_uuids, welcome_out, group_uuid)
+            .await?;
+        api.send_message(old_members, mls_message_out, group_uuid)
+            .await?;
 
         group.save_if_needed(&mls_provider)?;
 
         Ok(())
     }
 
-    #[bridge]
+    //#[bridge]
     pub async fn remove_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
@@ -184,14 +187,18 @@ impl FrontendInstance {
             return Err(Error::UnexpectedWelcome);
         }
 
+        group.merge_pending_commit(&mls_provider).unwrap();
+
         group
             .send_message(&api, &mls_message_out, &[*my_client_uuid])
             .await?;
 
+        group.save_if_needed(&mls_provider)?;
+
         Ok(())
     }
 
-    #[bridge]
+    //#[bridge]
     pub async fn leave_group(&self, group_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
@@ -229,6 +236,8 @@ impl FrontendInstance {
         let (mls_message_out, welcome_out, _group_info) =
             group.remove_members(&mls_provider, &signature, &members_to_remove)?;
 
+        group.merge_pending_commit(&mls_provider).unwrap();
+
         if welcome_out.is_some() {
             // we do not support proposals so no proposals should exist
             return Err(Error::UnexpectedWelcome);
@@ -240,6 +249,8 @@ impl FrontendInstance {
 
         // finally we leave the group for our client
         let leave_message = group.leave_group(&mls_provider, &signature)?;
+
+        group.merge_pending_commit(&mls_provider).unwrap();
 
         group.send_message(&api, &leave_message, &[]).await?;
 

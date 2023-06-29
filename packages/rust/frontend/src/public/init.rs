@@ -69,6 +69,7 @@ pub async fn init_async(
     let current_account = GlobalKv::get(&database, "current_account").await?;
 
     if let Some(current_account) = current_account {
+        // we are logged in (or at least "current_account" exists)
         let path = format!("{}/accounts/{}.db", &data_directory, &current_account);
 
         if !Path::new(&path).exists() {
