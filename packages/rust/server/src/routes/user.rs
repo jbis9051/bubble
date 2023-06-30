@@ -19,6 +19,7 @@ use crate::models::user::User;
 use crate::routes::map_sqlx_err;
 use crate::services::email::Recipient;
 
+use crate::config::CONFIG;
 use crate::services::password;
 use crate::services::session::create_session;
 use crate::types::{DbPool, EmailServiceArc};
@@ -125,6 +126,23 @@ async fn register(
                 "unable to send email".to_string(),
             )
         })?;
+
+    if CONFIG.debug_mode {
+        // WARNING: this is a debug mode only feature, do not use in production
+        confirm(
+            db,
+            Json(ConfirmEmail {
+                token: confirmation.token,
+            }),
+        )
+        .await
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "unable to confirm email".to_string(),
+            )
+        })?;
+    }
 
     Ok((StatusCode::CREATED, user.uuid.to_string()))
 }

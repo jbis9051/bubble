@@ -1,13 +1,5 @@
-use crate::models::kv::{AccountKv, GlobalKv};
+use crate::js_interface::FrontendInstance;
 use crate::Error;
-use common::base64::Base64;
-use common::http_types::{CreateUser, RegisteredClientsResponse};
-use ed25519_dalek::Keypair;
-use rand_core::OsRng;
-
-use sqlx::sqlite::SqlitePoolOptions;
-use sqlx::types::{chrono, Uuid};
-use sqlx::Row;
 
 // create a database with sqlite
 // set database to update global db with user entry
@@ -16,6 +8,29 @@ use sqlx::Row;
 // send an api route to create a user from uuid create account db
 // not updating global var
 
+impl FrontendInstance {
+    pub async fn register(
+        _username: String,
+        _password: String,
+        _name: String,
+        _email: String,
+    ) -> Result<(), Error> {
+        todo!()
+    }
+
+    pub async fn login(_username: String, _password: String) -> Result<(), Error> {
+        todo!()
+    }
+
+    pub async fn logout() -> Result<(), Error> {
+        todo!()
+    }
+
+    pub async fn forgot(_email: String) -> Result<(), Error> {
+        todo!()
+    }
+}
+/*
 pub async fn register(
     username: String,
     password: String,
@@ -50,7 +65,6 @@ pub async fn register(
 
     let user_uuid = response.uuid;
     let client_uuid = Uuid::new_v4().to_string();
-
 
 
     // create an account db based on up in migrations
@@ -99,17 +113,16 @@ pub async fn register(
     sqlx::query(
         "INSERT INTO client (uuid, user_id, signing_key, validated_date) VALUES ($1, $2, $3, $4)",
     )
-    .bind(&client_uuid)
-    .bind(user_id)
-    .bind(&account_key.public.to_bytes().to_vec())
-    .bind(chrono::Utc::now().timestamp())
-    .execute(&mut temp)
-    .await?;
+        .bind(&client_uuid)
+        .bind(user_id)
+        .bind(&account_key.public.to_bytes().to_vec())
+        .bind(chrono::Utc::now().timestamp())
+        .execute(&mut temp)
+        .await?;
 
     temp.commit().await?;
 
     Ok(())
-
 }
 
 pub async fn login(username: String, _password: String) -> Result<(), Error> {
@@ -154,3 +167,4 @@ pub async fn forgot(_email: String) -> Result<(), Error> {
 
     Ok(())
 }
+*/

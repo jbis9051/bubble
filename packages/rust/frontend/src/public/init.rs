@@ -16,7 +16,13 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct TokioThread {
     pub handle: Handle,
-    pub shutdown: Sender<()>,
+    pub shutdown: Option<Sender<()>>,
+}
+
+impl Drop for TokioThread {
+    fn drop(&mut self) {
+        self.shutdown.take().map(|s| s.send(()));
+    }
 }
 
 impl TokioThread {
@@ -36,7 +42,7 @@ impl TokioThread {
 
         Self {
             handle,
-            shutdown: shutdown_tx,
+            shutdown: Some(shutdown_tx),
         }
     }
 }
@@ -44,7 +50,18 @@ impl TokioThread {
 pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
     let tokio_thread = TokioThread::spawn();
     let handle = tokio_thread.handle.clone();
-
+    /* let (pool, account_data) = handle.block_on(init_async(&data_directory)).unwrap();
+    println!("2");
+    let global_data = GlobalStaticData {
+        data_directory,
+        tokio: tokio_thread,
+    };
+    println!("3");
+    let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
+    println!("4");
+    let address = VIRTUAL_MEMORY.push(Arc::new(frontend_instance));
+    println!("5");
+    promise.resolve(&address.to_string());*/
     handle.block_on(promisify::<usize, Error>(promise, async move {
         let (pool, account_data) = init_async(&data_directory).await?;
         let global_data = GlobalStaticData {

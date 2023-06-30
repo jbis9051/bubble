@@ -8,12 +8,18 @@ use uuid::Uuid;
 pub mod group;
 pub mod location;
 pub mod message;
-//pub mod user;
+pub mod user;
 
 #[derive(Debug)]
 pub struct GlobalStaticData {
     pub data_directory: String,
     pub tokio: TokioThread,
+}
+
+impl Drop for GlobalStaticData {
+    fn drop(&mut self) {
+        println!("Dropping GlobalStaticData");
+    }
 }
 
 #[derive(Debug)]

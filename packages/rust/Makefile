@@ -13,6 +13,10 @@ start_dev:
 	docker compose -f docker-compose-start-dev.yml down
 	docker compose -f docker-compose-start-dev.yml up --build
 
+start_debug:
+	docker compose -f docker-compose-start-debug.yml down
+	docker compose -f docker-compose-start-debug.yml up --build
+
 test_ci: fmt_ci test_db_ci test_server_ci stop_ci
 
 # Below is used for testing the CI environment. You can run the tests yourself if you would like with make test_ci
