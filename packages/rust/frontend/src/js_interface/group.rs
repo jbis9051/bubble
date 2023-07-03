@@ -26,8 +26,8 @@ use uuid::Uuid;
 #[derive(Serialize, Deserialize)]
 pub struct Group {
     pub uuid: Uuid,
-    pub name: String,
-    pub image: Vec<u8>,
+    pub name: Option<String>,
+    pub image: Option<Vec<u8>>,
     pub members: HashMap<Uuid, Vec<Uuid>>,
 }
 
@@ -35,12 +35,12 @@ impl FrontendInstance {
     //#[bridge]
     pub async fn get_groups(&self) -> Result<Vec<Group>, Error> {
         let global = self.account_data.read().await;
-        let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &global_data.database;
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
-            global_data.bearer.read().await.clone(),
+            Some(global_data.bearer.read().await.clone()),
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
 
@@ -75,11 +75,13 @@ impl FrontendInstance {
     //#[bridge]
     pub async fn create_group(&self) -> Result<Uuid, Error> {
         let global = self.account_data.read().await;
-        let account_db = &global.as_ref().ok_or_else(|| Error::DBReference)?.database;
+        let account_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
+        let account_db = &account_data.database;
+        let client_uuid = account_data.client_uuid.read().await.unwrap();
 
         let mls_provider = MlsProvider::new(account_db.clone());
         let (signature, credential_with_key) =
-            get_this_client_mls_resources(account_db, &mls_provider).await?;
+            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
         let uuid = Uuid::new_v4();
         let mut group = MlsGroup::new_with_group_id(
             &mls_provider,
@@ -90,21 +92,32 @@ impl FrontendInstance {
         )?;
         group.save(&mls_provider)?;
 
+        GroupModel {
+            id: 0,
+            uuid,
+            name: None,
+            image: None,
+        }
+        .create(account_db)
+        .await?;
+
         Ok(uuid)
     }
 
     //#[bridge]
     pub async fn add_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
-        let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &global_data.database;
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
-            global_data.bearer.read().await.clone(),
+            Some(global_data.bearer.read().await.clone()),
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
-        let (signature, _) = get_this_client_mls_resources(account_db, &mls_provider).await?;
+        let (signature, _) =
+            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
 
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
@@ -153,12 +166,13 @@ impl FrontendInstance {
     //#[bridge]
     pub async fn remove_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
-        let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &global_data.database;
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
-            global_data.bearer.read().await.clone(),
+            Some(global_data.bearer.read().await.clone()),
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
         let my_client_uuid = &global_data
@@ -167,7 +181,8 @@ impl FrontendInstance {
             .await
             .ok_or_else(|| Error::ReadClientUUID)?;
 
-        let (signature, _) = get_this_client_mls_resources(account_db, &mls_provider).await?;
+        let (signature, _) =
+            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?,
@@ -201,16 +216,18 @@ impl FrontendInstance {
     //#[bridge]
     pub async fn leave_group(&self, group_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
-        let global_data = global.as_ref().ok_or_else(|| Error::DBReference)?;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &global_data.database;
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
-            global_data.bearer.read().await.clone(),
+            Some(global_data.bearer.read().await.clone()),
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
 
-        let (signature, _) = get_this_client_mls_resources(account_db, &mls_provider).await?;
+        let (signature, _) =
+            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?,

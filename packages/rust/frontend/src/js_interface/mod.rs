@@ -13,6 +13,7 @@ pub mod user;
 #[derive(Debug)]
 pub struct GlobalStaticData {
     pub data_directory: String,
+    pub domain: String,
     pub tokio: TokioThread,
 }
 
@@ -58,7 +59,47 @@ impl FrontendInstance {
     }
 }
 
+use crate::application_message::Location;
+use crate::js_interface::group::Group;
+use crate::Error;
+
 export!(
     FrontendInstance,
     multiply(a: i32, b: i32) -> Result<i32, ()>;
+    // user
+    register(
+        username: String,
+        password: String,
+        name: String,
+        email: String
+    ) -> Result<(), Error>;
+    login(username_or_email: String, password: String) -> Result<Uuid, Error>;
+    logout() -> Result<(), Error>;
+    // group
+    get_groups() -> Result<Vec<Group>, Error>;
+    create_group() -> Result<Uuid, Error>;
+    add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
+    remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
+    leave_group(group_uuid: Uuid) -> Result<(), Error>;
+    // message
+    receive_messages() -> Result<(), Error>;
+    // location
+    get_location(
+        group_uuid: Uuid,
+        client: Uuid,
+        before_timestamp: i64,
+        amount: u32
+    ) -> Result<Vec<Location>, ()>;
+    get_num_location(
+        group_uuid: Uuid,
+        client: Uuid,
+        from_timestamp: i64,
+        to_timestamp: i64
+    ) -> Result<i64, ()>;
+    send_location(
+        group_uuid: Uuid,
+        longitude: f64,
+        latitude: f64,
+        timestamp: i64
+    ) -> Result<(), ()>;
 );

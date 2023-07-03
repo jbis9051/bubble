@@ -120,7 +120,7 @@ async fn test_login_logout() {
         db.pool(),
         &client,
         &Login {
-            email: user.email.unwrap().clone(),
+            username_or_email: user.email.unwrap().clone(),
             password: created_user.password.clone(),
         },
     )
@@ -536,7 +536,7 @@ async fn test_login_bad_credentials() {
         .unwrap();
 
     let mut login = Login {
-        email: created_user.email,
+        username_or_email: created_user.email,
         password: "badpassword".to_string(),
     };
 
@@ -549,7 +549,7 @@ async fn test_login_bad_credentials() {
 
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
 
-    login.email = "bad@gmail.com".to_string();
+    login.username_or_email = "bad@gmail.com".to_string();
 
     let res = client
         .post("/v1/user/session")

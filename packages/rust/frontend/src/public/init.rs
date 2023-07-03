@@ -50,22 +50,14 @@ impl TokioThread {
 pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
     let tokio_thread = TokioThread::spawn();
     let handle = tokio_thread.handle.clone();
-    /* let (pool, account_data) = handle.block_on(init_async(&data_directory)).unwrap();
-    println!("2");
-    let global_data = GlobalStaticData {
-        data_directory,
-        tokio: tokio_thread,
-    };
-    println!("3");
-    let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
-    println!("4");
-    let address = VIRTUAL_MEMORY.push(Arc::new(frontend_instance));
-    println!("5");
-    promise.resolve(&address.to_string());*/
     handle.block_on(promisify::<usize, Error>(promise, async move {
         let (pool, account_data) = init_async(&data_directory).await?;
+        let domain = GlobalKv::get(&pool, "domain")
+            .await?
+            .unwrap_or("http://localhost:3000".to_string()); // TODO: make this not dumb
         let global_data = GlobalStaticData {
             data_directory,
+            domain,
             tokio: tokio_thread,
         };
         let frontend_instance = FrontendInstance::new(global_data, pool, account_data);

@@ -6,10 +6,12 @@ use common::base64;
 use openmls::prelude::{Credential, CredentialType, CredentialWithKey, SignaturePublicKey};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
+use uuid::Uuid;
 
 use crate::Error;
 
 pub async fn get_this_client_mls_resources(
+    client_uuid: &Uuid,
     account_db: &DbPool,
     mls_provider: &MlsProvider,
 ) -> Result<(SignatureKeyPair, CredentialWithKey), Error> {
@@ -22,7 +24,7 @@ pub async fn get_this_client_mls_resources(
     let signature =
         SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME)
             .ok_or_else(|| Error::KeyStoreRead)?;
-    let credential = Credential::new(client_public, CredentialType::Basic)?;
+    let credential = Credential::new(client_uuid.as_bytes().to_vec(), CredentialType::Basic)?;
     let credential_with_key = CredentialWithKey {
         credential,
         signature_key: SignaturePublicKey::from(signature.public()),

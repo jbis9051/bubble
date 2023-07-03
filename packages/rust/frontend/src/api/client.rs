@@ -1,6 +1,8 @@
 use crate::api::BubbleApi;
-use common::http_types::{KeyPackagePublic, PublicClient};
+use common::base64::Base64;
+use common::http_types::{CreateClient, CreateClientResponse, KeyPackagePublic, PublicClient};
 use openmls::prelude::KeyPackage;
+
 use uuid::Uuid;
 
 impl BubbleApi {
@@ -16,6 +18,7 @@ impl BubbleApi {
             ))
             .send()
             .await?
+            .error_for_status()?
             .json()
             .await?;
         let key_package = key_package.key_package;
@@ -29,8 +32,29 @@ impl BubbleApi {
             .get(&format!("{}/v1/client/{}", self.domain, client_uuid))
             .send()
             .await?
+            .error_for_status()?
             .json()
             .await?;
         Ok(client)
+    }
+
+    pub async fn create_client(
+        &self,
+        signing_key: Vec<u8>,
+        signature: Vec<u8>,
+    ) -> Result<Uuid, reqwest::Error> {
+        let res: CreateClientResponse = self
+            .client
+            .post(&format!("{}/v1/client", self.domain))
+            .json(&CreateClient {
+                signing_key: Base64(signing_key),
+                signature: Base64(signature),
+            })
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        Ok(res.client_uuid)
     }
 }

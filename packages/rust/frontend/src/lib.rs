@@ -1,5 +1,7 @@
+extern crate core;
+
 mod api;
-mod application_message;
+pub mod application_message;
 mod helper;
 pub mod js_interface;
 mod mls_provider;
@@ -9,24 +11,23 @@ mod public;
 mod types;
 mod virtual_memory;
 
-use std::sync::Arc;
-// export all platform specific functions
-pub use platform::export::*;
-
+use crate::helper::resource_fetcher::ResourceError;
 use crate::js_interface::FrontendInstance;
-
 use crate::virtual_memory::VirtualMemory;
-
 use once_cell::sync::Lazy;
 use openmls::prelude::{AddMembersError, LeaveGroupError, RemoveMembersError};
-
-use crate::helper::resource_fetcher::ResourceError;
 use serde::{Serialize, Serializer};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
+use std::sync::Arc;
+
+// export all platform specific functions
+pub use platform::export::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("global account data was None, are you logged in?")]
+    NoGlobalAccountData,
     #[error("sqlx error: {0}")]
     Sqlx(#[from] sqlx::Error),
     #[error("sqlx migrate error: {0}")]
@@ -45,8 +46,6 @@ pub enum Error {
     TLS(#[from] tls_codec::Error),
     #[error("keystore error: {0}")]
     KeyStore(#[from] mls_provider::keystore::SqlxError),
-    #[error("could not get account db reference")]
-    DBReference,
     #[error("uuid error: {0}")]
     Uuid(#[from] uuid::Error),
     #[error("no client_public_signature found in kv table")]

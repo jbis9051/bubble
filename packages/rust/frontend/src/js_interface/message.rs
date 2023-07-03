@@ -11,33 +11,16 @@ use openmls::prelude::*;
 use sqlx::types::chrono::{NaiveDateTime, Utc};
 use uuid::Uuid;
 
-macro_rules! unwrap_or_continue {
-    ($e:expr) => {
-        match $e {
-            Some(v) => v,
-            None => continue,
-        }
-    };
-}
-
-macro_rules! unwrap_or_continue_err {
-    ($e:expr) => {
-        match $e {
-            Ok(v) => v,
-            Err(_) => continue,
-        }
-    };
-}
-
 impl FrontendInstance {
-    pub async fn receive_messages(&self) {
+    // #[bridge]
+    pub async fn receive_messages(&self) -> Result<(), crate::Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
         let my_client_uuid = &global_data.client_uuid.read().await.unwrap();
         let api = BubbleApi::new(
             global_data.domain.clone(),
-            global_data.bearer.read().await.clone(),
+            Some(global_data.bearer.read().await.clone()),
         );
         let messages = api.receive_messages(*my_client_uuid).await.unwrap();
 
@@ -54,6 +37,7 @@ impl FrontendInstance {
         }
 
         self.process_messages().await;
+        Ok(())
     }
 
     async fn process_messages(&self) {
@@ -86,8 +70,8 @@ impl FrontendInstance {
                     Group {
                         id: 0,
                         uuid: group_id,
-                        name: group_id.to_string(),
-                        image: vec![],
+                        name: None,
+                        image: None,
                     }
                     .create(account_db)
                     .await

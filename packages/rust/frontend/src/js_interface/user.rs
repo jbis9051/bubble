@@ -1,5 +1,19 @@
-use crate::js_interface::FrontendInstance;
+use crate::api::BubbleApi;
+use crate::js_interface::{FrontendInstance, GlobalAccountData};
+use crate::mls_provider::MlsProvider;
+use crate::models::kv::{AccountKv, GlobalKv};
+use crate::types::SIGNATURE_SCHEME;
 use crate::Error;
+use common::base64;
+use ed25519_dalek::{Keypair, SecretKey, Signer};
+use openmls_basic_credential::SignatureKeyPair;
+use openmls_traits::OpenMlsCryptoProvider;
+use rand_core::OsRng;
+use sqlx::sqlite::SqlitePoolOptions;
+use std::fs;
+use std::path::Path;
+use tokio::sync::RwLock;
+use uuid::Uuid;
 
 // create a database with sqlite
 // set database to update global db with user entry
@@ -7,164 +21,146 @@ use crate::Error;
 // make a key and store in db
 // send an api route to create a user from uuid create account db
 // not updating global var
-
+// `domain`, `bearer`, `client_uuid`
 impl FrontendInstance {
     pub async fn register(
-        _username: String,
-        _password: String,
-        _name: String,
-        _email: String,
+        &self,
+        username: String,
+        password: String,
+        name: String,
+        email: String,
     ) -> Result<(), Error> {
-        todo!()
+        let api = BubbleApi::new(self.static_data.domain.clone(), None);
+        let mut csprng = OsRng {};
+        let user_keys = Keypair::generate(&mut csprng);
+        let public = user_keys.public.to_bytes().to_vec();
+        let user_uuid = api
+            .register(email, username, password, name, public.clone())
+            .await?;
+        fs::create_dir_all(format!("{}/accounts", &self.static_data.data_directory)).unwrap();
+        let path = format!(
+            "{}/accounts/{}.db",
+            &self.static_data.data_directory, &user_uuid
+        );
+        let account_db = SqlitePoolOptions::new()
+            .connect(&format!("sqlite:{}?mode=rwc", path))
+            .await?;
+        sqlx::migrate!("./migrations/account")
+            .run(&account_db)
+            .await?;
+        AccountKv::set(
+            &account_db,
+            "user_private_key",
+            &base64::serialize(user_keys.secret.to_bytes().as_ref()),
+        )
+        .await?;
+        AccountKv::set(&account_db, "domain", &self.static_data.domain).await?;
+        Ok(())
     }
 
-    pub async fn login(_username: String, _password: String) -> Result<(), Error> {
-        todo!()
+    pub async fn login(&self, username_or_email: String, password: String) -> Result<Uuid, Error> {
+        let api = BubbleApi::new(self.static_data.domain.clone(), None);
+        let res = api.login(username_or_email, password).await?;
+        let path = format!(
+            "{}/accounts/{}.db",
+            &self.static_data.data_directory, &res.user_uuid
+        );
+        if !Path::new(&path).exists() {
+            // TODO: fs exist race condition
+            panic!("logging into an account on a device other than the one it was created on is not supported yet");
+        }
+        let account_db = SqlitePoolOptions::new()
+            .connect(&format!("sqlite:{}", path))
+            .await?;
+
+        AccountKv::set(&account_db, "bearer", &res.bearer.to_string()).await?;
+        GlobalKv::set(
+            &self.global_database,
+            "current_account",
+            &res.user_uuid.to_string(),
+        )
+        .await?;
+
+        let domain = AccountKv::get(&account_db, "domain").await?.unwrap();
+
+        // we've logged in, now if needed, we must create a client
+
+        let client_uuid = AccountKv::get(&account_db, "client_uuid").await?;
+
+        if let Some(client_uuid) = client_uuid {
+            let mut guard = self.account_data.write().await;
+            *guard = Some(GlobalAccountData {
+                database: account_db,
+                bearer: RwLock::new(res.bearer.to_string()),
+                domain,
+                user_uuid: res.user_uuid,
+                client_uuid: RwLock::new(Some(Uuid::parse_str(&client_uuid).unwrap())),
+            });
+            // client already exists
+            return Ok(res.user_uuid);
+        }
+
+        // we must create a client
+
+        let user_private_key = base64::deserialize(
+            &AccountKv::get(&account_db, "user_private_key")
+                .await
+                .unwrap()
+                .unwrap(),
+        );
+        let user_private_key = SecretKey::from_bytes(&user_private_key).unwrap();
+
+        let user_keypair = Keypair {
+            public: (&user_private_key).into(),
+            secret: user_private_key,
+        };
+
+        let client_signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
+
+        let signature_of_signing_key = user_keypair.sign(client_signature_keypair.public());
+
+        let api = BubbleApi::new(
+            self.static_data.domain.clone(),
+            Some(res.bearer.to_string()),
+        );
+
+        let client_uuid = api
+            .create_client(
+                client_signature_keypair.public().to_vec(),
+                signature_of_signing_key.to_bytes().to_vec(),
+            )
+            .await?;
+
+        let mls_provider = MlsProvider::new(account_db.clone());
+
+        AccountKv::set(&account_db, "client_uuid", &client_uuid.to_string()).await?;
+        AccountKv::set(
+            &account_db,
+            "client_public_signature_key",
+            &base64::serialize(client_signature_keypair.public()),
+        )
+        .await?;
+
+        client_signature_keypair.store(mls_provider.key_store())?;
+
+        let mut guard = self.account_data.write().await;
+        *guard = Some(GlobalAccountData {
+            database: account_db,
+            bearer: RwLock::new(res.bearer.to_string()),
+            domain,
+            user_uuid: res.user_uuid,
+            client_uuid: RwLock::new(Some(client_uuid)),
+        });
+
+        Ok(res.user_uuid)
     }
 
-    pub async fn logout() -> Result<(), Error> {
-        todo!()
+    pub async fn logout(&self) -> Result<(), Error> {
+        GlobalKv::delete(&self.global_database, "current_account").await?;
+        Ok(())
     }
 
     pub async fn forgot(_email: String) -> Result<(), Error> {
         todo!()
     }
 }
-/*
-pub async fn register(
-    username: String,
-    password: String,
-    name: String,
-    email: String,
-) -> Result<(), Error> {
-    //create key pair and store as signing key for client
-    let mut csprng = OsRng {};
-    let account_key = Keypair::generate(&mut csprng);
-
-    // api request
-    let _path = "/v1/user/register";
-    // let url = account_url(path).await;
-    let url = "".to_string();
-    let created_user = CreateUser {
-        email: email.clone(),
-        username: username.clone(),
-        password: password.clone(),
-        name: name.clone(),
-        identity: Base64(account_key.secret.to_bytes().to_vec()),
-    };
-
-    let client = reqwest::Client::new();
-    let response = client
-        .post(&url)
-        .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&created_user).unwrap())
-        .send()
-        .await?
-        .json::<RegisteredClientsResponse>()
-        .await?;
-
-    let user_uuid = response.uuid;
-    let client_uuid = Uuid::new_v4().to_string();
-
-
-    // create an account db based on up in migrations
-    let account_db = SqlitePoolOptions::new()
-        .connect("sqlite:accounts.db")
-        .await?;
-    sqlx::migrate!("./migrations/account")
-        .run(&account_db)
-        .await?;
-
-    let mut temp = account_db.begin().await?;
-
-    //assign new account_db to global account data var, clone when writing to it? or use a mutex
-    let bearer = AccountKv::get(&account_db, "bearer").await?;
-    let _domain = AccountKv::get(&account_db, "domain").await?;
-
-    if let Some(_bearer) = bearer {
-        let _write = crate::GLOBAL_ACCOUNT_DATA.write().await;
-        /*   *write = Some(GlobalAccountData {
-                    bearer: RwLock::new(bearer),
-                    domain: domain.unwrap_or_default(),
-                    database: account_db.clone(),
-                });
-                drop(write);
-        */
-
-        // I'm lost here fuck
-    }
-
-    // update account db
-    sqlx::query("INSERT INTO user (uuid, name, identity, updated_date) VALUES ($1, $2, $3, $4);")
-        .bind(user_uuid)
-        .bind(&name)
-        .bind(&username)
-        .bind(chrono::Utc::now().timestamp())
-        .execute(&account_db)
-        .await?;
-
-    let user_id = sqlx::query("SELECT id FROM user WHERE uuid = $1")
-        .bind(user_uuid)
-        .fetch_one(&account_db)
-        .await
-        .unwrap()
-        .get::<i32, _>("id");
-
-    sqlx::query(
-        "INSERT INTO client (uuid, user_id, signing_key, validated_date) VALUES ($1, $2, $3, $4)",
-    )
-        .bind(&client_uuid)
-        .bind(user_id)
-        .bind(&account_key.public.to_bytes().to_vec())
-        .bind(chrono::Utc::now().timestamp())
-        .execute(&mut temp)
-        .await?;
-
-    temp.commit().await?;
-
-    Ok(())
-}
-
-pub async fn login(username: String, _password: String) -> Result<(), Error> {
-    // let db = crate::GLOBAL_DATABASE.get().unwrap();
-    let account_db = SqlitePoolOptions::new()
-        .connect("sqlite:accounts.db")
-        .await?;
-    let _user_id = sqlx::query("SELECT FROM user WHERE identity = $1")
-        .bind(&username)
-        .fetch_one(db)
-        .await?;
-    let _real_password = sqlx::query("SELECT password FROM user WHERE identity = $1")
-        .bind(&username)
-        .fetch_one(db)
-        .await?;
-    /*
-    ???????????? Im sure theres mroe to do but idk
-     */
-    Ok(())
-}
-
-pub async fn logout() -> Result<(), Error> {
-    let account_db = SqlitePoolOptions::new()
-        .connect("sqlite:accounts.db")
-        .await?;
-
-    AccountKv::delete(&account_db, "current_account").await?;
-    Ok(())
-}
-
-pub async fn forgot(_email: String) -> Result<(), Error> {
-    let account_db = SqlitePoolOptions::new()
-        .connect("sqlite:accounts.db")
-        .await?;
-
-    AccountKv::set(&account_db, "forgot_email", &_email).await?;
-
-    let _response = reqwest::get("accounts/user/forgot")
-        .await?
-        .text()
-        .await?;
-
-    Ok(())
-}
-*/

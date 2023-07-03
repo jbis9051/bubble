@@ -91,7 +91,7 @@ impl KeyStore {
         value: &[u8],
         type_name: InternalMlsEntityId,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM keystore WHERE key = $1; INSERT INTO kv (key, value, type_name) VALUES ($1,$2, $3);")
+        sqlx::query("DELETE FROM keystore WHERE key = $1; INSERT INTO keystore (key, value, type_name) VALUES ($1,$2, $3);")
             .bind(key)
             .bind(value)
             .bind(type_name.as_str())

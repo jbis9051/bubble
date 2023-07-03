@@ -6,8 +6,8 @@ use uuid::Uuid;
 pub struct Group {
     pub id: i32,
     pub uuid: Uuid,
-    pub name: String,
-    pub image: Vec<u8>,
+    pub name: Option<String>,
+    pub image: Option<Vec<u8>>,
 }
 
 impl From<&SqliteRow> for Group {
@@ -36,7 +36,7 @@ impl Group {
     }
 
     pub async fn all(db: &DbPool) -> Result<Vec<Group>, sqlx::Error> {
-        let locations = sqlx::query("SELECT * FROM group").fetch_all(db).await?;
+        let locations = sqlx::query("SELECT * FROM \"group\"").fetch_all(db).await?;
         Ok(locations.iter().map(Group::from).collect())
     }
 }

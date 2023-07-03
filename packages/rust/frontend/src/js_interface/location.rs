@@ -62,7 +62,7 @@ impl FrontendInstance {
         Ok(locations)
     }
 
-    #[bridge]
+    // #[bridge]
     pub async fn send_location(
         &self,
         group_uuid: Uuid,
@@ -73,12 +73,13 @@ impl FrontendInstance {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
+        let client_uuid = &global_data.client_uuid.read().await.unwrap();
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
-            global_data.bearer.read().await.clone(),
+            Some(global_data.bearer.read().await.clone()),
         );
-        let (signature, _) = get_this_client_mls_resources(account_db, &mls_provider)
+        let (signature, _) = get_this_client_mls_resources(client_uuid, account_db, &mls_provider)
             .await
             .unwrap();
 

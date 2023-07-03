@@ -22,7 +22,8 @@ use server::services::email::PrinterEmailService;
 
 use common::base64::Base64;
 use common::http_types::{
-    ChangeEmail, ConfirmEmail, CreateClient, CreateUser, Login, SessionTokenResponse,
+    ChangeEmail, ConfirmEmail, CreateClient, CreateUser, Login, SessionTokenRequest,
+    SessionTokenResponse,
 };
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
@@ -101,7 +102,7 @@ pub async fn confirm_user(
 
     let user = User::from_id(db, user_in.id).await.unwrap();
     let token: SessionTokenResponse = res.json().await;
-    Ok((user, token.token))
+    Ok((user, token.bearer))
 }
 
 pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<Uuid, StatusCode> {
@@ -114,7 +115,7 @@ pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<U
     assert_eq!(res.status(), StatusCode::CREATED);
 
     let token: SessionTokenResponse = res.json().await;
-    Ok(token.token)
+    Ok(token.bearer)
 }
 
 pub async fn logout(
@@ -122,7 +123,7 @@ pub async fn logout(
     client: &TestClient,
     session: &Session,
 ) -> Result<(), StatusCode> {
-    let token = SessionTokenResponse {
+    let token = SessionTokenRequest {
         token: session.token,
     };
     let bearer = format!("Bearer {}", token.token);

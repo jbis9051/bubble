@@ -9,6 +9,11 @@ pub struct CreateClient {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct CreateClientResponse {
+    pub client_uuid: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UpdateClient {
     pub signing_key: Base64,
     pub signature: Base64,
@@ -56,18 +61,29 @@ pub struct CreateUser {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct CreateUserResponse {
+    pub user_uuid: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct ConfirmEmail {
     pub token: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SessionTokenResponse {
+pub struct SessionTokenRequest {
     pub token: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct SessionTokenResponse {
+    pub user_uuid: Uuid,
+    pub bearer: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct Login {
-    pub email: String,
+    pub username_or_email: String,
     pub password: String,
 }
 

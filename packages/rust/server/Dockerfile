@@ -25,7 +25,7 @@ RUN cargo build --package server --release
 
 COPY common ./common
 COPY server ./server
-COPY frontend ./frontend
+#COPY frontend ./frontend
 COPY bridge_macro ./bridge_macro
 
 RUN touch /rust/server/src/main.rs

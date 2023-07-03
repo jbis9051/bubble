@@ -25,9 +25,9 @@ use crate::services::session::create_session;
 use crate::types::{DbPool, EmailServiceArc};
 use common::base64::Base64;
 use common::http_types::{
-    ChangeEmail, ClientsResponse, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login,
-    PasswordReset, PasswordResetCheck, PublicClient, PublicUser, SessionTokenResponse,
-    UpdateIdentity, UserProfile,
+    ChangeEmail, ClientsResponse, ConfirmEmail, CreateUser, CreateUserResponse, DeleteUser,
+    ForgotEmail, Login, PasswordReset, PasswordResetCheck, PublicClient, PublicUser,
+    SessionTokenRequest, SessionTokenResponse, UpdateIdentity, UserProfile,
 };
 
 pub fn router() -> Router {
@@ -49,7 +49,7 @@ async fn register(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
     Json(payload): Json<CreateUser>,
-) -> Result<(StatusCode, String), (StatusCode, String)> {
+) -> Result<(StatusCode, Json<CreateUserResponse>), (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
 
     if (User::from_username(&db, &payload.username).await).is_ok() {
@@ -136,7 +136,8 @@ async fn register(
             }),
         )
         .await
-        .map_err(|_| {
+        .map_err(|e| {
+            println!("unable to confirm email: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "unable to confirm email".to_string(),
@@ -144,7 +145,12 @@ async fn register(
         })?;
     }
 
-    Ok((StatusCode::CREATED, user.uuid.to_string()))
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateUserResponse {
+            user_uuid: user.uuid,
+        }),
+    ))
 }
 
 async fn confirm(
@@ -171,16 +177,29 @@ async fn confirm(
 
     let token = create_session(&db, user.id).await.map_err(map_sqlx_err)?;
 
-    Ok((StatusCode::OK, Json(SessionTokenResponse { token })))
+    Ok((
+        StatusCode::OK,
+        Json(SessionTokenResponse {
+            user_uuid: user.uuid,
+            bearer: token,
+        }),
+    ))
 }
 
 async fn login(
     db: Extension<DbPool>,
     Json(payload): Json<Login>,
 ) -> Result<(StatusCode, Json<SessionTokenResponse>), StatusCode> {
-    let user = User::from_email(&db, &payload.email)
-        .await
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let user = {
+        let by_email = User::from_email(&db, &payload.username_or_email).await;
+        if let Ok(user) = by_email {
+            user
+        } else {
+            User::from_username(&db, &payload.username_or_email)
+                .await
+                .map_err(|_| StatusCode::UNAUTHORIZED)?
+        }
+    };
 
     if !password::verify(&user.password, &payload.password)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -190,12 +209,18 @@ async fn login(
 
     let token = create_session(&db, user.id).await.map_err(map_sqlx_err)?;
 
-    Ok((StatusCode::CREATED, Json(SessionTokenResponse { token })))
+    Ok((
+        StatusCode::CREATED,
+        Json(SessionTokenResponse {
+            user_uuid: user.uuid,
+            bearer: token,
+        }),
+    ))
 }
 
 async fn logout(
     db: Extension<DbPool>,
-    Json(payload): Json<SessionTokenResponse>,
+    Json(payload): Json<SessionTokenRequest>,
     _user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     // so while with authenticate the user, this permits any user to delete any session token

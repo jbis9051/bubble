@@ -15,7 +15,8 @@ use crate::routes::map_sqlx_err;
 use crate::types::DbPool;
 use common::base64::Base64;
 use common::http_types::{
-    CreateClient, KeyPackagePublic, PublicClient, ReplaceKeyPackages, UpdateClient,
+    CreateClient, CreateClientResponse, KeyPackagePublic, PublicClient, ReplaceKeyPackages,
+    UpdateClient,
 };
 use openmls::key_packages::KeyPackage;
 
@@ -34,7 +35,7 @@ pub async fn create(
     db: Extension<DbPool>,
     Json(payload): Json<CreateClient>,
     user: AuthenticatedUser,
-) -> Result<(StatusCode, String), StatusCode> {
+) -> Result<(StatusCode, Json<CreateClientResponse>), StatusCode> {
     let identity =
         PublicKey::from_bytes(&user.identity).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?; // ensure the user has a valid identity key
 
@@ -56,7 +57,12 @@ pub async fn create(
 
     client.create(&db).await.map_err(map_sqlx_err)?;
 
-    Ok((StatusCode::CREATED, client.uuid.to_string()))
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateClientResponse {
+            client_uuid: client.uuid,
+        }),
+    ))
 }
 
 pub async fn update(

@@ -36,6 +36,7 @@ impl BubbleApi {
             .json(&CheckMessages { client_uuid })
             .send()
             .await?
+            .error_for_status()?
             .json()
             .await
             .unwrap();
