@@ -78,6 +78,9 @@ pub fn e2e_test() {
     let alice_uuid = call!(alice_instance, login(username_or_email: "aliceusername", password: "alicepassword") -> Result<Uuid, ()>).unwrap();
     let bob_uuid = call!(bob_instance, login(username_or_email: "bobusername", password: "bobpassword") -> Result<Uuid, ()>).unwrap();
 
+    call!(alice_instance, replace_key_packages()).unwrap();
+    call!(bob_instance, replace_key_packages()).unwrap();
+
     println!("2");
 
     let groups = call!(alice_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();

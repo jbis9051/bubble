@@ -18,7 +18,8 @@ use common::http_types::{
     CreateClient, CreateClientResponse, KeyPackagePublic, PublicClient, ReplaceKeyPackages,
     UpdateClient,
 };
-use openmls::key_packages::KeyPackage;
+use openmls::key_packages::KeyPackageIn;
+use openmls::prelude::TlsDeserializeTrait;
 
 pub fn router() -> Router {
     Router::new()
@@ -140,9 +141,9 @@ pub async fn replace_key_packages(
     }
 
     for package in &payload.key_packages {
-        let key_package =
-            KeyPackage::try_from(package.as_slice()).map_err(|_| StatusCode::BAD_REQUEST)?;
-        if key_package.credential().identity()
+        let key_package = KeyPackageIn::tls_deserialize(&mut package.as_slice())
+            .map_err(|_| StatusCode::BAD_REQUEST)?;
+        if key_package.unverified_credential().credential.identity()
             != format!("keypackage_{}_{}", user.uuid, client.uuid).as_bytes()
         {
             // IMPORTANT: we validate that the key package is actually for this client. This identifier will be used by other Clients to contact the Authentication Service (us)..

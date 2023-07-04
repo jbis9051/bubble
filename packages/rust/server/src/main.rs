@@ -1,6 +1,7 @@
 use server::config::CONFIG;
 #[allow(unused_imports)]
 use server::services::email::{PrinterEmailService, SendGridEmailService};
+#[allow(unused_imports)]
 use server::types::EmailServiceArc;
 use server::{config, router};
 use sqlx::postgres::PgPoolOptions;

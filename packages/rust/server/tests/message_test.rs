@@ -125,7 +125,7 @@ async fn test_multiple_messages() {
     let message_3 = SendMessage {
         client_uuids: vec![client_uuid],
         message: Message {
-            message: Base64(vec![]),
+            message: Base64("test message 3".as_bytes().to_vec()),
             group_id: Default::default(),
         },
     };

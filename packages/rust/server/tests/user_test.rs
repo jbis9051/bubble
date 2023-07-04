@@ -3,8 +3,8 @@ use crate::helper::{create_client, start_server, TempDatabase};
 use axum::http::StatusCode;
 use common::base64::Base64;
 use common::http_types::{
-    ChangeEmail, ConfirmEmail, CreateUser, DeleteUser, ForgotEmail, Login, PasswordReset,
-    PublicUser, UpdateIdentity, UserProfile,
+    ChangeEmail, ConfirmEmail, CreateUser, CreateUserResponse, DeleteUser, ForgotEmail, Login,
+    PasswordReset, PublicUser, UpdateIdentity, UserProfile,
 };
 use ed25519_dalek::PublicKey;
 use server::models::confirmation::Confirmation;
@@ -12,7 +12,6 @@ use server::models::forgot::Forgot;
 use server::models::session::Session;
 use server::models::user::User;
 use server::services::password;
-use uuid::Uuid;
 
 mod crypto_helper;
 mod helper;
@@ -38,7 +37,8 @@ async fn test_register() {
         .await;
 
     assert_eq!(res.status(), StatusCode::CREATED);
-    assert!(Uuid::parse_str(&res.text().await).is_ok());
+
+    let _: CreateUserResponse = res.json().await;
 
     let user = User::from_username(db.pool(), &created_user.username)
         .await

@@ -5,6 +5,7 @@ use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
+pub mod client;
 pub mod group;
 pub mod location;
 pub mod message;
@@ -102,4 +103,6 @@ export!(
         latitude: f64,
         timestamp: i64
     ) -> Result<(), ()>;
+    // clients
+    replace_key_packages() -> Result<(), Error>;
 );

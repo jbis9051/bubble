@@ -1,7 +1,9 @@
+extern crate core;
+
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
-use std::str::FromStr;
+
 use std::sync::Arc;
 
 use server::models::user::User;
@@ -12,8 +14,6 @@ use sqlx::postgres::PgPoolOptions;
 
 use axum::http::StatusCode;
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
-use openmls::prelude::SignatureKeypair;
-use openmls_rust_crypto::OpenMlsRustCrypto;
 use server::models::confirmation::Confirmation;
 
 use server::models::session::Session;
@@ -22,9 +22,10 @@ use server::services::email::PrinterEmailService;
 
 use common::base64::Base64;
 use common::http_types::{
-    ChangeEmail, ConfirmEmail, CreateClient, CreateUser, Login, SessionTokenRequest,
-    SessionTokenResponse,
+    ChangeEmail, ConfirmEmail, CreateClient, CreateClientResponse, CreateUser, Login,
+    SessionTokenRequest, SessionTokenResponse,
 };
+use openmls_basic_credential::SignatureKeyPair;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
 use uuid::Uuid;
@@ -185,20 +186,18 @@ pub async fn create_client(
     private: &[u8],
     bearer: &str,
     client: &TestClient,
-) -> (SignatureKeypair, Uuid) {
-    let backend = &OpenMlsRustCrypto::default();
-    let signature_keypair = SignatureKeypair::new(SIGNATURE_SCHEME, backend).unwrap();
-    let (_signature_privkey, signature_pubkey) = signature_keypair.clone().into_tuple();
+) -> (SignatureKeyPair, Uuid) {
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
     let user_keypair = Keypair {
         public: PublicKey::from_bytes(public).unwrap(),
         secret: SecretKey::from_bytes(private).unwrap(),
     };
 
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
     };
 
@@ -211,7 +210,7 @@ pub async fn create_client(
 
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let client_uuid = Uuid::from_str(&res.text().await).unwrap();
+    let res: CreateClientResponse = res.json().await;
 
-    (signature_keypair, client_uuid)
+    (signature_keypair, res.client_uuid)
 }
