@@ -1,8 +1,8 @@
 use crate::api::BubbleApi;
 use common::base64::Base64;
 use common::http_types::{
-    ClientsResponse, CreateUser, CreateUserResponse, Login, PublicClient, PublicUser,
-    SessionTokenResponse,
+    ClientsResponse, ConfirmEmail, CreateUser, CreateUserResponse, ForgotEmail, Login,
+    PasswordReset, PasswordResetCheck, PublicClient, PublicUser, SessionTokenResponse,
 };
 
 use uuid::Uuid;
@@ -79,5 +79,60 @@ impl BubbleApi {
             .json()
             .await?;
         Ok(clients.clients)
+    }
+
+    pub async fn forgot(&self, email: String) -> Result<(), reqwest::Error> {
+        //error_for_status handles if not StatusCode::OK
+        self.client
+            .post(&format!("{}/v1/user/forgot", self.domain))
+            .json(&ForgotEmail { email })
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        Ok(())
+    }
+
+    pub async fn confirm(&self, token: Uuid) -> Result<SessionTokenResponse, reqwest::Error> {
+        let res: SessionTokenResponse = self
+            .client
+            .post(&format!("{}/v1/user/confirm", self.domain))
+            .json(&ConfirmEmail { token })
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        Ok(res)
+    }
+
+    pub async fn forgot_confirm(
+        &self,
+        password: String,
+        token: Uuid,
+    ) -> Result<(), reqwest::Error> {
+        self.client
+            .patch(&format!("{}/v1/user/reset", self.domain))
+            .json(&PasswordReset { password, token })
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        Ok(())
+    }
+
+    //do I just call query here?
+    pub async fn forgot_check(&self, token: Uuid) -> Result<(), reqwest::Error> {
+        self.client
+            .get(&format!("{}/v1/user/reset/{}", self.domain, token))
+            .query(&PasswordResetCheck { token })
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        Ok(())
     }
 }

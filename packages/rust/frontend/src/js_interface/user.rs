@@ -5,6 +5,7 @@ use crate::models::kv::{AccountKv, GlobalKv};
 use crate::types::SIGNATURE_SCHEME;
 use crate::Error;
 use common::base64;
+use common::http_types::SessionTokenResponse;
 use ed25519_dalek::{Keypair, SecretKey, Signer};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
@@ -61,6 +62,11 @@ impl FrontendInstance {
     pub async fn login(&self, username_or_email: String, password: String) -> Result<Uuid, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         let res = api.login(username_or_email, password).await?;
+        let user_uuid = self.login_with_token(res).await?;
+        Ok(user_uuid)
+    }
+
+    pub async fn login_with_token(&self, res: SessionTokenResponse) -> Result<Uuid, Error> {
         let path = format!(
             "{}/accounts/{}.db",
             &self.static_data.data_directory, &res.user_uuid
@@ -151,7 +157,6 @@ impl FrontendInstance {
             user_uuid: res.user_uuid,
             client_uuid: RwLock::new(Some(client_uuid)),
         });
-
         Ok(res.user_uuid)
     }
 
@@ -160,7 +165,29 @@ impl FrontendInstance {
         Ok(())
     }
 
-    pub async fn forgot(_email: String) -> Result<(), Error> {
-        todo!()
+    pub async fn forgot(&self, email: String) -> Result<(), Error> {
+        let api = BubbleApi::new(self.static_data.domain.clone(), None);
+        api.forgot(email).await?;
+        Ok(())
+    }
+
+    pub async fn confirm(&self, token: Uuid) -> Result<Uuid, Error> {
+        let api = BubbleApi::new(self.static_data.domain.clone(), None);
+        let res = api.confirm(token).await?;
+        let user_uuid = self.login_with_token(res).await?;
+        Ok(user_uuid)
+    }
+
+    pub async fn forgot_confirm(&self, password: String, token: Uuid) -> Result<(), Error> {
+        let api = BubbleApi::new(self.static_data.domain.clone(), None);
+        api.forgot_confirm(password, token).await?;
+        Ok(())
+    }
+    //different because its an endpoint?
+
+    pub async fn forgot_check(&self, token: Uuid) -> Result<(), Error> {
+        let api = BubbleApi::new(self.static_data.domain.clone(), None);
+        api.forgot_check(token).await?;
+        Ok(())
     }
 }

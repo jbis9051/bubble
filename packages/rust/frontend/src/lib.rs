@@ -10,7 +10,6 @@ mod platform;
 mod public;
 mod types;
 mod virtual_memory;
-mod user;
 
 use crate::helper::resource_fetcher::ResourceError;
 use crate::js_interface::FrontendInstance;

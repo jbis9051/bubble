@@ -1,6 +1,8 @@
 use crate::types::DbPool;
 use common::http_types::PublicUser;
+use ed25519_dalek::{PublicKey, Signature, Verifier};
 use sqlx::sqlite::SqliteRow;
+use sqlx::types::chrono;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
 use uuid::Uuid;
@@ -67,5 +69,26 @@ impl User {
             .as_ref()
             .map(|row| row.into());
         Ok(user)
+    }
+    pub async fn create_client(
+        &self,
+        db: &DbPool,
+        signing_key: &[u8],
+        signature: &Signature,
+    ) -> Result<(), sqlx::Error> {
+        let public_user_key: PublicKey = PublicKey::from_bytes(&self.identity).unwrap();
+        if public_user_key.verify(signing_key, signature).is_err() {
+            return Err(sqlx::Error::RowNotFound);
+        }
+        sqlx::query(
+            "INSERT INTO client (user_id, signing_key, validated_date) VALUES ($1, $2, $3);",
+        )
+        .bind(self.id)
+        .bind(signing_key)
+        .bind(chrono::Utc::now().timestamp())
+        .execute(db)
+        .await
+        .unwrap();
+        Ok(())
     }
 }
