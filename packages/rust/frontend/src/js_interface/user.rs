@@ -185,9 +185,9 @@ impl FrontendInstance {
     }
     //different because its an endpoint?
 
-    pub async fn forgot_check(&self, token: Uuid) -> Result<(), Error> {
+    pub async fn forgot_check(&self, token: Uuid) -> Result<bool, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
-        api.forgot_check(token).await?;
-        Ok(())
+        let res = api.forgot_check(token).await;
+        Ok(res.is_ok())
     }
 }
