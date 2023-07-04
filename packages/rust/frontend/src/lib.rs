@@ -1,5 +1,3 @@
-extern crate core;
-
 mod api;
 pub mod application_message;
 mod helper;

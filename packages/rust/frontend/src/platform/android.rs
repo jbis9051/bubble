@@ -56,9 +56,9 @@ impl Promise for AndroidPromise {
 pub type DevicePromise = AndroidPromise;
 
 pub mod export {
-    use crate::call::call;
-    use crate::init::init;
     use crate::platform::DevicePromise;
+    use crate::public::call;
+    use crate::public::init;
     use jni::objects::{JClass, JObject, JString};
     use jni::sys::{jdouble, jstring};
     use jni::JNIEnv;
