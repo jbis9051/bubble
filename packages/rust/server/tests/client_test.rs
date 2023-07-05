@@ -222,7 +222,7 @@ async fn test_key_packages() {
 
     // Upload Key Packages
 
-    let identity = format!("keypackage_{}_{}", user.uuid, client_uuid);
+    let identity = format!("client_{}_{}", user.uuid, client_uuid);
     let credential = Credential::new(identity.into_bytes(), CredentialType::Basic).unwrap();
 
     let mut key_packages = Vec::new();
@@ -513,7 +513,7 @@ async fn test_replace_key_packages_bad_auth() {
 
     // try to upload a key package with the second user's token
 
-    let identity = format!("keypackage_{}_{}", user.uuid, client_uuid);
+    let identity = format!("client_{}_{}", user.uuid, client_uuid);
     let credential = Credential::new(identity.into_bytes(), CredentialType::Basic).unwrap();
 
     let mut key_packages = Vec::new();
@@ -570,7 +570,7 @@ async fn test_replace_key_packages_id() {
 
     // try to upload a key package a bad identity
 
-    let identity = format!("keypackage_{}_{}", user.uuid, Uuid::new_v4());
+    let identity = format!("client_{}_{}", user.uuid, Uuid::new_v4());
     let credential = Credential::new(identity.into_bytes(), CredentialType::Basic).unwrap();
 
     let mut key_packages = Vec::new();

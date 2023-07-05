@@ -10,6 +10,9 @@ impl BubbleApi {
         message: Vec<u8>,
         group_uuid: Uuid,
     ) -> Result<(), reqwest::Error> {
+        if client_uuids.is_empty() {
+            return Ok(());
+        }
         let message = Message {
             group_id: group_uuid,
             message: Base64(message),
@@ -19,7 +22,7 @@ impl BubbleApi {
             message,
         };
         self.client
-            .post(&format!("{}/v1/messages", self.domain))
+            .post(&format!("{}/v1/message", self.domain))
             .json(&message)
             .send()
             .await?;
@@ -32,7 +35,7 @@ impl BubbleApi {
     ) -> Result<Vec<Message>, reqwest::Error> {
         let response: MessagesResponse = self
             .client
-            .get(&format!("{}/v1/messages", self.domain))
+            .get(&format!("{}/v1/message", self.domain))
             .json(&CheckMessages { client_uuid })
             .send()
             .await?

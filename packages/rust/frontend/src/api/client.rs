@@ -3,8 +3,8 @@ use common::base64::Base64;
 use common::http_types::{
     CreateClient, CreateClientResponse, KeyPackagePublic, PublicClient, ReplaceKeyPackages,
 };
-use openmls::prelude::KeyPackage;
-use tls_codec::Serialize;
+use openmls::prelude::{KeyPackage, KeyPackageIn};
+use tls_codec::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
@@ -12,7 +12,7 @@ impl BubbleApi {
     pub async fn request_key_package(
         &self,
         client_uuid: &Uuid,
-    ) -> Result<KeyPackage, reqwest::Error> {
+    ) -> Result<KeyPackageIn, reqwest::Error> {
         let key_package: KeyPackagePublic = self
             .client
             .get(&format!(
@@ -25,8 +25,8 @@ impl BubbleApi {
             .json()
             .await?;
         let key_package = key_package.key_package;
-        let key_package: KeyPackage = serde_json::from_slice(&key_package).unwrap();
-        Ok(key_package)
+        let key_package_in = KeyPackageIn::tls_deserialize(&mut key_package.as_slice()).unwrap();
+        Ok(key_package_in)
     }
 
     pub async fn replace_key_packages(
@@ -34,8 +34,7 @@ impl BubbleApi {
         client_uuid: &Uuid,
         key_packages: Vec<KeyPackage>,
     ) -> Result<(), reqwest::Error> {
-        println!("replacing key packages for client {}", client_uuid);
-        let res = self
+        let _res = self
             .client
             .post(&format!(
                 "{}/v1/client/{}/key_packages",
@@ -49,11 +48,6 @@ impl BubbleApi {
             })
             .send()
             .await?;
-        println!(
-            "replace key packages response: {} - {:?}",
-            res.status(),
-            res.text().await?
-        );
         Ok(())
     }
 

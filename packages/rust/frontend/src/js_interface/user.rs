@@ -11,6 +11,7 @@ use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 use rand_core::OsRng;
 use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::ConnectOptions;
 use std::fs;
 use std::path::Path;
 use tokio::sync::RwLock;

@@ -144,7 +144,7 @@ pub async fn replace_key_packages(
         let key_package = KeyPackageIn::tls_deserialize(&mut package.as_slice())
             .map_err(|_| StatusCode::BAD_REQUEST)?;
         if key_package.unverified_credential().credential.identity()
-            != format!("keypackage_{}_{}", user.uuid, client.uuid).as_bytes()
+            != format!("client_{}_{}", user.uuid, client.uuid).as_bytes()
         {
             // IMPORTANT: we validate that the key package is actually for this client. This identifier will be used by other Clients to contact the Authentication Service (us)..
             return Err(StatusCode::BAD_REQUEST);

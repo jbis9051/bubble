@@ -25,13 +25,13 @@ impl From<&SqliteRow> for Inbox {
 impl Inbox {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = (&sqlx::query(
-            "INSERT INTO inbox (message, group_id, received_date) VALUES (?, ?, ?) RETURNING id, message, received_date",
+            "INSERT INTO inbox (message, group_id, received_date) VALUES (?, ?, ?) RETURNING *",
         )
-            .bind(&self.message)
-            .bind(self.group_id)
-            .bind(self.received_date)
-            .fetch_one(db)
-            .await?)
+        .bind(&self.message)
+        .bind(self.group_id)
+        .bind(self.received_date)
+        .fetch_one(db)
+        .await?)
             .into();
         Ok(())
     }

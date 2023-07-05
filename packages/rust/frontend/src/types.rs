@@ -1,5 +1,6 @@
 use once_cell::sync::Lazy;
 use openmls::group::MlsGroupConfig;
+use openmls::prelude::{CryptoConfig, ProtocolVersion};
 use openmls_traits::types::{Ciphersuite, SignatureScheme};
 use sqlx::SqlitePool;
 
@@ -12,6 +13,10 @@ pub const CIPHERSUITE: Ciphersuite =
 
 pub static MLS_GROUP_CONFIG: Lazy<MlsGroupConfig> = Lazy::new(|| {
     MlsGroupConfig::builder()
+        .crypto_config(CryptoConfig {
+            ciphersuite: CIPHERSUITE,
+            version: ProtocolVersion::default(),
+        })
         .use_ratchet_tree_extension(true)
         .build()
 });

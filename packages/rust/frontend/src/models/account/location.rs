@@ -20,13 +20,15 @@ pub struct Location {
 
 impl From<&SqliteRow> for Location {
     fn from(row: &SqliteRow) -> Self {
+        let location_date: i64 = row.get("location_date");
+        let location_date = NaiveDateTime::from_timestamp_millis(location_date).unwrap();
         Self {
             id: row.get("id"),
             client_uuid: row.get("client_uuid"),
             group_uuid: row.get("group_uuid"),
             longitude: row.get("longitude"),
             latitude: row.get("latitude"),
-            location_date: row.get("location_date"),
+            location_date,
             raw: row.get("raw"),
             created_date: row.get("created_date"),
         }
@@ -40,7 +42,7 @@ impl Location {
             .bind(self.group_uuid)
             .bind(self.longitude)
             .bind(self.latitude)
-            .bind(self.location_date)
+            .bind(self.location_date.timestamp_millis())
             .bind(&self.raw)
             .fetch_one(db).await?).into();
         Ok(())
@@ -54,7 +56,7 @@ impl Location {
         amount: u32,
     ) -> Result<Vec<Location>, sqlx::Error> {
         let locations = sqlx::query("SELECT * FROM location WHERE location_date < $1 AND group_uuid = $2 AND client_uuid = $3 ORDER BY location_date DESC LIMIT $4")
-            .bind(before)
+            .bind(before.timestamp_millis())
             .bind(group_uuid)
             .bind(client_uuid)
             .bind(amount)
@@ -71,8 +73,8 @@ impl Location {
         to: &NaiveDateTime,
     ) -> Result<i64, sqlx::Error> {
         let count = sqlx::query("SELECT COUNT(*) as count FROM location WHERE location_date BETWEEN $1 AND $2 AND group_uuid = $3 AND client_uuid = $4")
-            .bind(from)
-            .bind(to)
+            .bind(from.timestamp_millis())
+            .bind(to.timestamp_millis())
             .bind(group_uuid)
             .bind(client_uuid)
             .fetch_one(db)

@@ -1,11 +1,3 @@
-/*
-function get_groups(): Group[] {}
-function create_group(): uuid {}
-function add_member(group_uuid: uuid, user: uuid){}
-function remove_member(group_uuid: uuid, user: uuid){}
-function leave_group(group_uuid: uuid){}
- */
-
 use crate::api::BubbleApi;
 use crate::helper::bubble_group::BubbleGroup;
 use crate::helper::helper::get_this_client_mls_resources;
@@ -17,9 +9,11 @@ use crate::types::MLS_GROUP_CONFIG;
 use crate::Error;
 use bridge_macro::bridge;
 use openmls::group::MlsGroup;
-use openmls::prelude::{GroupId, TlsSerializeTrait};
+use openmls::prelude::{GroupId, ProtocolVersion, TlsSerializeTrait};
+use openmls_traits::OpenMlsCryptoProvider;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tokio::io::AsyncReadExt;
 use uuid::Uuid;
 
 #[bridge]
@@ -53,9 +47,9 @@ impl FrontendInstance {
                 .ok_or_else(|| Error::MLSGroupLoad)?;
             let members = mls_group.get_group_members()?;
             let mut out_members: HashMap<_, Vec<_>> = HashMap::with_capacity(members.len());
-            for (client_uuid, _) in members {
+            for member in members {
                 let client = resource_fetcher
-                    .get_client_partial_authentication(&client_uuid)
+                    .get_client_partial_authentication(&member.client_uuid)
                     .await?;
                 out_members
                     .entry(client.user_uuid)
@@ -77,11 +71,13 @@ impl FrontendInstance {
         let global = self.account_data.read().await;
         let account_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &account_data.database;
+        let user_uuid = &account_data.user_uuid;
         let client_uuid = account_data.client_uuid.read().await.unwrap();
 
         let mls_provider = MlsProvider::new(account_db.clone());
         let (signature, credential_with_key) =
-            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
+            get_this_client_mls_resources(user_uuid, &client_uuid, account_db, &mls_provider)
+                .await?;
         let uuid = Uuid::new_v4();
         let mut group = MlsGroup::new_with_group_id(
             &mls_provider,
@@ -116,8 +112,13 @@ impl FrontendInstance {
             Some(global_data.bearer.read().await.clone()),
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
-        let (signature, _) =
-            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
+        let (signature, _) = get_this_client_mls_resources(
+            &global_data.user_uuid,
+            &client_uuid,
+            account_db,
+            &mls_provider,
+        )
+        .await?;
 
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
@@ -132,14 +133,18 @@ impl FrontendInstance {
         let mut client_uuids = Vec::with_capacity(clients.len());
         for client in &clients {
             client_uuids.push(client.uuid);
-            let key_package = api.request_key_package(&client.uuid).await?;
+            let key_package_in = api.request_key_package(&client.uuid).await?;
+            let key_package = key_package_in
+                .validate(mls_provider.crypto(), ProtocolVersion::default())
+                .unwrap();
             key_packages.push(key_package);
         }
 
         let old_members = group
             .get_group_members()?
             .into_iter()
-            .map(|(uuid, _)| uuid)
+            .filter(|m| m.client_uuid != client_uuid) // we don't want to send the message to ourselves
+            .map(|m| m.client_uuid)
             .collect::<Vec<_>>();
 
         let (mls_message_out, welcome_out, _group_info) =
@@ -174,25 +179,29 @@ impl FrontendInstance {
             global_data.domain.clone(),
             Some(global_data.bearer.read().await.clone()),
         );
-        let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
         let my_client_uuid = &global_data
             .client_uuid
             .read()
             .await
             .ok_or_else(|| Error::ReadClientUUID)?;
 
-        let (signature, _) =
-            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
+        let (signature, _) = get_this_client_mls_resources(
+            &global_data.user_uuid,
+            &client_uuid,
+            account_db,
+            &mls_provider,
+        )
+        .await?;
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?,
         );
 
         let members_to_remove = group
-            .get_group_members_by_user_uuid(&user_uuid, &resource_fetcher)
-            .await?
+            .get_group_members()?
             .into_iter()
-            .map(|(_, index)| index)
+            .filter(|m| m.user_uuid == user_uuid)
+            .map(|m| m.index)
             .collect::<Vec<_>>();
 
         let (mls_message_out, welcome_out, _group_info) =
@@ -218,16 +227,17 @@ impl FrontendInstance {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &global_data.database;
+        let user_uuid = &global_data.user_uuid;
         let client_uuid = global_data.client_uuid.read().await.unwrap();
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
             Some(global_data.bearer.read().await.clone()),
         );
-        let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
 
         let (signature, _) =
-            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
+            get_this_client_mls_resources(user_uuid, &client_uuid, account_db, &mls_provider)
+                .await?;
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?,
@@ -242,11 +252,10 @@ impl FrontendInstance {
 
         // get all clients for our user with the exception of our own client
         let members_to_remove = group
-            .get_group_members_by_user_uuid(my_user_uuid, &resource_fetcher)
-            .await?
+            .get_group_members()?
             .into_iter()
-            .filter(|(uuid, _)| uuid != my_client_uuid)
-            .map(|(_, index)| index)
+            .filter(|m| &m.user_uuid == my_user_uuid && &m.client_uuid != my_client_uuid)
+            .map(|m| m.index)
             .collect::<Vec<_>>();
 
         // remove all members except our own client

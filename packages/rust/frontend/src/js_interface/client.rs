@@ -14,7 +14,7 @@ impl FrontendInstance {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let account_db = &global_data.database;
-        let user_uuid = global_data.user_uuid;
+        let user_uuid = &global_data.user_uuid;
         let client_uuid = global_data.client_uuid.read().await.unwrap();
         let api = BubbleApi::new(
             global_data.domain.clone(),
@@ -22,9 +22,10 @@ impl FrontendInstance {
         );
         let mls_provider = MlsProvider::new(account_db.clone());
         let (signature, _) =
-            get_this_client_mls_resources(&client_uuid, account_db, &mls_provider).await?;
+            get_this_client_mls_resources(user_uuid, &client_uuid, account_db, &mls_provider)
+                .await?;
 
-        let identity = format!("keypackage_{}_{}", user_uuid, client_uuid);
+        let identity = format!("client_{}_{}", user_uuid, client_uuid);
         let credential = Credential::new(identity.into_bytes(), CredentialType::Basic)?;
         let public = SignaturePublicKey::from(signature.public());
 

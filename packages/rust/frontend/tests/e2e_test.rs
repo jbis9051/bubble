@@ -3,6 +3,7 @@ use frontend::init;
 use frontend::js_interface::group::Group;
 use serde::Deserialize;
 use serde_json::Value;
+use sqlx::types::chrono::NaiveDateTime;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs};
 use thiserror::__private::PathAsDisplay;
@@ -67,13 +68,13 @@ pub fn create_instance(name: &str) -> Result<i32, String> {
 
 #[test]
 pub fn e2e_test() {
+    reqwest::blocking::get("http://localhost:3000/reset").unwrap();
+
     let alice_instance = create_instance("alice").unwrap();
     let bob_instance = create_instance("bob").unwrap();
 
     call!(alice_instance, register(username: "aliceusername", password: "alicepassword", name: "alice", email: "alice@email.com")).unwrap();
     call!(bob_instance, register(username: "bobusername", password: "bobpassword", name: "bob", email: "bob@email.com")).unwrap();
-
-    println!("1");
 
     let alice_uuid = call!(alice_instance, login(username_or_email: "aliceusername", password: "alicepassword") -> Result<Uuid, ()>).unwrap();
     let bob_uuid = call!(bob_instance, login(username_or_email: "bobusername", password: "bobpassword") -> Result<Uuid, ()>).unwrap();
@@ -81,16 +82,10 @@ pub fn e2e_test() {
     call!(alice_instance, replace_key_packages()).unwrap();
     call!(bob_instance, replace_key_packages()).unwrap();
 
-    println!("2");
-
     let groups = call!(alice_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
     assert_eq!(groups.len(), 0);
 
-    println!("3");
-
     let group_uuid = call!(alice_instance, create_group() -> Result<Uuid, ()>).unwrap();
-
-    println!("4");
 
     let groups = call!(alice_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
     assert_eq!(groups.len(), 1);
@@ -100,15 +95,11 @@ pub fn e2e_test() {
     assert_eq!(groups[0].members.len(), 1);
     assert!(groups[0].members.get(&alice_uuid).is_some());
 
-    println!("5");
-
     call!(
         alice_instance,
         add_member(group_uuid: group_uuid, user_uuid: bob_uuid)
     )
     .unwrap();
-
-    println!("6");
 
     let groups = call!(alice_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
     assert_eq!(groups.len(), 1);
@@ -116,8 +107,6 @@ pub fn e2e_test() {
     assert!(groups[0].members.get(&bob_uuid).is_some());
     assert_eq!(groups[0].members.get(&bob_uuid).unwrap().len(), 1);
     let bob_client = groups[0].members.get(&bob_uuid).unwrap()[0];
-
-    println!("7");
 
     let groups = call!(bob_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
     assert_eq!(groups.len(), 0);
@@ -130,8 +119,10 @@ pub fn e2e_test() {
     assert!(groups[0].members.get(&bob_uuid).is_some());
     assert!(groups[0].members.get(&alice_uuid).is_some());
     assert_eq!(groups[0].members.get(&alice_uuid).unwrap().len(), 1);
+    let alice_client = groups[0].members.get(&alice_uuid).unwrap()[0];
 
-    let future = i64::MAX;
+    let future = NaiveDateTime::MAX.timestamp_millis();
+
     let locations = call!(bob_instance, get_location(group_uuid: group_uuid, client: bob_client, before_timestamp: future, amount: 100) -> Result<Vec<Location>, ()>).unwrap();
     let num_locations = call!(bob_instance, get_num_location(group_uuid: group_uuid, client: bob_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
     assert_eq!(locations.len(), num_locations as usize);
@@ -152,8 +143,8 @@ pub fn e2e_test() {
 
     call!(bob_instance, receive_messages()).unwrap();
 
-    let locations = call!(bob_instance, get_location(group_uuid: group_uuid, client: alice_uuid, before_timestamp: future, amount: 100) -> Result<Vec<Location>, ()>).unwrap();
-    let num_locations = call!(bob_instance, get_num_location(group_uuid: group_uuid, client: alice_uuid, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    let locations = call!(bob_instance, get_location(group_uuid: group_uuid, client: alice_client, before_timestamp: future, amount: 100) -> Result<Vec<Location>, ()>).unwrap();
+    let num_locations = call!(bob_instance, get_num_location(group_uuid: group_uuid, client: alice_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
     assert_eq!(locations.len(), num_locations as usize);
     assert_eq!(num_locations, 1);
     assert_eq!(locations[0].longitude, alice_location.0);
@@ -170,8 +161,8 @@ pub fn e2e_test() {
 
     call!(alice_instance, receive_messages()).unwrap();
 
-    let locations = call!(alice_instance, get_location(group_uuid: group_uuid, client: bob_uuid, before_timestamp: future, amount: 100) -> Result<Vec<Location>, ()>).unwrap();
-    let num_locations = call!(alice_instance, get_num_location(group_uuid: group_uuid, client: bob_uuid, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    let locations = call!(alice_instance, get_location(group_uuid: group_uuid, client: bob_client, before_timestamp: future, amount: 100) -> Result<Vec<Location>, ()>).unwrap();
+    let num_locations = call!(alice_instance, get_num_location(group_uuid: group_uuid, client: bob_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
     assert_eq!(locations.len(), num_locations as usize);
     assert_eq!(num_locations, 1);
     assert_eq!(locations[0].longitude, bob_location.0);

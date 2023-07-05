@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::Error;
 
 pub async fn get_this_client_mls_resources(
+    user_uuid: &Uuid,
     client_uuid: &Uuid,
     account_db: &DbPool,
     mls_provider: &MlsProvider,
@@ -24,10 +25,28 @@ pub async fn get_this_client_mls_resources(
     let signature =
         SignatureKeyPair::read(mls_provider.key_store(), &client_public, SIGNATURE_SCHEME)
             .ok_or_else(|| Error::KeyStoreRead)?;
-    let credential = Credential::new(client_uuid.as_bytes().to_vec(), CredentialType::Basic)?;
+    let identity = format!("client_{}_{}", user_uuid, client_uuid);
+    let credential = Credential::new(identity.into_bytes(), CredentialType::Basic)?;
     let credential_with_key = CredentialWithKey {
         credential,
         signature_key: SignaturePublicKey::from(signature.public()),
     };
     Ok((signature, credential_with_key))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ParseIdentityError {}
+
+pub fn parse_identity(identity: &[u8]) -> Result<(Uuid, Uuid), ParseIdentityError> {
+    let identity = String::from_utf8(identity.to_vec()).expect("invalid identity");
+    let parts: Vec<&str> = identity.split('_').collect();
+
+    if parts.len() != 3 {
+        panic!("invalid identity parts");
+    }
+
+    let user_uuid = Uuid::parse_str(parts[1]).expect("invalid user uuid");
+    let client_uuid = Uuid::parse_str(parts[2]).expect("invalid client uuid");
+
+    Ok((user_uuid, client_uuid))
 }

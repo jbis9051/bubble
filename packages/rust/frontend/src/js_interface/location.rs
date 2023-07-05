@@ -12,7 +12,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 impl FrontendInstance {
-    #[bridge]
+    //#[bridge]
     pub async fn get_location(
         &self,
         group_uuid: Uuid,
@@ -73,15 +73,17 @@ impl FrontendInstance {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
+        let user_uuid = &global_data.user_uuid;
         let client_uuid = &global_data.client_uuid.read().await.unwrap();
         let mls_provider = MlsProvider::new(account_db.clone());
         let api = BubbleApi::new(
             global_data.domain.clone(),
             Some(global_data.bearer.read().await.clone()),
         );
-        let (signature, _) = get_this_client_mls_resources(client_uuid, account_db, &mls_provider)
-            .await
-            .unwrap();
+        let (signature, _) =
+            get_this_client_mls_resources(user_uuid, client_uuid, account_db, &mls_provider)
+                .await
+                .unwrap();
 
         let mut group = BubbleGroup::new(
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider).unwrap(),
@@ -94,7 +96,7 @@ impl FrontendInstance {
         });
 
         group
-            .send_application_message(&mls_provider, &api, &signature, &message)
+            .send_application_message(&mls_provider, &api, &signature, &message, &[*client_uuid])
             .await
             .unwrap();
 

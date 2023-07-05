@@ -1,7 +1,7 @@
 fmt:
 	sleek **/**/*.sql
-	cargo fmt --all
 	cargo clippy --all --fix --allow-dirty --allow-staged
+	cargo fmt --all
 
 # For usage when developing server
 dev:

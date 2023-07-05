@@ -1,6 +1,7 @@
 use crate::api::BubbleApi;
 use crate::application_message::Message;
 use crate::helper::bubble_group::BubbleGroup;
+use crate::helper::helper::parse_identity;
 use crate::js_interface::FrontendInstance;
 use crate::mls_provider::MlsProvider;
 use crate::models::account::group::Group;
@@ -9,6 +10,7 @@ use crate::models::account::location::Location;
 use crate::types::{DbPool, MLS_GROUP_CONFIG};
 use openmls::prelude::*;
 use sqlx::types::chrono::{NaiveDateTime, Utc};
+
 use uuid::Uuid;
 
 impl FrontendInstance {
@@ -60,12 +62,21 @@ impl FrontendInstance {
         for (message, inbox_message) in messages {
             let body = message.extract();
             match body {
-                MlsMessageInBody::PublicMessage(_) => {}
-                MlsMessageInBody::PrivateMessage(_) => {}
+                MlsMessageInBody::PublicMessage(m) => {
+                    process_group_message(account_db, &inbox_message, &mls_provider, m.into())
+                        .await
+                        .unwrap();
+                }
+                MlsMessageInBody::PrivateMessage(m) => {
+                    process_group_message(account_db, &inbox_message, &mls_provider, m.into())
+                        .await
+                        .unwrap();
+                }
                 MlsMessageInBody::Welcome(welcome) => {
-                    let group =
+                    let mut group = BubbleGroup::new(
                         MlsGroup::new_from_welcome(&mls_provider, &MLS_GROUP_CONFIG, welcome, None)
-                            .unwrap();
+                            .unwrap(),
+                    );
                     let group_id = Uuid::from_slice(group.group_id().as_slice()).unwrap();
                     Group {
                         id: 0,
@@ -76,6 +87,8 @@ impl FrontendInstance {
                     .create(account_db)
                     .await
                     .unwrap();
+
+                    group.save_if_needed(&mls_provider).unwrap();
                 }
                 MlsMessageInBody::GroupInfo(_) => continue,
                 MlsMessageInBody::KeyPackage(_) => continue,
@@ -92,17 +105,17 @@ impl FrontendInstance {
             account_db: &DbPool,
             inbox_message: &Inbox,
             mls_provider: &MlsProvider,
-            message: impl Into<ProtocolMessage>,
+            message: ProtocolMessage,
         ) -> Result<(), ()> {
             let mut group = BubbleGroup::new(
                 MlsGroup::load(
-                    &GroupId::from_slice(inbox_message.group_id.as_ref()),
+                    &GroupId::from_slice(message.group_id().as_slice()),
                     mls_provider,
                 )
                 .unwrap(),
             );
             let group_message = group.process_message(mls_provider, message).unwrap();
-            let group_uuid = Uuid::from_slice(group_message.credential().identity()).unwrap();
+            let (_, client_uuid) = parse_identity(group_message.credential().identity()).unwrap();
             let content = group_message.into_content();
             match content {
                 ProcessedMessageContent::ApplicationMessage(app) => {
@@ -111,7 +124,7 @@ impl FrontendInstance {
                         Message::Location(message) => {
                             Location {
                                 id: 0,
-                                client_uuid: group_uuid,
+                                client_uuid,
                                 group_uuid: group.group_uuid(),
                                 longitude: message.longitude,
                                 latitude: message.latitude,

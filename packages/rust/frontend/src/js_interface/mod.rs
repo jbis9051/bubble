@@ -18,12 +18,6 @@ pub struct GlobalStaticData {
     pub tokio: TokioThread,
 }
 
-impl Drop for GlobalStaticData {
-    fn drop(&mut self) {
-        println!("Dropping GlobalStaticData");
-    }
-}
-
 #[derive(Debug)]
 pub struct GlobalAccountData {
     pub database: SqlitePool,

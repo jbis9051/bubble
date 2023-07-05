@@ -5,7 +5,7 @@ use sqlx::SqlitePool;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::thread;
-use tokio::runtime::{Builder, Handle};
+use tokio::runtime::Builder;
 
 pub struct MlsKeyStoreProvider {
     db: SqlitePool,
@@ -49,7 +49,6 @@ impl OpenMlsKeyStore for MlsKeyStoreProvider {
     {
         let internal_id: InternalMlsEntityId = V::ID.into();
         let v = serde_json::to_vec(v).unwrap();
-        let _handle = Handle::current();
         let db = self.db.clone();
         let k = k.to_vec();
         thread::spawn(move || {
@@ -81,6 +80,17 @@ impl OpenMlsKeyStore for MlsKeyStoreProvider {
     }
 
     fn delete<V: MlsEntity>(&self, k: &[u8]) -> Result<(), Self::Error> {
-        Ok(Handle::current().block_on(KeyStore::delete(&self.db, k))?)
+        let db = self.db.clone();
+        let k = k.to_vec();
+        thread::spawn(move || {
+            let rt = Builder::new_current_thread().enable_all().build().unwrap();
+            rt.block_on(async move {
+                KeyStore::delete(&db, &k).await.unwrap();
+            });
+        })
+        .join()
+        .unwrap();
+
+        Ok(())
     }
 }
