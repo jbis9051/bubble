@@ -51,6 +51,5 @@ CREATE TABLE keystore (
 CREATE TABLE inbox (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     message BLOB NOT NULL,
-    group_id TEXT NOT NULL,
     received_date DATETIME NOT NULL
 )

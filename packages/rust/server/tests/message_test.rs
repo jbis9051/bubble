@@ -43,7 +43,6 @@ async fn test_single_message() {
         client_uuids: vec![client_uuid],
         message: Message {
             message: Base64(testmessage1.as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client
@@ -92,7 +91,6 @@ async fn test_multiple_messages() {
         client_uuids: vec![client_uuid],
         message: Message {
             message: Base64("test message 1".as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client
@@ -109,7 +107,6 @@ async fn test_multiple_messages() {
         client_uuids: vec![client_uuid],
         message: Message {
             message: Base64("test message 2".as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client
@@ -126,7 +123,6 @@ async fn test_multiple_messages() {
         client_uuids: vec![client_uuid],
         message: Message {
             message: Base64("test message 3".as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client
@@ -194,7 +190,6 @@ async fn test_invalid_uuid() {
         client_uuids: vec![bad_uuid],
         message: Message {
             message: Base64("test message".as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client
@@ -211,7 +206,6 @@ async fn test_invalid_uuid() {
         client_uuids: vec![client_uuid, bad_uuid],
         message: Message {
             message: Base64("test message".as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client
@@ -228,7 +222,6 @@ async fn test_invalid_uuid() {
         client_uuids: vec![],
         message: Message {
             message: Base64("test message".as_bytes().to_vec()),
-            group_id: Default::default(),
         },
     };
     let res = client

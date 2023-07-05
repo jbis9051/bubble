@@ -2,12 +2,10 @@ use crate::types::DbPool;
 use sqlx::sqlite::SqliteRow;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
-use uuid::Uuid;
 
 pub struct Inbox {
     pub id: i32,
     pub message: Vec<u8>,
-    pub group_id: Uuid,
     pub received_date: NaiveDateTime,
 }
 
@@ -16,7 +14,6 @@ impl From<&SqliteRow> for Inbox {
         Self {
             id: row.get("id"),
             message: row.get("message"),
-            group_id: row.get("group_id"),
             received_date: row.get("received_date"),
         }
     }
@@ -24,15 +21,13 @@ impl From<&SqliteRow> for Inbox {
 
 impl Inbox {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
-        *self = (&sqlx::query(
-            "INSERT INTO inbox (message, group_id, received_date) VALUES (?, ?, ?) RETURNING *",
-        )
-        .bind(&self.message)
-        .bind(self.group_id)
-        .bind(self.received_date)
-        .fetch_one(db)
-        .await?)
-            .into();
+        *self =
+            (&sqlx::query("INSERT INTO inbox (message, received_date) VALUES (?, ?) RETURNING *")
+                .bind(&self.message)
+                .bind(self.received_date)
+                .fetch_one(db)
+                .await?)
+                .into();
         Ok(())
     }
 

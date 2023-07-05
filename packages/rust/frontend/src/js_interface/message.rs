@@ -30,7 +30,6 @@ impl FrontendInstance {
             Inbox {
                 id: 0,
                 message: message.message.0,
-                group_id: message.group_id,
                 received_date: Utc::now().naive_utc(),
             }
             .create(account_db)

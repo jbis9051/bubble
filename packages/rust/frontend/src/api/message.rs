@@ -8,13 +8,12 @@ impl BubbleApi {
         &self,
         client_uuids: Vec<Uuid>,
         message: Vec<u8>,
-        group_uuid: Uuid,
+        _group_uuid: Uuid,
     ) -> Result<(), reqwest::Error> {
         if client_uuids.is_empty() {
             return Ok(());
         }
         let message = Message {
-            group_id: group_uuid,
             message: Base64(message),
         };
         let message = SendMessage {

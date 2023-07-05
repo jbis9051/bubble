@@ -32,7 +32,6 @@ pub struct KeyPackagePublic {
 #[derive(Serialize, Deserialize)]
 pub struct Message {
     pub message: Base64,
-    pub group_id: Uuid,
 }
 
 #[derive(Serialize, Deserialize)]

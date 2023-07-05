@@ -37,7 +37,6 @@ async fn send_message(
     let mut message = Message {
         id: Default::default(),
         message: payload.message.message.0,
-        group_id: payload.message.group_id,
         created: NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), // unwrap is safe because timestamp is 0
     };
     message
@@ -82,7 +81,6 @@ async fn receive_message(
         .into_iter()
         .map(|message| JsonMessage {
             message: Base64(message.message),
-            group_id: message.group_id,
         })
         .collect();
 
