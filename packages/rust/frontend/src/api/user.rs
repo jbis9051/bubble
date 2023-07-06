@@ -130,8 +130,7 @@ impl BubbleApi {
             .get(&format!("{}/v1/user/reset/{}", self.domain, token))
             .query(&PasswordResetCheck { token })
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
         Ok(res.status() != StatusCode::NOT_FOUND)
     }
 }
