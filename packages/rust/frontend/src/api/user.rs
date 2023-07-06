@@ -4,6 +4,7 @@ use common::http_types::{
     ClientsResponse, ConfirmEmail, CreateUser, CreateUserResponse, ForgotEmail, Login,
     PasswordReset, PasswordResetCheck, PublicClient, PublicUser, SessionTokenResponse,
 };
+use reqwest::StatusCode;
 
 use uuid::Uuid;
 
@@ -123,16 +124,14 @@ impl BubbleApi {
         Ok(())
     }
 
-    //do I just call query here?
-    pub async fn forgot_check(&self, token: Uuid) -> Result<(), reqwest::Error> {
-        self.client
+    pub async fn forgot_check(&self, token: Uuid) -> Result<bool, reqwest::Error> {
+        let res = self
+            .client
             .get(&format!("{}/v1/user/reset/{}", self.domain, token))
             .query(&PasswordResetCheck { token })
             .send()
             .await?
-            .error_for_status()?
-            .json()
-            .await?;
-        Ok(())
+            .error_for_status()?;
+        Ok(res.status() != StatusCode::NOT_FOUND)
     }
 }

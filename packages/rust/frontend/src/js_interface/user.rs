@@ -184,11 +184,10 @@ impl FrontendInstance {
         api.forgot_confirm(password, token).await?;
         Ok(())
     }
-    //different because its an endpoint?
 
     pub async fn forgot_check(&self, token: Uuid) -> Result<bool, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
-        let res = api.forgot_check(token).await;
-        Ok(res.is_ok())
+        let res = api.forgot_check(token).await?;
+        Ok(res)
     }
 }
