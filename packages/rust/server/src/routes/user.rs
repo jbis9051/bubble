@@ -202,6 +202,11 @@ async fn login(
         }
     };
 
+    // User account exists but email not confirmed yet
+    if user.email.is_none() {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
     if !password::verify(&user.password, &payload.password)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
     {

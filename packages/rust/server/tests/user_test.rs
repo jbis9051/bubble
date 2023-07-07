@@ -1,5 +1,5 @@
 use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
-use crate::helper::{create_client, start_server, TempDatabase};
+use crate::helper::{confirm_user, create_client, login, register, start_server, TempDatabase};
 use axum::http::StatusCode;
 use common::base64::Base64;
 use common::http_types::{
@@ -81,6 +81,68 @@ async fn test_register() {
     assert_eq!(user.username, created_user.username);
     assert_eq!(user.email, Some(created_user.email));
     assert_eq!(user.name, created_user.name);
+}
+
+#[tokio::test]
+async fn test_login_without_confirm() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "test".to_string(),
+        password: "password".to_string(),
+        name: "John Doe".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (user, confirmation_token) = register(db.pool(), &client, &created_user).await.unwrap();
+    assert_eq!(user.email, None);
+
+    let email_login = Login {
+        username_or_email: created_user.email,
+        password: created_user.password.clone(),
+    };
+    let res = client
+        .post("/v1/user/session")
+        .header("Content-type", "application/json")
+        .body(serde_json::to_string(&email_login).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+
+    let username_login = Login {
+        username_or_email: created_user.username,
+        password: created_user.password,
+    };
+    let res = client
+        .post("/v1/user/session")
+        .header("Content-type", "application/json")
+        .body(serde_json::to_string(&username_login).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+
+    let confirm = ConfirmEmail {
+        token: confirmation_token,
+    };
+    let (user, token) = confirm_user(db.pool(), &client, &confirm, &user)
+        .await
+        .unwrap();
+
+    let res = client
+        .post("/v1/user/session")
+        .header("Content-type", "application/json")
+        .body(serde_json::to_string(&username_login).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
+    let res = client
+        .post("/v1/user/session")
+        .header("Content-type", "application/json")
+        .body(serde_json::to_string(&username_login).unwrap())
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::CREATED);
 }
 
 #[tokio::test]
