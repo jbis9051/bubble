@@ -17,12 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
-      - uses: Swatinem/rust-cache@v2.5.1
         with:
           toolchain: stable
           components: rustfmt, clippy
           override: true
           profile: minimal
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/install@v0.1
         with:
             crate: sleek
@@ -34,32 +34,32 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
-      - uses: Swatinem/rust-cache@v2.5.1
         with:
           toolchain: stable
           override: true
           profile: minimal
+      - uses: Swatinem/rust-cache@v2
       - run: make test_server_ci
   android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
-      - uses: Swatinem/rust-cache@v2.5.1
         with:
           toolchain: stable
           override: true
           profile: minimal
+      - uses: Swatinem/rust-cache@v2
       - run: cd frontend && make android-docker
   ios:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
-      - uses: Swatinem/rust-cache@v2.5.1
         with:
           toolchain: stable
           override: true
           profile: minimal
           target: aarch64-apple-ios-sim
+      - uses: Swatinem/rust-cache@v2
       - run: cd frontend && make ios-sim
