@@ -29,7 +29,7 @@ async fn reset(db: Extension<DbPool>) -> StatusCode {
     // WARNING: This is a debug endpoint that resets the database.
     // It should not be used in production. To be honest, we should probably remove it before we go live.
     if !CONFIG.debug_mode {
-        return StatusCode::OK;
+        return StatusCode::NOT_FOUND;
     }
     let num_users = sqlx::query("SELECT COUNT(*) FROM user")
         .fetch_one(&db.0)

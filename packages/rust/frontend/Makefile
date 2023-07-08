@@ -1,9 +1,9 @@
 all: typescript ios-sim android
 
 ios:
-	cargo build --crate-type=staticlib --target=x86_64-apple-ios --release # x86 iOS simulator
-	cargo build --crate-type=staticlib --target=aarch64-apple-ios-sim --release # arm iOS simulator
-	cargo build --crate-type=staticlib --target=aarch64-apple-ios --release # arm iOS device
+	cargo rustc --crate-type=staticlib --target=x86_64-apple-ios --release # x86 iOS simulator
+	cargo rustc --crate-type=staticlib --target=aarch64-apple-ios --release # arm iOS device
+	cargo rustc --crate-type=staticlib --target=aarch64-apple-ios-sim --release # arm iOS simulator
 
 ios-sim:
 	cargo rustc --crate-type=staticlib --target=aarch64-apple-ios-sim --release # arm iOS simulator
