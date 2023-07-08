@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { UserLocal } from '../../lib/bubbleApi/user';
 
 export const authSlice = createSlice({
     name: 'auth',
@@ -8,24 +9,14 @@ export const authSlice = createSlice({
     },
     reducers: {
         setAuth: (state, action) => {
-            // eslint-disable-next-line no-param-reassign
             state.status = 'fulfilled';
-            // eslint-disable-next-line no-param-reassign
             state.user = action.payload;
         },
     },
 });
 
-export interface AuthUser {
-    displayName: string;
-    email: string;
-    photoURL: string;
-    uid: string;
-    onboarded: boolean;
-}
-
 export const { setAuth } = authSlice.actions;
 
-export const selectUser = (state: any): AuthUser => state.auth.user;
+export const selectUser = (state: any): UserLocal => state.auth.user;
 
 export default authSlice.reducer;

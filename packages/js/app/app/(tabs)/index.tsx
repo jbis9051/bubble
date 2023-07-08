@@ -1,77 +1,19 @@
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import EditScreenInfo from '../../components/EditScreenInfo';
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface CurrentBubbleDisplayProps {}
-
-function CurrentBubbleDisplay(props: CurrentBubbleDisplayProps) {
-    // eslint-disable-next-line no-empty-pattern
-    const {} = props;
-    const [open, setOpen] = useState(false);
-
-    return (
-        <View
-            style={{
-                backgroundColor: 'white',
-                borderRadius: 30,
-                height: '100%',
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 15,
-                gap: 15,
-            }}
-        >
-            <MaterialCommunityIcons
-                name="chart-bubble"
-                size={24}
-                color="black"
-            />
-            <Text>Go Blue's Bubble</Text>
-        </View>
-    );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface BubbleSettingsProps {}
-
-function BubbleSettings(props: BubbleSettingsProps) {
-    // eslint-disable-next-line no-empty-pattern
-    const {} = props;
-
-    return (
-        <View
-            style={{
-                backgroundColor: 'white',
-                borderRadius: 9999,
-                width: '100%',
-                aspectRatio: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}
-        >
-            <Ionicons name="settings" size={24} color="black" />
-        </View>
-    );
-}
+import { Link } from 'expo-router';
 
 interface CustomMarkerProps {
     coordinate: LatLng;
     selected?: boolean;
     onPress?: () => void;
-    photoUrl?: string; // if there, is a photoUrl, display it. Otherwise, display initials
 }
 
 function CustomMarker(props: CustomMarkerProps) {
-    const { coordinate, onPress } = props;
+    const { coordinate } = props;
 
     return (
-        <Marker coordinate={coordinate} onPress={onPress}>
+        <Marker coordinate={coordinate}>
             <View
                 style={{
                     height: 50,
@@ -83,7 +25,7 @@ function CustomMarker(props: CustomMarkerProps) {
                     backgroundColor: 'white',
                 }}
             >
-                <Text>Blue</Text>
+                <Text>Hello</Text>
             </View>
         </Marker>
     );
@@ -113,7 +55,28 @@ export default function MapScreen() {
                         paddingHorizontal: 10,
                     }}
                 >
-                    <CurrentBubbleDisplay />
+                    <Link href="/bubbleListModal" asChild>
+                        <Pressable
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: 30,
+                                height: '100%',
+                                width: '100%',
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                paddingHorizontal: 15,
+                                gap: 15,
+                            }}
+                        >
+                            <MaterialCommunityIcons
+                                name="chart-bubble"
+                                size={24}
+                                color="black"
+                            />
+                            <Text>Go Blue's Bubble</Text>
+                        </Pressable>
+                    </Link>
                 </View>
                 <View
                     style={{
@@ -122,7 +85,19 @@ export default function MapScreen() {
                         paddingHorizontal: 12,
                     }}
                 >
-                    <BubbleSettings />
+                    <View
+                        style={{
+                            backgroundColor: 'white',
+                            borderRadius: 9999,
+                            width: '100%',
+                            aspectRatio: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Ionicons name="settings" size={24} color="black" />
+                    </View>
                 </View>
             </SafeAreaView>
         </View>
