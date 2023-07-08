@@ -57,4 +57,5 @@ jobs:
           toolchain: stable
           override: true
           profile: minimal
+          target: aarch64-apple-ios-sim
       - run: cd frontend && make ios-sim
