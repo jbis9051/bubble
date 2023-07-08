@@ -57,6 +57,7 @@ impl FrontendInstance {
 use crate::application_message::Location;
 use crate::js_interface::group::Group;
 use crate::Error;
+use common::http_types::PublicUser;
 
 export!(
     FrontendInstance,
@@ -99,4 +100,5 @@ export!(
     ) -> Result<(), ()>;
     // clients
     replace_key_packages() -> Result<(), Error>;
+    search(query: String) -> Result<Vec<PublicUser>, Error>;
 );

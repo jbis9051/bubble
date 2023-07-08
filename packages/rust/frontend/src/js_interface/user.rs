@@ -5,7 +5,7 @@ use crate::models::kv::{AccountKv, GlobalKv};
 use crate::types::SIGNATURE_SCHEME;
 use crate::Error;
 use common::base64;
-use common::http_types::SessionTokenResponse;
+use common::http_types::{PublicUser, SessionTokenResponse};
 use ed25519_dalek::{Keypair, SecretKey, Signer};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
@@ -187,6 +187,17 @@ impl FrontendInstance {
     pub async fn forgot_check(&self, token: Uuid) -> Result<bool, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         let res = api.forgot_check(token).await?;
+        Ok(res)
+    }
+
+    pub async fn search(&self, query: String) -> Result<Vec<PublicUser>, Error> {
+        let global = self.account_data.read().await;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
+        let api = BubbleApi::new(
+            global_data.domain.clone(),
+            Some(global_data.bearer.read().await.clone()),
+        );
+        let res = api.search(query).await?;
         Ok(res)
     }
 }

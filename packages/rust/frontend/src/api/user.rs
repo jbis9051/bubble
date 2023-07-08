@@ -2,7 +2,8 @@ use crate::api::BubbleApi;
 use common::base64::Base64;
 use common::http_types::{
     ClientsResponse, ConfirmEmail, CreateUser, CreateUserResponse, ForgotEmail, Login,
-    PasswordReset, PasswordResetCheck, PublicClient, PublicUser, SessionTokenResponse,
+    PasswordReset, PasswordResetCheck, PublicClient, PublicUser, Search, SearchResponse,
+    SessionTokenResponse,
 };
 use reqwest::StatusCode;
 
@@ -132,5 +133,18 @@ impl BubbleApi {
             .send()
             .await?;
         Ok(res.status() != StatusCode::NOT_FOUND)
+    }
+
+    pub async fn search(&self, query: String) -> Result<Vec<PublicUser>, reqwest::Error> {
+        let res: SearchResponse = self
+            .client
+            .get(&format!("{}/v1/user/search", self.domain))
+            .json(&Search { query })
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        Ok(res.users)
     }
 }
