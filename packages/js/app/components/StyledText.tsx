@@ -31,7 +31,6 @@ function Heading1(props: TextProps) {
     );
 }
 
-// ex: "Fall Break is just around the corner!"
 function Heading2(props: TextProps) {
     return (
         <BaseText
@@ -50,7 +49,7 @@ function Heading2(props: TextProps) {
         />
     );
 }
-// ex: "Upcoming Pools"
+
 function Body(props: TextProps) {
     return (
         <BaseText
