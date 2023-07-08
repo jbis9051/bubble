@@ -259,26 +259,31 @@ impl FrontendInstance {
             .collect::<Vec<_>>();
 
         // remove all members except our own client
-        let (mls_message_out, welcome_out, _group_info) =
-            group.remove_members(&mls_provider, &signature, &members_to_remove)?;
 
-        group.merge_pending_commit(&mls_provider).unwrap();
+        if !members_to_remove.is_empty() {
+            let (mls_message_out, welcome_out, _group_info) =
+                group.remove_members(&mls_provider, &signature, &members_to_remove)?;
 
-        if welcome_out.is_some() {
-            // we do not support proposals so no proposals should exist
-            return Err(Error::UnexpectedWelcome);
+            group.merge_pending_commit(&mls_provider).unwrap();
+
+            if welcome_out.is_some() {
+                // we do not support proposals so no proposals should exist
+                return Err(Error::UnexpectedWelcome);
+            }
+
+            group
+                .send_message(&api, &mls_message_out, &[*my_client_uuid])
+                .await?;
         }
-
-        group
-            .send_message(&api, &mls_message_out, &[*my_client_uuid])
-            .await?;
 
         // finally we leave the group for our client
         let leave_message = group.leave_group(&mls_provider, &signature)?;
 
         group.merge_pending_commit(&mls_provider).unwrap();
 
-        group.send_message(&api, &leave_message, &[]).await?;
+        group
+            .send_message(&api, &leave_message, &[*my_client_uuid])
+            .await?;
 
         group.save_if_needed(&mls_provider)?;
 

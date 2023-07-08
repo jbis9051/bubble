@@ -49,6 +49,9 @@ fn generate_key_package(
 
 #[tokio::test]
 pub async fn mls_playground() {
+    //use simple_logger::SimpleLogger;
+    //SimpleLogger::new().init().unwrap();
+
     let backend = &OpenMlsRustCrypto::default();
     let ciphersuite = Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519;
     // Generate credentials with keys
@@ -145,12 +148,10 @@ pub async fn mls_playground() {
         _ => panic!("uck"),
     };
 
-    let out = bob_group
+    let out = alice_group
         .process_message(backend, message)
         .expect("TODO: panic message");
-
-    println!("{:?}", out);
-
+    return;
     // send bob
     let message = bob_group
         .create_message(backend, &bob_signature_keys, b"Bye")
@@ -168,5 +169,43 @@ pub async fn mls_playground() {
     let out = alice_group
         .process_message(backend, message)
         .expect("TODO: panic message");
-    println!("{:?}", out);
+
+    // bob leave
+
+    let proposal = bob_group.leave_group(backend, &bob_signature_keys).unwrap();
+    let message = MlsMessageIn::tls_deserialize_exact(proposal.tls_serialize_detached().unwrap())
+        .unwrap()
+        .extract();
+    let message = match message {
+        MlsMessageInBody::PrivateMessage(a) => a,
+        _ => panic!("uck"),
+    };
+
+    let processed = alice_group.process_message(backend, message).unwrap();
+    let content = processed.into_content();
+    let proposal = match content {
+        ProcessedMessageContent::ProposalMessage(p) => p,
+        _ => panic!("fuic"),
+    };
+
+    alice_group.store_pending_proposal(*proposal);
+    let (commit, _, _) = alice_group
+        .commit_to_pending_proposals(backend, &alice_signature_keys)
+        .unwrap();
+    let message = MlsMessageIn::tls_deserialize_exact(commit.tls_serialize_detached().unwrap())
+        .unwrap()
+        .extract();
+    let message = match message {
+        MlsMessageInBody::PrivateMessage(a) => a,
+        _ => panic!("uck"),
+    };
+
+    let processed = alice_group.process_message(backend, message).unwrap();
+    let content = processed.into_content();
+    let commit = match content {
+        ProcessedMessageContent::StagedCommitMessage(c) => c,
+        _ => panic!("fuic"),
+    };
+
+    alice_group.merge_staged_commit(backend, *commit).unwrap();
 }

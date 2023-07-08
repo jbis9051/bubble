@@ -91,25 +91,26 @@ impl Message {
         client_id: i32,
         db: &DbPool,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM recipient WHERE client_id = $1;")
+        let mut tx = db.begin().await?;
+        sqlx::query("DELETE FROM recipient WHERE client_id = $1 AND message_id = ANY($2);")
             .bind(client_id)
-            .execute(db)
-            .await?;
-
-        sqlx::query("DELETE FROM message WHERE id = ANY($1);")
             .bind(message_ids)
-            .execute(db)
+            .execute(&mut tx)
             .await?;
 
+        sqlx::query("DELETE FROM message WHERE id IN (SELECT message.id FROM message LEFT JOIN recipient ON message.id = recipient.message_id GROUP BY message.id HAVING COUNT(recipient.id) = 0);")
+            .execute(&mut tx)
+            .await?;
+        tx.commit().await?;
         Ok(())
     }
 
     pub async fn from_client_id(db: &DbPool, client_id: i32) -> Result<Vec<Message>, sqlx::Error> {
         Ok(sqlx::query(
-            "SELECT *
+            "SELECT message.*
         FROM message
         INNER JOIN recipient ON message.id = recipient.message_id
-        WHERE recipient.client_id = $1;",
+        WHERE recipient.client_id = $1 ORDER BY message.created ASC;",
         )
         .bind(client_id)
         .fetch_all(db)

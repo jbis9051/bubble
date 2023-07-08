@@ -39,4 +39,13 @@ impl Group {
         let locations = sqlx::query("SELECT * FROM \"group\"").fetch_all(db).await?;
         Ok(locations.iter().map(Group::from).collect())
     }
+
+    pub async fn from_uuid(db: &DbPool, uuid: Uuid) -> Result<Option<Group>, sqlx::Error> {
+        let row = sqlx::query("SELECT * FROM \"group\" WHERE uuid = $1")
+            .bind(uuid)
+            .fetch_optional(db)
+            .await?
+            .map(|r| (&r).into());
+        Ok(row)
+    }
 }

@@ -67,7 +67,7 @@ pub fn create_instance(name: &str) -> Result<i32, String> {
 }
 
 #[test]
-pub fn e2e_test() {
+pub fn test_basic() {
     reqwest::blocking::get("http://localhost:3000/reset").unwrap();
 
     let alice_instance = create_instance("alice").unwrap();
@@ -168,4 +168,175 @@ pub fn e2e_test() {
     assert_eq!(locations[0].longitude, bob_location.0);
     assert_eq!(locations[0].latitude, bob_location.1);
     assert_eq!(locations[0].timestamp, now);
+}
+
+#[test]
+pub fn test_full() {
+    reqwest::blocking::get("http://localhost:3000/reset").unwrap();
+
+    let alice_instance = create_instance("alice").unwrap();
+    let bob_instance = create_instance("bob").unwrap();
+    let charlie_instance = create_instance("charlie").unwrap();
+
+    call!(alice_instance, register(username: "aliceusername", password: "alicepassword", name: "alice", email: "alice@email.com")).unwrap();
+    call!(bob_instance, register(username: "bobusername", password: "bobpassword", name: "bob", email: "bob@email.com")).unwrap();
+    call!(charlie_instance, register(username: "charlieusername", password: "charliepassword", name: "charlie", email: "charlie@email.com")).unwrap();
+
+    let alice_uuid = call!(alice_instance, login(username_or_email: "aliceusername", password: "alicepassword") -> Result<Uuid, ()>).unwrap();
+    let bob_uuid = call!(bob_instance, login(username_or_email: "bobusername", password: "bobpassword") -> Result<Uuid, ()>).unwrap();
+    let charlie_uuid = call!(charlie_instance, login(username_or_email: "charlieusername", password: "charliepassword") -> Result<Uuid, ()>).unwrap();
+
+    call!(alice_instance, replace_key_packages()).unwrap();
+    call!(bob_instance, replace_key_packages()).unwrap();
+    call!(charlie_instance, replace_key_packages()).unwrap();
+
+    let group_uuid = call!(alice_instance, create_group() -> Result<Uuid, ()>).unwrap();
+
+    call!(
+        alice_instance,
+        add_member(group_uuid: group_uuid, user_uuid: bob_uuid)
+    )
+    .unwrap();
+
+    call!(bob_instance, receive_messages()).unwrap();
+
+    call!(
+        alice_instance,
+        add_member(group_uuid: group_uuid, user_uuid: charlie_uuid)
+    )
+    .unwrap();
+
+    call!(bob_instance, receive_messages()).unwrap();
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let groups = call!(bob_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
+    let alice_client = groups[0].members.get(&alice_uuid).unwrap()[0];
+    let bob_client = groups[0].members.get(&bob_uuid).unwrap()[0];
+    let _charlie_client = groups[0].members.get(&charlie_uuid).unwrap()[0];
+
+    let future = NaiveDateTime::MAX.timestamp_millis();
+
+    let alice_location = (37.2431, -115.7930);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64;
+
+    call!(alice_instance, send_location(group_uuid: group_uuid, longitude: alice_location.0, latitude: alice_location.1, timestamp: now)).unwrap();
+
+    call!(bob_instance, receive_messages()).unwrap();
+
+    let num_locations = call!(bob_instance, get_num_location(group_uuid: group_uuid, client: alice_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    assert_eq!(num_locations, 1);
+
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let num_locations = call!(charlie_instance, get_num_location(group_uuid: group_uuid, client: alice_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    assert_eq!(num_locations, 1);
+
+    let bob_location = (32.0853, 34.7818);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64;
+
+    call!(bob_instance, send_location(group_uuid: group_uuid, longitude: bob_location.0, latitude: bob_location.1, timestamp: now)).unwrap();
+
+    call!(alice_instance, receive_messages()).unwrap();
+
+    let num_locations = call!(alice_instance, get_num_location(group_uuid: group_uuid, client: bob_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    assert_eq!(num_locations, 1);
+
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let num_locations = call!(charlie_instance, get_num_location(group_uuid: group_uuid, client: bob_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    assert_eq!(num_locations, 1);
+
+    call!(
+        charlie_instance,
+        remove_member(group_uuid: group_uuid, user_uuid: alice_uuid)
+    )
+    .unwrap();
+
+    call!(alice_instance, receive_messages()).unwrap();
+    call!(bob_instance, receive_messages()).unwrap();
+
+    let bob_location = (32.0853, 34.7818);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64;
+
+    call!(bob_instance, send_location(group_uuid: group_uuid, longitude: bob_location.0, latitude: bob_location.1, timestamp: now)).unwrap();
+
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let num_locations = call!(charlie_instance, get_num_location(group_uuid: group_uuid, client: bob_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    assert_eq!(num_locations, 2);
+
+    // bob adds alice back
+
+    call!(
+        bob_instance,
+        add_member(group_uuid: group_uuid, user_uuid: alice_uuid)
+    )
+    .unwrap();
+
+    call!(alice_instance, receive_messages()).unwrap();
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let bob_location = (32.0853, 34.7818);
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64;
+
+    call!(bob_instance, send_location(group_uuid: group_uuid, longitude: bob_location.0, latitude: bob_location.1, timestamp: now)).unwrap();
+
+    call!(alice_instance, receive_messages()).unwrap();
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let num_locations = call!(alice_instance, get_num_location(group_uuid: group_uuid, client: bob_client, from_timestamp: 0, to_timestamp: future) -> Result<i64, ()>).unwrap();
+    assert_eq!(num_locations, 2);
+
+    let groups = call!(alice_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
+    let num_members = groups[0].members.len();
+    assert_eq!(num_members, 3);
+
+    call!(bob_instance, leave_group(group_uuid: group_uuid)).unwrap();
+
+    call!(alice_instance, receive_messages()).unwrap();
+    call!(alice_instance, receive_messages()).unwrap();
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let groups = call!(alice_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
+    let num_members = groups[0].members.len();
+    assert_eq!(num_members, 2);
+
+    let groups = call!(charlie_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
+    let num_members = groups[0].members.len();
+    assert_eq!(num_members, 2);
+
+    call!(alice_instance, leave_group(group_uuid: group_uuid)).unwrap();
+
+    // alice sends to charlie
+
+    call!(charlie_instance, receive_messages()).unwrap();
+    call!(charlie_instance, receive_messages()).unwrap();
+
+    let groups = call!(charlie_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
+    let num_members = groups[0].members.len();
+    assert_eq!(num_members, 1);
+
+    call!(
+        charlie_instance,
+        add_member(group_uuid: group_uuid, user_uuid: bob_uuid)
+    )
+    .unwrap();
+
+    call!(bob_instance, receive_messages()).unwrap();
+
+    let groups = call!(bob_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
+    let num_members = groups[0].members.len();
+    assert_eq!(num_members, 2);
 }
