@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use common::base64::Base64;
 use common::http_types::{
     ChangeEmail, ConfirmEmail, CreateUser, CreateUserResponse, DeleteUser, ForgotEmail, Login,
-    PasswordReset, PublicUser, UpdateIdentity, UserProfile,
+    PasswordReset, PublicUser, Search, SearchResponse, UpdateIdentity, UserProfile,
 };
 use ed25519_dalek::PublicKey;
 use server::models::confirmation::Confirmation;
@@ -440,6 +440,131 @@ async fn test_update_profile() {
         payload.primary_client_uuid,
         update_profile.primary_client_uuid
     );
+}
+
+#[tokio::test]
+async fn test_search() {
+    let db = TempDatabase::new().await;
+    let client = start_server(db.pool().clone()).await;
+
+    let users = [
+        CreateUser {
+            // LIKE username "%alice%"
+            email: "alice@gmail.com".to_string(),
+            username: "alice".to_string(),
+            password: "testpassword".to_string(),
+            name: "none".to_string(),
+            identity: Base64(PUBLIC.to_vec()),
+        },
+        CreateUser {
+            email: "alice2@gmail.com".to_string(),
+            username: "alice2".to_string(),
+            password: "testpassword".to_string(),
+            name: "none".to_string(),
+            identity: Base64(PUBLIC.to_vec()),
+        },
+        CreateUser {
+            // duplicate username/name
+            email: "bob@gmail.com".to_string(),
+            username: "bob".to_string(),
+            password: "testpassword".to_string(),
+            name: "bob".to_string(),
+            identity: Base64(PUBLIC.to_vec()),
+        },
+        CreateUser {
+            // exact email "charlie@gmail.com"
+            email: "charlie@gmail.com".to_string(),
+            username: "charlie".to_string(),
+            password: "testpassword".to_string(),
+            name: "none".to_string(),
+            identity: Base64(PUBLIC.to_vec()),
+        },
+        CreateUser {
+            // LIKE name "%sally%"
+            email: "sally@gmail.com".to_string(),
+            username: "sally".to_string(),
+            password: "testpassword".to_string(),
+            name: "sally".to_string(),
+            identity: Base64(PUBLIC.to_vec()),
+        },
+        CreateUser {
+            email: "sally2@gmail.com".to_string(),
+            username: "sally2".to_string(),
+            password: "testpassword".to_string(),
+            name: "sally2".to_string(),
+            identity: Base64(PUBLIC.to_vec()),
+        },
+    ];
+
+    for user in users.iter() {
+        helper::initialize_user(db.pool(), &client, user)
+            .await
+            .unwrap();
+    }
+
+    let created_user = CreateUser {
+        email: "test@gmail.com".to_string(),
+        username: "testusername".to_string(),
+        password: "testpassword".to_string(),
+        name: "testname".to_string(),
+        identity: Base64(PUBLIC.to_vec()),
+    };
+    let (token, _user) = helper::initialize_user(db.pool(), &client, &created_user)
+        .await
+        .unwrap();
+
+    let bearer = format!("Bearer {}", token);
+
+    let search = |query: String| {
+        client
+            .get("/v1/user/search")
+            .json(&Search { query })
+            .header("Authorization", &bearer)
+            .send()
+    };
+
+    // search by username
+    let res = search("alice".to_string()).await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let payload: SearchResponse = res.json().await;
+    let payload = payload.users;
+    assert_eq!(payload.len(), 2);
+    assert_eq!(payload[0].username, "alice");
+    assert_eq!(payload[1].username, "alice2");
+
+    // duplicate check
+    let res = search("bob".to_string()).await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let payload: SearchResponse = res.json().await;
+    let payload = payload.users;
+    assert_eq!(payload.len(), 1);
+    assert_eq!(payload[0].username, "bob");
+    assert_eq!(payload[0].name, "bob");
+
+    // exact email
+    let res = search("charlie@gmail.com".to_string()).await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let payload: SearchResponse = res.json().await;
+    let payload = payload.users;
+    assert_eq!(payload.len(), 1);
+    assert_eq!(payload[0].username, "charlie");
+
+    let res = search("charlie@".to_string()).await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let payload: SearchResponse = res.json().await;
+    let payload = payload.users;
+    assert_eq!(payload.len(), 0);
+
+    // search by name
+    let res = search("sally".to_string()).await;
+    assert_eq!(res.status(), StatusCode::OK);
+    let payload: SearchResponse = res.json().await;
+    let payload = payload.users;
+    assert_eq!(payload.len(), 2);
+    assert_eq!(payload[0].name, "sally");
+    assert_eq!(payload[0].username, "sally");
+    assert_eq!(payload[1].name, "sally2");
+    assert_eq!(payload[1].username, "sally2");
 }
 
 // negative tests

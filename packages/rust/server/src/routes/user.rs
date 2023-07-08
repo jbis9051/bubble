@@ -26,8 +26,8 @@ use crate::types::{DbPool, EmailServiceArc};
 use common::base64::Base64;
 use common::http_types::{
     ChangeEmail, ClientsResponse, ConfirmEmail, CreateUser, CreateUserResponse, DeleteUser,
-    ForgotEmail, Login, PasswordReset, PasswordResetCheck, PublicClient, PublicUser,
-    SessionTokenRequest, SessionTokenResponse, UpdateIdentity, UserProfile,
+    ForgotEmail, Login, PasswordReset, PasswordResetCheck, PublicClient, PublicUser, Search,
+    SearchResponse, SessionTokenRequest, SessionTokenResponse, UpdateIdentity, UserProfile,
 };
 
 pub fn router() -> Router {
@@ -43,6 +43,7 @@ pub fn router() -> Router {
         .route("/:uuid", get(get_user))
         .route("/:uuid/clients", get(get_clients))
         .route("/profile", put(update_profile))
+        .route("/search", get(search))
 }
 
 async fn register(
@@ -447,4 +448,53 @@ async fn update_profile(
     user.update(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
+}
+
+async fn search(
+    db: Extension<DbPool>,
+    Json(payload): Json<Search>,
+    _: AuthenticatedUser,
+) -> Result<Json<SearchResponse>, StatusCode> {
+    let user_email = User::try_from_email(&db, &payload.query)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    let mut users_username = User::search_username(&db, &payload.query)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    let mut users_name = User::search_name(&db, &payload.query)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    users_username.append(&mut users_name);
+
+    let mut users = users_username;
+
+    users.sort_by(|a, b| a.username.cmp(&b.username));
+    users.dedup_by_key(|u| u.id);
+
+    if let Some(u) = user_email {
+        users.insert(0, u);
+    }
+
+    let mut out = Vec::with_capacity(users.len());
+
+    for user in users {
+        let primary_client_uuid = user
+            .client(&db)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .map(|c| c.uuid);
+
+        out.push(PublicUser {
+            uuid: user.uuid,
+            username: user.username,
+            name: user.name,
+            primary_client_uuid,
+            identity: Base64(user.identity),
+        })
+    }
+
+    Ok(Json(SearchResponse { users: out }))
 }

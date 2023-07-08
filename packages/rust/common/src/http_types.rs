@@ -150,3 +150,13 @@ pub struct UserProfile {
     pub name: String,
     pub primary_client_uuid: Option<Uuid>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct Search {
+    pub query: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SearchResponse {
+    pub users: Vec<PublicUser>,
+}

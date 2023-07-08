@@ -97,6 +97,14 @@ impl User {
             .into())
     }
 
+    pub async fn try_from_email(db: &DbPool, email: &str) -> Result<Option<User>, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE email = $1;")
+            .bind(email)
+            .fetch_optional(db)
+            .await?
+            .map(|row| row.borrow().into()))
+    }
+
     pub async fn from_uuid(db: &DbPool, uuid: &Uuid) -> Result<User, sqlx::Error> {
         Ok(sqlx::query("SELECT * FROM \"user\" WHERE uuid = $1;")
             .bind(uuid)
@@ -104,6 +112,28 @@ impl User {
             .await?
             .borrow()
             .into())
+    }
+
+    pub async fn search_username(db: &DbPool, username: &str) -> Result<Vec<User>, sqlx::Error> {
+        Ok(
+            sqlx::query("SELECT * FROM \"user\" WHERE username LIKE $1;")
+                .bind(format!("%{}%", username))
+                .fetch_all(db)
+                .await?
+                .iter()
+                .map(|row| row.into())
+                .collect(),
+        )
+    }
+
+    pub async fn search_name(db: &DbPool, name: &str) -> Result<Vec<User>, sqlx::Error> {
+        Ok(sqlx::query("SELECT * FROM \"user\" WHERE name LIKE $1;")
+            .bind(format!("%{}%", name))
+            .fetch_all(db)
+            .await?
+            .iter()
+            .map(|row| row.into())
+            .collect())
     }
 
     pub async fn update(&self, db: &DbPool) -> Result<(), sqlx::Error> {
