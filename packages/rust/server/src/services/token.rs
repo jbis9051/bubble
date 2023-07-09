@@ -155,7 +155,7 @@ impl Service { // axum
     }
 
     fn handle_request(&self, num_tokens: usize, bucket_to_handle: &str) {
-        if self.token_bucket.handle(num_tokens, bucket_to_handle) {
+        if self.token_bucket.handle(num_tokens, bucket_to_handle).is_ok() {
             println!(
                 "Request handled by service {} for configuration {}: {:?}",
                 self.name,
