@@ -7,16 +7,14 @@ export const unstable_settings = {
 
 export default function BubbleListModalLayout() {
     return (
-        <Stack
-            screenOptions={{ presentation: "modal", }}
-        >
+        <Stack screenOptions={{ presentation: 'modal' }}>
             <Stack.Screen
                 name="index"
-                options={{ presentation: "modal", title: "Bubbles" }}
+                options={{ presentation: 'modal', title: 'Bubbles' }}
             />
             <Stack.Screen
                 name="newGroup"
-                options={{ presentation: "card", title: "Create Bubble" }}
+                options={{ presentation: 'card', title: 'Create Bubble' }}
             />
         </Stack>
     );

@@ -5,12 +5,18 @@ function generateSampleLocations(numLocations: number): LocationWithTime[] {
 
     const US_BOUNDARIES = {
         latitude: { min: 24.396308, max: 49.384358 },
-        longitude: { min: -125.000000, max: -66.934570 },
+        longitude: { min: -125.0, max: -66.93457 },
     };
 
     for (let i = 0; i < numLocations; i++) {
-        let latitude = Math.random() * (US_BOUNDARIES.latitude.max - US_BOUNDARIES.latitude.min) + US_BOUNDARIES.latitude.min;
-        let longitude = Math.random() * (US_BOUNDARIES.longitude.max - US_BOUNDARIES.longitude.min) + US_BOUNDARIES.longitude.min;
+        const latitude =
+            Math.random() *
+                (US_BOUNDARIES.latitude.max - US_BOUNDARIES.latitude.min) +
+            US_BOUNDARIES.latitude.min;
+        const longitude =
+            Math.random() *
+                (US_BOUNDARIES.longitude.max - US_BOUNDARIES.longitude.min) +
+            US_BOUNDARIES.longitude.min;
 
         const timestamp = Date.now() - Math.floor(Math.random() * 86400000);
 
@@ -48,7 +54,7 @@ export class MapService {
         group_uuid: uuid,
         longitude: number,
         latitude: number
-    ): Promise<void> { }
+    ): Promise<void> {}
 }
 
 export interface LocationWithTime {

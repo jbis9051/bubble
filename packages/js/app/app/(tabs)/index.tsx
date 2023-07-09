@@ -1,11 +1,18 @@
-import { Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { useSelector } from 'react-redux';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { selectCurrentGroup } from '../../redux/slices/groupSlice';
 import { MapService } from '../../lib/bubbleApi/location';
-import { useContext, useEffect, useRef, useState } from 'react';
 import { UserLocal } from '../../lib/bubbleApi/user';
 import { getInitials } from '../../lib/formatText';
 import { ThemeContext } from '../../lib/Context';
@@ -46,7 +53,12 @@ function CustomMarker(props: CustomMarkerProps) {
                         backgroundColor: theme.colors.secondaryPaper,
                     }}
                 >
-                    <StyledText nomargin style={{ color: theme.colors.primaryPaper }}>{getInitials(user.name)}</StyledText>
+                    <StyledText
+                        nomargin
+                        style={{ color: theme.colors.primaryPaper }}
+                    >
+                        {getInitials(user.name)}
+                    </StyledText>
                 </View>
             </View>
         </Marker>
@@ -59,38 +71,36 @@ interface UserWithLocation extends UserLocal {
 
 export default function MapScreen() {
     const activeGroup = useSelector(selectCurrentGroup);
-    const [memberLocations, setMemberLocations] = useState<UserWithLocation[]>([]);
+    const [memberLocations, setMemberLocations] = useState<UserWithLocation[]>(
+        []
+    );
 
     useEffect(() => {
         const interval = setInterval(async () => {
             if (activeGroup) {
                 const memberLocations = await Promise.all(
                     activeGroup.members.map(async (member) => {
-                        const locations = await MapService
-                            .get_location(
-                                activeGroup.uuid,
-                                member.primary_client_uuid,
-                                Date.now() + 1,
-                                1);
-                        ;
+                        const locations = await MapService.get_location(
+                            activeGroup.uuid,
+                            member.primary_client_uuid,
+                            Date.now() + 1,
+                            1
+                        );
                         return { ...member, location: locations[0].coordinate };
                     })
-                )
+                );
                 setMemberLocations(memberLocations);
             }
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [activeGroup])
+    }, [activeGroup]);
 
     return (
         <View>
             <MapView style={styles.map}>
-                {memberLocations.map(mLoc => (
-                    <CustomMarker
-                        coordinate={mLoc.location}
-                        user={mLoc}
-                    />
+                {memberLocations.map((mLoc) => (
+                    <CustomMarker coordinate={mLoc.location} user={mLoc} />
                 ))}
             </MapView>
             <SafeAreaView
@@ -128,7 +138,9 @@ export default function MapScreen() {
                                 size={24}
                                 color="black"
                             />
-                            <Text numberOfLines={1} style={{ width: "85%" }}>{activeGroup?.name}</Text>
+                            <Text numberOfLines={1} style={{ width: '85%' }}>
+                                {activeGroup?.name}
+                            </Text>
                         </TouchableOpacity>
                     </Link>
                 </View>

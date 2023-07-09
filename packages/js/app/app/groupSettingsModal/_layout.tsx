@@ -7,20 +7,18 @@ export const unstable_settings = {
 
 export default function GroupListModalLayout() {
     return (
-        <Stack
-            screenOptions={{ presentation: "modal", }}
-        >
+        <Stack screenOptions={{ presentation: 'modal' }}>
             <Stack.Screen
                 name="index"
-                options={{ presentation: "modal", title: "Bubble Settings" }}
+                options={{ presentation: 'modal', title: 'Bubble Settings' }}
             />
             <Stack.Screen
                 name="shareBubble"
-                options={{ presentation: "card", title: "Invite Members" }}
+                options={{ presentation: 'card', title: 'Invite Members' }}
             />
             <Stack.Screen
                 name="memberDisplay"
-                options={{ presentation: "card", title: "Group Member" }}
+                options={{ presentation: 'card', title: 'Group Member' }}
             />
         </Stack>
     );

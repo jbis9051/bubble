@@ -9,9 +9,7 @@ interface LoadingProps {
 const DEFAULT_DELAY = 1000;
 export function Loading(props: LoadingProps) {
     const { shouldCenter, delay, defaultDelay } = props;
-    const [show, setShow] = useState<boolean>(
-        defaultDelay || delay ? false : true
-    );
+    const [show, setShow] = useState<boolean>(!(defaultDelay || delay));
     const cdelay = defaultDelay ? DEFAULT_DELAY : delay;
 
     useEffect(() => {

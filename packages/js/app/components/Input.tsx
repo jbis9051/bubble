@@ -33,35 +33,35 @@ interface TextInputProps {
     onPress?: () => void;
     secureTextEntry?: boolean;
     textContentType?:
-    | 'none'
-    | 'URL'
-    | 'addressCity'
-    | 'addressCityAndState'
-    | 'addressState'
-    | 'countryName'
-    | 'creditCardNumber'
-    | 'emailAddress'
-    | 'familyName'
-    | 'fullStreetAddress'
-    | 'givenName'
-    | 'jobTitle'
-    | 'location'
-    | 'middleName'
-    | 'name'
-    | 'namePrefix'
-    | 'nameSuffix'
-    | 'nickname'
-    | 'organizationName'
-    | 'postalCode'
-    | 'streetAddressLine1'
-    | 'streetAddressLine2'
-    | 'sublocality'
-    | 'telephoneNumber'
-    | 'username'
-    | 'password'
-    | 'newPassword'
-    | 'oneTimeCode'
-    | undefined;
+        | 'none'
+        | 'URL'
+        | 'addressCity'
+        | 'addressCityAndState'
+        | 'addressState'
+        | 'countryName'
+        | 'creditCardNumber'
+        | 'emailAddress'
+        | 'familyName'
+        | 'fullStreetAddress'
+        | 'givenName'
+        | 'jobTitle'
+        | 'location'
+        | 'middleName'
+        | 'name'
+        | 'namePrefix'
+        | 'nameSuffix'
+        | 'nickname'
+        | 'organizationName'
+        | 'postalCode'
+        | 'streetAddressLine1'
+        | 'streetAddressLine2'
+        | 'sublocality'
+        | 'telephoneNumber'
+        | 'username'
+        | 'password'
+        | 'newPassword'
+        | 'oneTimeCode'
+        | undefined;
 }
 export function StyledInput(props: TextInputProps) {
     const {
@@ -95,7 +95,10 @@ export function StyledInput(props: TextInputProps) {
     useEffect(() => {
         if (value.length) {
             labelScale.value = withTiming(1);
-            labelOpacity.value = withDelay(50, withTiming(1, { duration: 100 }));
+            labelOpacity.value = withDelay(
+                50,
+                withTiming(1, { duration: 100 })
+            );
             textFieldTranslateY.value = withTiming(8);
         } else {
             labelScale.value = withTiming(0.95);
@@ -125,27 +128,30 @@ export function StyledInput(props: TextInputProps) {
                     style={{
                         marginLeft: 22,
                         color: theme.colors.secondaryPaper,
-                        position: "absolute"
+                        position: 'absolute',
                     }}
                 >
                     {label}
                 </StyledText>
             </Animated.View>
-            <Animated.View style={[
-                {
-                    position: 'relative',
-                    height: "100%",
-                    display: 'flex',
-                    justifyContent: 'center',
-                },
-                animatedTextFieldStyle]}>
+            <Animated.View
+                style={[
+                    {
+                        position: 'relative',
+                        height: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                    },
+                    animatedTextFieldStyle,
+                ]}
+            >
                 <RNTextInput
                     style={[
                         styles.input,
                         showSubmit
                             ? {
-                                paddingRight: 50,
-                            }
+                                  paddingRight: 50,
+                              }
                             : undefined,
                     ]}
                     placeholder={label}

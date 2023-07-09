@@ -13,7 +13,6 @@ export interface CustomTextProps {
 
 const DEFAULT_MARGIN = 15;
 
-// ex: "Hi <name>!"
 function Heading1(props: TextProps) {
     return (
         <BaseText
@@ -52,7 +51,7 @@ function Heading2(props: TextProps) {
         />
     );
 }
-// ex: "Upcoming Pools"
+
 function Body(props: TextProps) {
     return (
         <BaseText

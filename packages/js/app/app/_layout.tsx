@@ -5,10 +5,10 @@ import {
     ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack, } from 'expo-router';
+import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { Provider as ReduxProvider, useSelector, } from 'react-redux';
+import { Provider as ReduxProvider, useSelector } from 'react-redux';
 
 import { UserContext, UserLocal, useSession } from '../lib/bubbleApi/user';
 import SignInScreen from '../components/display/SignInComponent';
@@ -34,7 +34,7 @@ function RootLayout() {
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
-    const { loaded: userLoading, } = useSession();
+    const { loaded: userLoading } = useSession();
     const { loaded: groupsLoaded } = useGroups();
     const user = useSelector(selectUser);
 
@@ -60,8 +60,12 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
 
     return (
         <>
-            <NavThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <ThemeContext.Provider value={darkMode ? Colors.dark : Colors.light}>
+            <NavThemeProvider
+                value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+            >
+                <ThemeContext.Provider
+                    value={darkMode ? Colors.dark : Colors.light}
+                >
                     <AndroidPromptProvider />
                     <Stack>
                         <Stack.Screen
@@ -70,11 +74,17 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
                         />
                         <Stack.Screen
                             name="allGroupsModal"
-                            options={{ presentation: 'modal', headerShown: false, }}
+                            options={{
+                                presentation: 'modal',
+                                headerShown: false,
+                            }}
                         />
                         <Stack.Screen
                             name="groupSettingsModal"
-                            options={{ presentation: 'modal', headerShown: false, }}
+                            options={{
+                                presentation: 'modal',
+                                headerShown: false,
+                            }}
                         />
                     </Stack>
                 </ThemeContext.Provider>
@@ -88,5 +98,5 @@ export default function WithReduxLayout() {
         <ReduxProvider store={store}>
             <RootLayout />
         </ReduxProvider>
-    )
+    );
 }

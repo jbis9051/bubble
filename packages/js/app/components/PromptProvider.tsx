@@ -1,10 +1,14 @@
-import { BackHandler, Platform, StyleSheet, View } from "react-native";
-import prompt, { PromptOptions } from "react-native-prompt-android";
+import { BackHandler, Platform, StyleSheet, View } from 'react-native';
+import prompt, { PromptOptions } from 'react-native-prompt-android';
 import Dialog from 'react-native-dialog';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
-
-let androidPromptRef: (title: string, message: string, buttons: Array<PromptButton>, options: PromptOptions) => void;
+let androidPromptRef: (
+    title: string,
+    message: string,
+    buttons: Array<PromptButton>,
+    options: PromptOptions
+) => void;
 let promptLastCancelled = 0;
 
 type PromptButton = {
@@ -19,64 +23,89 @@ export default function compatiblePrompt(
     title?: string,
     message?: string,
     callbackOrButtons?: ((value: string) => void) | Array<PromptButton>,
-    options?: PromptOptions,
+    options?: PromptOptions
 ) {
     if (!options) {
-        options = { type: "default" };
+        options = { type: 'default' };
     }
-    if (Platform.OS === "android") {
-        androidPromptRef(title || "", message || "", callbackOrButtons as Array<PromptButton>, options);
+    if (Platform.OS === 'android') {
+        androidPromptRef(
+            title || '',
+            message || '',
+            callbackOrButtons as Array<PromptButton>,
+            options
+        );
         return;
     }
     prompt(title, message, callbackOrButtons, options);
-};
+}
 
-export function alertPrompt(title: string, message?: string, onClose?: () => void) {
+export function alertPrompt(
+    title: string,
+    message?: string,
+    onClose?: () => void
+) {
     compatiblePrompt(title, message, [
         {
-            text: "OK",
+            text: 'OK',
             onPress: onClose,
-        }
+        },
     ]);
 }
 
-export function confirmPrompt(title: string, message?: string, onConfirm?: () => void, onCancel?: () => void) {
+export function confirmPrompt(
+    title: string,
+    message?: string,
+    onConfirm?: () => void,
+    onCancel?: () => void
+) {
     compatiblePrompt(title, message, [
         {
-            text: "Cancel",
+            text: 'Cancel',
             onPress: onCancel,
         },
         {
-            text: "OK",
+            text: 'OK',
             onPress: onConfirm,
-        }
+        },
     ]);
 }
 
-export function confirmPromptDestructive(title: string, message?: string, onConfirm?: () => void, onCancel?: () => void, customLeaveText?: string) {
+export function confirmPromptDestructive(
+    title: string,
+    message?: string,
+    onConfirm?: () => void,
+    onCancel?: () => void,
+    customLeaveText?: string
+) {
     compatiblePrompt(title, message, [
         {
-            text: "Cancel",
+            text: 'Cancel',
             onPress: onCancel,
-            style: "cancel",
+            style: 'cancel',
         },
         {
-            text: customLeaveText ?? "Discard",
+            text: customLeaveText ?? 'Discard',
             onPress: onConfirm,
             style: 'destructive',
-        }
+        },
     ]);
 }
 
 export function AndroidPromptProvider() {
     const [visible, setVisible] = useState(false);
-    const [title, setTitle] = useState("");
-    const [message, setMessage] = useState("");
+    const [title, setTitle] = useState('');
+    const [message, setMessage] = useState('');
     const [buttons, setButtons] = useState<PromptButton[]>([]);
-    const [options, setOptions] = useState<PromptOptions>({ type: "default" });
-    const [input, setInput] = useState("");
+    const [options, setOptions] = useState<PromptOptions>({ type: 'default' });
+    const [input, setInput] = useState('');
 
-    androidPromptRef = (title: string, message: string, buttons: Array<PromptButton>, options: PromptOptions) => {
+    androidPromptRef = (
+        title: string,
+        message: string,
+        buttons: Array<PromptButton>,
+        options: PromptOptions
+    ) => {
         const f = () => {
             setTitle(title);
             setMessage(message);
@@ -85,13 +114,13 @@ export function AndroidPromptProvider() {
             } else {
                 setButtons([
                     {
-                        style: "cancel",
-                        text: "OK",
-                    }
+                        style: 'cancel',
+                        text: 'OK',
+                    },
                 ]);
             }
             setOptions(options);
-            setInput("");
+            setInput('');
             setVisible(true);
         };
         if (Date.now() - promptLastCancelled < 500) {
@@ -99,43 +128,57 @@ export function AndroidPromptProvider() {
         } else {
             f();
         }
-    }
+    };
 
     const handleCancel = () => {
         hide();
-    }
+    };
 
     const hide = () => {
         promptLastCancelled = Date.now();
         setVisible(false);
-    }
+    };
 
-    if (Platform.OS !== "android") {
+    if (Platform.OS !== 'android') {
         return null;
     }
 
     return (
         <View style={[StyleSheet.absoluteFill, styles.container]}>
-            <Dialog.Container visible={visible} onRequestClose={() => setVisible(false)}>
+            <Dialog.Container
+                visible={visible}
+                onRequestClose={() => setVisible(false)}
+            >
                 <Dialog.Title>{title}</Dialog.Title>
                 {message ? (
-                    <Dialog.Description>
-                        {message}
-                    </Dialog.Description>
+                    <Dialog.Description>{message}</Dialog.Description>
                 ) : null}
-                {options.type === "plain-text" && <Dialog.Input onChangeText={(t) => setInput(t)} autoFocus />}
+                {options.type === 'plain-text' && (
+                    <Dialog.Input onChangeText={(t) => setInput(t)} autoFocus />
+                )}
                 {buttons.map((button, index) => {
-                    if (button.style === "cancel") {
-                        return <Dialog.Button key={index} label={button.text} onPress={handleCancel} />
+                    if (button.style === 'cancel') {
+                        return (
+                            <Dialog.Button
+                                key={index}
+                                label={button.text}
+                                onPress={handleCancel}
+                            />
+                        );
                     }
-                    return <Dialog.Button key={index} label={button.text} onPress={() => {
-                        hide();
-                        if (button.onPress) {
-                            button.onPress(input);
-                        }
-                    }} />
-                })
-                }
+                    return (
+                        <Dialog.Button
+                            key={index}
+                            label={button.text}
+                            onPress={() => {
+                                hide();
+                                if (button.onPress) {
+                                    button.onPress(input);
+                                }
+                            }}
+                        />
+                    );
+                })}
             </Dialog.Container>
         </View>
     );
@@ -144,8 +187,8 @@ export function AndroidPromptProvider() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
-        alignItems: "center",
-        justifyContent: "center",
-    }
-})
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+});

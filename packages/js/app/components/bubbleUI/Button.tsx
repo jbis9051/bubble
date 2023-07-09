@@ -6,8 +6,8 @@ import {
     Platform,
     ViewStyle,
     View,
+    ActivityIndicator,
 } from 'react-native';
-import { ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ThemeContext } from '../../lib/Context';
 
@@ -50,7 +50,7 @@ function FilledButton(props: StyledButtonProps) {
                             color: disabled
                                 ? theme.colors.secondaryPaper
                                 : theme.complementColors[color],
-                            fontSize: fontSize,
+                            fontSize,
                         }}
                     >
                         {children}
@@ -95,7 +95,7 @@ function OutlinedButton(props: StyledButtonProps) {
                     <Text
                         style={{
                             color: forecolor,
-                            fontSize: fontSize,
+                            fontSize,
                         }}
                     >
                         {children}
@@ -189,7 +189,7 @@ export function TextButton(props: TextButtonProps) {
         <>
             <TouchableOpacity
                 disabled={disabled}
-                onPress={onPress ? onPress : () => {}}
+                onPress={onPress || (() => {})}
                 style={[
                     { margin: 15, marginTop: isAndroid ? 15 : 20 },
                     noMarginStyle,
