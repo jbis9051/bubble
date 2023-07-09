@@ -113,9 +113,9 @@ impl TokenBucket {
         }
     }
 
-    fn update(&self, to_update: &str) {
+    fn update(&self, to_update: &str) -> Result<(), &'static str> { // error handling
         let mut buckets = self.buckets.lock().unwrap();
-        let mut bucket = buckets.get_mut(to_update).unwrap();
+        let mut bucket = buckets.get_mut(to_update).ok_or("Bucket not found")?;
         let now = Instant::now();
         let elapsed = now.duration_since(bucket.last_refill_time);
 
@@ -125,6 +125,7 @@ impl TokenBucket {
                 std::cmp::min(bucket.capacity, bucket.current_tokens + tokens_to_add);
             bucket.last_refill_time = now;
         }
+        Ok(())
     }
 
     fn handle(&self, num_tokens: usize, to_update: &str) -> bool {
@@ -148,7 +149,7 @@ struct Service {
     token_bucket: Arc<TokenBucket>,
 }
 
-impl Service {
+impl Service { // axum
     fn new(name: String, token_bucket: Arc<TokenBucket>) -> Service {
         Service { name, token_bucket }
     }
