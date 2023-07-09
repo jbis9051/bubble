@@ -11,7 +11,8 @@ export interface CustomTextProps {
     nomargin?: boolean;
 }
 
-// ex: "Hi <name>!"
+const DEFAULT_MARGIN = 15;
+
 function Heading1(props: TextProps) {
     return (
         <BaseText
@@ -20,8 +21,8 @@ function Heading1(props: TextProps) {
                 {
                     fontSize: 36,
                     fontWeight: '500',
-                    marginTop: 15,
-                    marginLeft: 15,
+                    marginTop: DEFAULT_MARGIN,
+                    marginLeft: DEFAULT_MARGIN,
                     lineHeight: 43,
                 },
                 props.style,
@@ -31,6 +32,7 @@ function Heading1(props: TextProps) {
     );
 }
 
+// ex: "Fall Break is just around the corner!"
 function Heading2(props: TextProps) {
     return (
         <BaseText
@@ -39,8 +41,8 @@ function Heading2(props: TextProps) {
                 {
                     fontSize: 24,
                     fontWeight: '500',
-                    marginTop: 15,
-                    marginLeft: 15,
+                    marginTop: DEFAULT_MARGIN,
+                    marginLeft: DEFAULT_MARGIN,
                     lineHeight: 29,
                 },
                 props.style,
@@ -58,8 +60,8 @@ function Body(props: TextProps) {
                 {
                     fontSize: 18,
                     fontWeight: '400',
-                    marginTop: 15,
-                    marginLeft: 15,
+                    marginTop: DEFAULT_MARGIN,
+                    marginLeft: DEFAULT_MARGIN,
                     lineHeight: 21,
                 },
                 props.style,
@@ -77,8 +79,8 @@ function Mini(props: TextProps) {
                 {
                     fontSize: 12,
                     fontWeight: '400',
-                    marginTop: 15,
-                    marginLeft: 15,
+                    marginTop: DEFAULT_MARGIN,
+                    marginLeft: DEFAULT_MARGIN,
                     lineHeight: 14,
                 },
                 props.style,

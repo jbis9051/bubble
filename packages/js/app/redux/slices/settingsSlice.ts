@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { UserLocal } from '../../lib/bubbleApi/user';
 
 export const authSlice = createSlice({
-    name: 'auth',
+    name: 'settings',
     initialState: {
         status: 'idle',
         user: null,

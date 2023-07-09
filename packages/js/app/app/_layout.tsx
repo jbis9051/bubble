@@ -16,6 +16,8 @@ import { ThemeContext } from '../lib/Context';
 import Colors from '../constants/Colors';
 import store from '../redux/store';
 import { selectUser } from '../redux/slices/authSlice';
+import { useGroups } from '../lib/bubbleApi/group';
+import { AndroidPromptProvider } from '../components/PromptProvider';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -33,13 +35,14 @@ function RootLayout() {
         ...FontAwesome.font,
     });
     const { loaded: userLoading } = useSession();
+    const { loaded: groupsLoaded } = useGroups();
     const user = useSelector(selectUser);
 
     useEffect(() => {
         if (error) throw error;
     }, [error]);
 
-    const loaded = userLoading && fontsLoaded;
+    const loaded = userLoading && fontsLoaded && groupsLoaded;
 
     return (
         <>
@@ -63,23 +66,24 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
                 <ThemeContext.Provider
                     value={darkMode ? Colors.dark : Colors.light}
                 >
+                    <AndroidPromptProvider />
                     <Stack>
                         <Stack.Screen
                             name="(tabs)"
                             options={{ headerShown: false }}
                         />
                         <Stack.Screen
-                            name="bubbleListModal"
+                            name="allGroupsModal"
                             options={{
                                 presentation: 'modal',
-                                title: 'Your Bubbles',
+                                headerShown: false,
                             }}
                         />
                         <Stack.Screen
-                            name="bubbleSettingsModal"
+                            name="groupSettingsModal"
                             options={{
                                 presentation: 'modal',
-                                title: 'Bubble Settings',
+                                headerShown: false,
                             }}
                         />
                     </Stack>

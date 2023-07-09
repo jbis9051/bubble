@@ -7,13 +7,6 @@ import {
     KeyboardAvoidingView,
     TouchableOpacity,
 } from 'react-native';
-import { UserLocal, UserService } from '../../lib/bubbleApi/user';
-import { LoggingService } from '../../lib/bubbleApi/logging';
-import StyledButton, { TextButton } from '../bubbleUI/Button';
-import StyledText from '../StyledText';
-import { StyledInput } from '../Input';
-import SignUp1Svg from '../../assets/svgs/SignUp1Background.svg';
-import SignUp2Svg from '../../assets/svgs/SignUp2Background.svg';
 import Animated, {
     WithTimingConfig,
     runOnJS,
@@ -22,9 +15,16 @@ import Animated, {
     useSharedValue,
     withTiming,
 } from 'react-native-reanimated';
-import { View } from '../Themed';
 import { Entypo } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
+import { UserLocal, UserService } from '../../lib/bubbleApi/user';
+import { LoggingService } from '../../lib/bubbleApi/logging';
+import StyledButton, { TextButton } from '../bubbleUI/Button';
+import StyledText from '../StyledText';
+import { StyledInput } from '../Input';
+import SignUp1Svg from '../../assets/svgs/SignUp1Background.svg';
+import SignUp2Svg from '../../assets/svgs/SignUp2Background.svg';
+import { View } from '../Themed';
 import { setAuth } from '../../redux/slices/authSlice';
 
 function SignUpFlow({

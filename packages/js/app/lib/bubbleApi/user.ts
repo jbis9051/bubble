@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { LoggingService } from './logging';
 import { useDispatch } from 'react-redux';
+import { LoggingService } from './logging';
 import { setAuth } from '../../redux/slices/authSlice';
+import { uuid } from './group';
 
 export class UserService {
     // static async signup({ email, username, password, name }:
@@ -16,18 +17,27 @@ export class UserService {
     // static async forgotPassword({ email }: { email: string }) {}
 
     static async register(username: string, password: string, name: string) {}
+
     static async login(email: string, password: string) {}
+
     static async logout() {}
+
     static async forgot(email: string) {}
 
     static async retrieveSession(): Promise<UserLocal | null> {
-        // return { name: 'test' };
-        return null;
+        return {
+            name: 'test',
+            user_uuid: 'user-uuid-1',
+            primary_client_uuid: 'client-uuid-1',
+        };
+        // return null;
     }
 }
 
 export interface UserLocal {
     name: string;
+    primary_client_uuid: uuid;
+    user_uuid: uuid;
 }
 
 export function useSession() {

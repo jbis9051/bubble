@@ -12,6 +12,7 @@ const palette = {
     inactive: '#FBBC05', // yellow
     white: '#FFFFFF',
     black: '#000000',
+    red: '#C40233',
 };
 
 export default {
@@ -23,7 +24,7 @@ export default {
             secondaryPaper: palette.grey4,
             active: palette.active,
             inactive: palette.inactive,
-            danger: palette.primary,
+            danger: palette.red,
         },
         complementColors: {
             primary: palette.white,
@@ -32,7 +33,7 @@ export default {
             secondaryPaper: palette.white,
             active: palette.black,
             inactive: palette.black,
-            danger: palette.black,
+            danger: palette.white,
         },
         text: '#000',
         background: '#fff',
@@ -48,7 +49,7 @@ export default {
             secondaryPaper: palette.grey4,
             active: palette.active,
             inactive: palette.inactive,
-            danger: palette.primary,
+            danger: palette.red,
         },
         complementColors: {
             primary: palette.white,
@@ -57,7 +58,7 @@ export default {
             secondaryPaper: palette.white,
             active: palette.black,
             inactive: palette.black,
-            danger: palette.black,
+            danger: palette.white,
         },
         text: '#fff',
         background: '#000',
