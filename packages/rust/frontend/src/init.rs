@@ -1,5 +1,8 @@
 use crate::models::kv::{AccountKv, GlobalKv};
+use crate::platform::DevicePromise;
+use crate::promise::Promise;
 use crate::{Error, GlobalAccountData, GlobalStaticData, GLOBAL_STATIC_DATA};
+use serde_json::json;
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::{sync, thread};
@@ -35,10 +38,14 @@ impl TokioThread {
     }
 }
 
-pub fn init(data_directory: String) -> Result<(), Error> {
+pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
     let tokio_thread = TokioThread::spawn();
+    /*
 
-    tokio_thread.handle.block_on(init_async(&data_directory))?;
+    tokio_thread.handle.block_on(promisify::<(), Error>(promise, async move {
+        //init_async(&data_directory).await?;
+        Ok(())
+    }));*/
 
     let global_data = GlobalStaticData {
         data_directory,
@@ -49,6 +56,8 @@ pub fn init(data_directory: String) -> Result<(), Error> {
         .set(global_data)
         .map(|_| ())
         .map_err(|_| Error::GlobalAlreadyInitialized)?;
+
+    promise.resolve(json!({"status": true, "value": null}).to_string().as_str());
 
     Ok(())
 }

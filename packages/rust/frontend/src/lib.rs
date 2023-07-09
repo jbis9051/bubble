@@ -1,13 +1,20 @@
+mod call;
 mod export_macro;
-pub mod init;
+mod init;
 mod models;
+mod platform;
+mod promise;
 mod types;
 
+// export all platform specific functions
+pub use platform::export::*;
+
 use crate::init::TokioThread;
+use bridge_macro::bridge;
 use once_cell::sync::{Lazy, OnceCell};
-use serde_json::Value;
+use serde::{Serialize, Serializer};
+use serde_json::{json, Value};
 use sqlx::SqlitePool;
-use std::ffi::{c_char, CStr};
 use tokio::sync::RwLock;
 
 #[derive(Debug, thiserror::Error)]
@@ -18,6 +25,15 @@ pub enum Error {
     SqlxMigrate(#[from] sqlx::migrate::MigrateError),
     #[error("global oneshot initialized, you probably called init twice")]
     GlobalAlreadyInitialized,
+}
+
+impl Serialize for Error {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let value = json!({
+            "message": self.to_string()
+        });
+        value.serialize(serializer)
+    }
 }
 
 #[derive(Debug)]
@@ -37,30 +53,7 @@ pub static GLOBAL_DATABASE: OnceCell<SqlitePool> = OnceCell::new();
 pub static GLOBAL_ACCOUNT_DATA: Lazy<RwLock<Option<GlobalAccountData>>> =
     Lazy::new(|| RwLock::new(None));
 
-#[no_mangle]
-pub unsafe extern "C" fn init(data_directory: *const c_char) {
-    let data_directory = unsafe { CStr::from_ptr(data_directory) }
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    init::init(data_directory).unwrap();
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn call(json: *const c_char) {
-    if json.is_null() {
-        panic!("rust call function was passed a null pointer");
-    }
-    let json = unsafe { CStr::from_ptr(json) };
-    let json = json.to_str().unwrap();
-    let mut deserialized: Value = serde_json::from_str(json).unwrap();
-    let method = deserialized["method"].as_str().unwrap().to_string();
-    let params = deserialized["params"].take();
-    dynamic_call(&method, params).unwrap();
-}
-
-pub async fn foo(_abc: String) {
+pub async fn foo(_abc: String) -> Result<(), ()> {
     let abc = reqwest::get("bubble.whatever/user/register")
         .await
         .unwrap()
@@ -69,6 +62,29 @@ pub async fn foo(_abc: String) {
         .unwrap();
 
     println!("Hello from foo: {}!", abc);
+
+    Ok(())
 }
 
-export!(foo(abc: String),);
+#[bridge]
+pub async fn multiply(a: i32, b: i32) -> Result<i32, ()> {
+    Ok(a * b)
+}
+
+#[bridge]
+#[derive(Serialize)]
+pub struct HelloResponse {
+    message: String,
+}
+
+#[bridge]
+pub async fn hello(name: String) -> Result<HelloResponse, ()> {
+    Ok(HelloResponse {
+        message: format!("Hello, {}!", name),
+    })
+}
+
+export!(
+    multiply(a: i32, b: i32) -> Result<i32, ()>;
+    hello(name: String) -> Result<HelloResponse, ()>;
+);

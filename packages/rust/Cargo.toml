@@ -1,5 +1,7 @@
 [workspace]
 members = [
     "server",
-    "frontend"
+    "frontend",
+    "bridge_macro",
+    "bridge_gen"
 ]
