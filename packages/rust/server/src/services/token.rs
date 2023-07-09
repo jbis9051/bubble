@@ -128,17 +128,17 @@ impl TokenBucket {
         Ok(())
     }
 
-    fn handle(&self, num_tokens: usize, to_update: &str) -> bool {
+    fn handle(&self, num_tokens: usize, to_update: &str) -> Result<bool, &'static str> {
         let mut buckets = self.buckets.lock().unwrap();
-        let mut bucket = buckets.get_mut(to_update).unwrap();
-        self.update(to_update);
+        let mut bucket = buckets.get_mut(to_update).ok_or("Bucket not found")?;
+        self.update(to_update)?;
 
         let tokens_in_bucket = bucket.current_tokens;
         if tokens_in_bucket >= num_tokens {
             bucket.current_tokens -= num_tokens;
-            true
+            Ok(true)
         } else {
-            false
+            Ok(false)
         }
     }
 }
