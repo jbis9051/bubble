@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 
-import { Alert, SafeAreaView, StyleSheet } from 'react-native';
+import {Alert, StyleSheet, View} from 'react-native';
 
 import { useDispatch } from 'react-redux';
-import { View } from '../../components/Themed';
 import StyledText from '../../components/StyledText';
 import { StyledInput } from '../../components/Input';
 import StyledButton from '../../components/bubbleUI/Button';

@@ -9,7 +9,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ThemeContext } from '../../lib/Context';
+import Colors from "../../constants/Colors";
 
 const isAndroid = Platform.OS === 'android';
 
@@ -18,10 +18,8 @@ type ColorTypes = 'primary' | 'secondary' | 'danger';
 function FilledButton(props: StyledButtonProps) {
     const { color, children, style, onPress, loading, disabled, fontSize } =
         props;
-    const theme = useContext(ThemeContext);
 
-    // const OuterComponent = (disabled ? View : TouchableOpacity) as React.ComponentType<any>;
-    const bgcolor = disabled ? 'rgba(0,0,0,.06)' : theme.colors[color];
+    const bgcolor = disabled ? 'rgba(0,0,0,.06)' : Colors.colors[color];
 
     return (
         <TouchableOpacity
@@ -48,8 +46,8 @@ function FilledButton(props: StyledButtonProps) {
                     <Text
                         style={{
                             color: disabled
-                                ? theme.colors.secondaryPaper
-                                : theme.complementColors[color],
+                                ? Colors.colors.secondaryPaper
+                                : Colors.complementColors[color],
                             fontSize,
                         }}
                     >
@@ -64,15 +62,14 @@ function FilledButton(props: StyledButtonProps) {
 function OutlinedButton(props: StyledButtonProps) {
     const { color, children, style, onPress, loading, disabled, fontSize } =
         props;
-    const theme = useContext(ThemeContext);
 
-    const forecolor = disabled ? 'rgba(0,0,0,.06)' : theme.colors[color];
+    const forecolor = disabled ? 'rgba(0,0,0,.06)' : Colors.colors[color];
     return (
         <TouchableOpacity
             style={[
                 {
                     height: 40,
-                    backgroundColor: theme.background,
+                    backgroundColor: Colors.background,
                     borderStyle: 'solid',
                     borderWidth: 1,
                     borderRadius: 15,

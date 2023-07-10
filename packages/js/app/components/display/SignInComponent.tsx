@@ -5,7 +5,7 @@ import {
     Alert,
     ScrollView,
     KeyboardAvoidingView,
-    TouchableOpacity,
+    TouchableOpacity, View,
 } from 'react-native';
 import Animated, {
     WithTimingConfig,
@@ -24,7 +24,6 @@ import StyledText from '../StyledText';
 import { StyledInput } from '../Input';
 import SignUp1Svg from '../../assets/svgs/SignUp1Background.svg';
 import SignUp2Svg from '../../assets/svgs/SignUp2Background.svg';
-import { View } from '../Themed';
 import { setAuth } from '../../redux/slices/authSlice';
 
 function SignUpFlow({

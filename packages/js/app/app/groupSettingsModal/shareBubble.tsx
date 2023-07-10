@@ -1,9 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet } from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import StyledText from '../../components/StyledText';
-import { View } from '../../components/Themed';
 import InviteUserComponent from '../../components/display/InviteUserComponent';
 import { selectCurrentGroup } from '../../redux/slices/groupSlice';
 

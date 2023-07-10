@@ -4,20 +4,16 @@ import {
     DefaultTheme,
     ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import { Provider as ReduxProvider, useSelector } from 'react-redux';
+import {useFonts} from 'expo-font';
+import {SplashScreen, Stack} from 'expo-router';
+import {useEffect} from 'react';
+import {Provider as ReduxProvider, useSelector} from 'react-redux';
 
-import { UserContext, UserLocal, useSession } from '../lib/bubbleApi/user';
+import {UserContext, UserLocal, useSession} from '../lib/bubbleApi/user';
 import SignInScreen from '../components/display/SignInComponent';
-import { ThemeContext } from '../lib/Context';
-import Colors from '../constants/Colors';
 import store from '../redux/store';
-import { selectUser } from '../redux/slices/authSlice';
-import { useGroups } from '../lib/bubbleApi/group';
-import { AndroidPromptProvider } from '../components/PromptProvider';
+import {selectUser} from '../redux/slices/authSlice';
+import {useGroups} from '../lib/bubbleApi/group';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -34,8 +30,8 @@ function RootLayout() {
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
-    const { loaded: userLoading } = useSession();
-    const { loaded: groupsLoaded } = useGroups();
+    const {loaded: userLoading} = useSession();
+    const {loaded: groupsLoaded} = useGroups();
     const user = useSelector(selectUser);
 
     useEffect(() => {
@@ -47,48 +43,36 @@ function RootLayout() {
     return (
         <>
             {/* Keep the splash screen open until the assets have loaded. In the future, we should just support async font loading with a native version of font-display. */}
-            {!loaded && <SplashScreen />}
-            {loaded && !user && <SignInScreen />}
-            {loaded && user && <RootLayoutNav user={user} />}
+            {!loaded && <SplashScreen/>}
+            {loaded && !user && <SignInScreen/>}
+            {loaded && user && <RootLayoutNav user={user}/>}
         </>
     );
 }
 
-function RootLayoutNav({ user }: { user: UserLocal }) {
-    const colorScheme = useColorScheme();
-    const darkMode = colorScheme === 'dark';
-
+function RootLayoutNav({user}: { user: UserLocal }) {
     return (
         <>
-            <NavThemeProvider
-                value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-            >
-                <ThemeContext.Provider
-                    value={darkMode ? Colors.dark : Colors.light}
-                >
-                    <AndroidPromptProvider />
-                    <Stack>
-                        <Stack.Screen
-                            name="(tabs)"
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="allGroupsModal"
-                            options={{
-                                presentation: 'modal',
-                                headerShown: false,
-                            }}
-                        />
-                        <Stack.Screen
-                            name="groupSettingsModal"
-                            options={{
-                                presentation: 'modal',
-                                headerShown: false,
-                            }}
-                        />
-                    </Stack>
-                </ThemeContext.Provider>
-            </NavThemeProvider>
+            <Stack>
+                <Stack.Screen
+                    name="(tabs)"
+                    options={{headerShown: false}}
+                />
+                <Stack.Screen
+                    name="allGroupsModal"
+                    options={{
+                        presentation: 'modal',
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="groupSettingsModal"
+                    options={{
+                        presentation: 'modal',
+                        headerShown: false,
+                    }}
+                />
+            </Stack>
         </>
     );
 }
@@ -96,7 +80,7 @@ function RootLayoutNav({ user }: { user: UserLocal }) {
 export default function WithReduxLayout() {
     return (
         <ReduxProvider store={store}>
-            <RootLayout />
+            <RootLayout/>
         </ReduxProvider>
     );
 }

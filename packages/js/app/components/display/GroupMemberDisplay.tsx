@@ -1,7 +1,6 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import { UserLocal } from '../../lib/bubbleApi/user';
-import { View } from '../Themed';
 import StyledText from '../StyledText';
 import Avatar from '../Avatar';
 

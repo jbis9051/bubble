@@ -15,8 +15,8 @@ import { selectCurrentGroup } from '../../redux/slices/groupSlice';
 import { MapService } from '../../lib/bubbleApi/location';
 import { UserLocal } from '../../lib/bubbleApi/user';
 import { getInitials } from '../../lib/formatText';
-import { ThemeContext } from '../../lib/Context';
 import StyledText from '../../components/StyledText';
+import Colors from "../../constants/Colors";
 
 interface CustomMarkerProps {
     coordinate: LatLng;
@@ -27,7 +27,6 @@ interface CustomMarkerProps {
 
 function CustomMarker(props: CustomMarkerProps) {
     const { coordinate, user } = props;
-    const theme = useContext(ThemeContext);
 
     return (
         <Marker coordinate={coordinate}>
@@ -39,7 +38,7 @@ function CustomMarker(props: CustomMarkerProps) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: theme.colors.primaryPaper,
+                    backgroundColor: Colors.colors.primaryPaper,
                 }}
             >
                 <View
@@ -50,12 +49,12 @@ function CustomMarker(props: CustomMarkerProps) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: theme.colors.secondaryPaper,
+                        backgroundColor: Colors.colors.secondaryPaper,
                     }}
                 >
                     <StyledText
                         nomargin
-                        style={{ color: theme.colors.primaryPaper }}
+                        style={{ color: Colors.colors.primaryPaper }}
                     >
                         {getInitials(user.name)}
                     </StyledText>

@@ -1,24 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, Platform, StyleSheet, TouchableOpacity } from 'react-native';
+import { FlatList, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useContext, useEffect } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
-import { Text, View } from '../../components/Themed';
 import {
-    selectCurrentGroup,
     selectGroups,
     setActiveGroup,
 } from '../../redux/slices/groupSlice';
 import { Group } from '../../lib/bubbleApi/group';
-import { ThemeContext } from '../../lib/Context';
 import StyledText from '../../components/StyledText';
 import { summarizeNames } from '../../lib/formatText';
+import Colors from "../../constants/Colors";
 
 function BubbleDisplay({ group }: { group: Group }) {
     const dispatch = useDispatch();
     const navigation = useNavigation();
-    const theme = useContext(ThemeContext);
 
     const handleSetActive = () => {
         navigation.goBack();
@@ -65,7 +62,6 @@ function BubbleDisplay({ group }: { group: Group }) {
 
 export default function BubbleListModal() {
     const groups = useSelector(selectGroups);
-    const theme = useContext(ThemeContext);
 
     const navigation = useNavigation();
 
@@ -96,10 +92,10 @@ export default function BubbleListModal() {
                             index % 2 === (groups.length % 2 === 1 ? 0 : 1)
                                 ? {
                                       borderTopColor:
-                                          theme.colors.secondaryPaper,
+                                          Colors.colors.secondaryPaper,
                                       borderTopWidth: 1,
                                       borderBottomColor:
-                                          theme.colors.secondaryPaper,
+                                          Colors.colors.secondaryPaper,
                                       borderBottomWidth: 1,
                                       borderStyle: 'solid',
                                   }

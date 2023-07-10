@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { View } from '../Themed';
 import StyledText from '../StyledText';
 import { GroupService } from '../../lib/bubbleApi/group';
 import { LoggingService } from '../../lib/bubbleApi/logging';

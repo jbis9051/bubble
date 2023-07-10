@@ -1,38 +1,38 @@
-import { StatusBar } from 'expo-status-bar';
+import {StatusBar} from 'expo-status-bar';
 import {
+    Alert,
     FlatList,
     Platform,
     ScrollView,
     StyleSheet,
-    TouchableOpacity,
+    TouchableOpacity, View,
 } from 'react-native';
-import { useNavigation } from 'expo-router';
-import { useContext, useEffect, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { useDispatch, useSelector } from 'react-redux';
+import {useNavigation} from 'expo-router';
+import {useContext, useEffect, useState} from 'react';
+import {Ionicons} from '@expo/vector-icons';
+import {useDispatch, useSelector} from 'react-redux';
 import StyledButton from '../../components/bubbleUI/Button';
 import StyledText from '../../components/StyledText';
-import { Text, View } from '../../components/Themed';
-import { selectCurrentGroup, setGroups } from '../../redux/slices/groupSlice';
-import { GroupService } from '../../lib/bubbleApi/group';
-import { UserLocal } from '../../lib/bubbleApi/user';
+import {selectCurrentGroup, setGroups} from '../../redux/slices/groupSlice';
+import {GroupService} from '../../lib/bubbleApi/group';
+import {UserLocal} from '../../lib/bubbleApi/user';
 import Avatar from '../../components/Avatar';
-import { ThemeContext } from '../../lib/Context';
-import { confirmPromptDestructive } from '../../components/PromptProvider';
-import { LoggingService } from '../../lib/bubbleApi/logging';
+import {LoggingService} from '../../lib/bubbleApi/logging';
+import Colors from "../../constants/Colors";
 
 interface BubbleMemberProps {
     member: UserLocal;
 }
-function BubbleMember({ member }: BubbleMemberProps) {
-    const { name, user_uuid } = member;
+
+function BubbleMember({member}: BubbleMemberProps) {
+    const {name, user_uuid} = member;
     const navigation = useNavigation();
 
     const handlePress = () => {
         // @ts-ignore
         navigation.navigate('groupSettingsModal', {
             screen: 'memberDisplay',
-            params: { user_uuid },
+            params: {user_uuid},
         });
     };
 
@@ -46,8 +46,8 @@ function BubbleMember({ member }: BubbleMemberProps) {
             }}
             onPress={handlePress}
         >
-            <Avatar name={name} width={50} />
-            <StyledText nomargin style={{ textAlign: 'center', flex: 1 }}>
+            <Avatar name={name} width={50}/>
+            <StyledText nomargin style={{textAlign: 'center', flex: 1}}>
                 {name}
             </StyledText>
         </TouchableOpacity>
@@ -57,7 +57,6 @@ function BubbleMember({ member }: BubbleMemberProps) {
 export default function GroupSettingsModal() {
     const curGroup = useSelector(selectCurrentGroup);
     const navigation = useNavigation();
-    const theme = useContext(ThemeContext);
     const dispatch = useDispatch();
 
     const [leaving, setLeaving] = useState(false);
@@ -73,7 +72,7 @@ export default function GroupSettingsModal() {
                         });
                     }}
                 >
-                    <Ionicons name="ios-add-sharp" size={24} color="black" />
+                    <Ionicons name="ios-add-sharp" size={24} color="black"/>
                 </TouchableOpacity>
             ),
         });
@@ -81,25 +80,32 @@ export default function GroupSettingsModal() {
 
     const handleLeaveBubble = () => {
         if (!curGroup) return null;
-        confirmPromptDestructive(
+        Alert.alert(
             `Leave '${curGroup.name}'?`,
             'You will need to be re-invited to join back.',
-            () => {
-                setLeaving(true);
-                GroupService.leave_group(curGroup.uuid)
-                    .then(() => {
-                        GroupService.get_groups()
-                            .then((groups) => {
-                                dispatch(setGroups(groups));
-                                navigation.goBack();
-                                setLeaving(false);
+            [
+                {
+                    text: 'OK',
+                    style: 'destructive',
+                    onPress: () => {
+                        setLeaving(true);
+                        GroupService.leave_group(curGroup.uuid)
+                            .then(() => {
+                                GroupService.get_groups()
+                                    .then((groups) => {
+                                        dispatch(setGroups(groups));
+                                        navigation.goBack();
+                                        setLeaving(false);
+                                    })
+                                    .catch(LoggingService.error);
                             })
                             .catch(LoggingService.error);
-                    })
-                    .catch(LoggingService.error);
-            },
-            undefined,
-            'Leave'
+                    }
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                }]
         );
     };
 
@@ -107,33 +113,33 @@ export default function GroupSettingsModal() {
 
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={{ height: '100%' }}>
-                <StyledText nomargin style={{ marginBottom: 15 }}>
+            <ScrollView contentContainerStyle={{height: '100%'}}>
+                <StyledText nomargin style={{marginBottom: 15}}>
                     Bubble Members
                 </StyledText>
                 {curGroup.members.map((m, idx) => (
                     <View
                         key={idx}
                         style={{
-                            borderTopColor: theme.colors.secondaryPaper,
-                            borderBottomColor: theme.colors.secondaryPaper,
+                            borderTopColor: Colors.colors.secondaryPaper,
+                            borderBottomColor: Colors.colors.secondaryPaper,
                             borderTopWidth: idx === 0 ? 1 : 0,
                             borderBottomWidth: 1,
                         }}
                     >
-                        <BubbleMember member={m} />
+                        <BubbleMember member={m}/>
                     </View>
                 ))}
                 <StyledButton
                     color="danger"
                     variant="outlined"
                     onPress={handleLeaveBubble}
-                    style={{ marginBottom: 15, marginTop: 'auto' }}
+                    style={{marginBottom: 15, marginTop: 'auto'}}
                 >
                     Leave Bubble
                 </StyledButton>
             </ScrollView>
-            <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+            <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'}/>
         </View>
     );
 }
