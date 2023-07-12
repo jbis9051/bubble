@@ -169,7 +169,7 @@ impl User {
         Ok(())
     }
 
-    pub async fn client(&self, db: &DbPool) -> Result<Option<Client>, sqlx::Error> {
+    pub async fn primary_client(&self, db: &DbPool) -> Result<Option<Client>, sqlx::Error> {
         if let Some(client_id) = self.primary_client_id {
             Ok(Some(Client::from_id(db, client_id).await?))
         } else {

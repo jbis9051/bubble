@@ -394,7 +394,7 @@ async fn get_user(
 ) -> Result<Json<PublicUser>, StatusCode> {
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     let primary_client_uuid = user
-        .client(&db)
+        .primary_client(&db)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .map(|c| c.uuid);
@@ -487,7 +487,7 @@ async fn search(
 
     for user in users {
         let primary_client_uuid = user
-            .client(&db)
+            .primary_client(&db)
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
             .map(|c| c.uuid);
