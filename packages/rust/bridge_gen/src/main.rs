@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use syn::__private::ToTokens;
 use syn::visit::Visit;
-use syn::{visit, Attribute, ItemFn, ItemStruct};
+use syn::{visit, Attribute, ImplItemFn, ItemStruct};
 
 // this some awful goddamn code, we should probably clean it up at some point
 
@@ -28,7 +28,7 @@ fn main() {
     let mut output = r#"/* WARNING: This file is auto-generated. Do not modify. */
 
 import { NativeModules, Platform } from 'react-native';
-import { Result } from './index';
+import { Result, Uuid, FrontendInstance } from './index';
 
 const LINKING_ERROR =
     `The package 'react-native-bubble-rust' doesn't seem to be linked. Make sure: \n\n${Platform.select(
@@ -69,7 +69,7 @@ export const RustInterop = NativeModules.Bubble
 }
 
 fn get_all_rust_files_in_dir(dir: &Path, rust_paths: &mut Vec<PathBuf>) {
-    for entry in std::fs::read_dir(dir).unwrap() {
+    for entry in fs::read_dir(dir).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
         if path.is_dir() {
@@ -81,7 +81,7 @@ fn get_all_rust_files_in_dir(dir: &Path, rust_paths: &mut Vec<PathBuf>) {
 }
 
 struct ParsedFile {
-    bridge_functions: Vec<ItemFn>,
+    bridge_functions: Vec<ImplItemFn>,
     bridge_structs: Vec<ItemStruct>,
 }
 
@@ -102,16 +102,16 @@ impl<'ast> Visit<'ast> for ParsedFile {
         visit::visit_item_struct(self, item_struct);
     }
 
-    fn visit_item_fn(&mut self, item_fn: &'ast ItemFn) {
+    fn visit_impl_item_fn(&mut self, item_fn: &'ast ImplItemFn) {
         if has_bridge_attribute(&item_fn.attrs) {
             self.bridge_functions.push(item_fn.clone());
         }
-        visit::visit_item_fn(self, item_fn);
+        visit::visit_impl_item_fn(self, item_fn);
     }
 }
 
 fn parse_file(path: &Path) -> ParsedFile {
-    let source_code = std::fs::read_to_string(path).unwrap();
+    let source_code = fs::read_to_string(path).unwrap();
     let syntax_tree = syn::parse_str(&source_code).expect("Failed to parse source code");
 
     let mut parsed_file = ParsedFile {
@@ -143,9 +143,9 @@ fn convert_struct_to_ts(in_struct: &ItemStruct) -> String {
     out_struct
 }
 
-fn convert_function_to_ts(int_func: &ItemFn) -> String {
+fn convert_function_to_ts(int_func: &ImplItemFn) -> String {
     let func_name = int_func.sig.ident.to_string();
-    let mut out_func = format!("export function {}(", func_name);
+    let mut out_func = format!("export function {}(instance: FrontendInstance,", func_name,);
 
     let mut input_names = Vec::new();
     input_names.reserve(int_func.sig.inputs.len());
@@ -154,7 +154,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
     for input in &int_func.sig.inputs {
         let input = match input {
             syn::FnArg::Typed(input) => input,
-            _ => panic!("Unexpected function input type"),
+            syn::FnArg::Receiver(_) => continue,
         };
         let input_name = input.pat.to_token_stream().to_string();
         input_names.push(input_name.clone());
@@ -174,6 +174,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
     out_func.push_str(
         r#"> {
     return RustInterop.call(JSON.stringify({
+        instance,
         method: '"#,
     );
     out_func.push_str(&func_name);
@@ -187,7 +188,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
     })).then((res: string) => JSON.parse(res));
 }
 
-    "#,
+"#,
     );
 
     out_func
@@ -196,7 +197,7 @@ fn convert_function_to_ts(int_func: &ItemFn) -> String {
 fn convert_type_to_ts(in_type: &str) -> String {
     let mut out_type = String::new();
 
-    let vec_regex = Regex::new(r"^Vec< (.*) >$").unwrap();
+    let vec_regex = Regex::new(r"^Vec < (.*) >$").unwrap();
 
     if let Some(captures) = vec_regex.captures(in_type) {
         let inner_type = captures.get(1).unwrap().as_str();
@@ -213,6 +214,19 @@ fn convert_type_to_ts(in_type: &str) -> String {
             "Result<{}, {}>",
             convert_type_to_ts(ok_type),
             convert_type_to_ts(err_type)
+        ));
+        return out_type;
+    }
+
+    let hash_map_regex = Regex::new(r"^HashMap < (.*) , (.*) >$").unwrap();
+
+    if let Some(captures) = hash_map_regex.captures(in_type) {
+        let key_type = captures.get(1).unwrap().as_str();
+        let value_type = captures.get(2).unwrap().as_str();
+        out_type.push_str(&format!(
+            "{{ [key: {}]: {} }}",
+            convert_type_to_ts(key_type),
+            convert_type_to_ts(value_type)
         ));
         return out_type;
     }

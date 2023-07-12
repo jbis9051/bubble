@@ -1,28 +1,31 @@
+extern crate core;
+
 use axum_test_helper::TestClient;
 use std::borrow::Borrow;
 use std::env;
-use std::str::FromStr;
+
 use std::sync::Arc;
 
-use bubble::models::user::User;
-use bubble::router;
+use server::models::user::User;
+use server::router;
 
-use bubble::types::{Base64, DbPool, SIGNATURE_SCHEME};
+use server::types::{DbPool, SIGNATURE_SCHEME};
 use sqlx::postgres::PgPoolOptions;
 
 use axum::http::StatusCode;
-use bubble::models::confirmation::Confirmation;
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
-use openmls::prelude::SignatureKeypair;
-use openmls_rust_crypto::OpenMlsRustCrypto;
+use server::models::confirmation::Confirmation;
 
-use bubble::routes::user::{ChangeEmail, Confirm, CreateUser, Login, SessionToken};
+use server::models::session::Session;
+use server::services::email::EmailService;
+use server::services::email::PrinterEmailService;
 
-use bubble::models::session::Session;
-use bubble::routes::client::CreateClient;
-use bubble::services::email::EmailService;
-use bubble::services::email::PrinterEmailService;
-
+use common::base64::Base64;
+use common::http_types::{
+    ChangeEmail, ConfirmEmail, CreateClient, CreateClientResponse, CreateUser, Login,
+    SessionTokenRequest, SessionTokenResponse,
+};
+use openmls_basic_credential::SignatureKeyPair;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::Postgres;
 use uuid::Uuid;
@@ -69,7 +72,7 @@ pub async fn register(
     user_in: &CreateUser,
 ) -> Result<(User, Uuid), StatusCode> {
     let res = client
-        .post("/user/register")
+        .post("/v1/user/register")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(user_in).unwrap())
         .send()
@@ -86,11 +89,11 @@ pub async fn register(
 pub async fn confirm_user(
     db: &DbPool,
     client: &TestClient,
-    confirm: &Confirm,
+    confirm: &ConfirmEmail,
     user_in: &User,
 ) -> Result<(User, Uuid), StatusCode> {
     let res = client
-        .patch("/user/confirm")
+        .patch("/v1/user/confirm")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(confirm).unwrap())
         .send()
@@ -99,21 +102,21 @@ pub async fn confirm_user(
     assert_eq!(res.status(), StatusCode::OK);
 
     let user = User::from_id(db, user_in.id).await.unwrap();
-    let token: SessionToken = res.json().await;
-    Ok((user, Uuid::parse_str(&token.token).unwrap()))
+    let token: SessionTokenResponse = res.json().await;
+    Ok((user, token.bearer))
 }
 
 pub async fn login(_db: &DbPool, client: &TestClient, login: &Login) -> Result<Uuid, StatusCode> {
     let res = client
-        .post("/user/session")
+        .post("/v1/user/session")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&login).unwrap())
         .send()
         .await;
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let token: SessionToken = res.json().await;
-    Ok(Uuid::parse_str(&token.token).unwrap())
+    let token: SessionTokenResponse = res.json().await;
+    Ok(token.bearer)
 }
 
 pub async fn logout(
@@ -121,12 +124,12 @@ pub async fn logout(
     client: &TestClient,
     session: &Session,
 ) -> Result<(), StatusCode> {
-    let token = SessionToken {
-        token: session.token.to_string(),
+    let token = SessionTokenRequest {
+        token: session.token,
     };
     let bearer = format!("Bearer {}", token.token);
     let res = client
-        .delete("/user/session")
+        .delete("/v1/user/session")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&token).unwrap())
         .header("Authorization", bearer)
@@ -145,7 +148,7 @@ pub async fn change_email(
 ) -> Result<Uuid, StatusCode> {
     let bearer = format!("Bearer {}", session.token);
     let res = client
-        .post("/user/email")
+        .post("/v1/user/email")
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&change).unwrap())
         .header("Authorization", bearer)
@@ -171,16 +174,9 @@ pub async fn initialize_user(
     user_in: &CreateUser,
 ) -> Result<(Uuid, User), StatusCode> {
     let (user, link_id) = register(db, client, user_in).await.unwrap();
-    let (user, token) = confirm_user(
-        db,
-        client,
-        &Confirm {
-            token: link_id.to_string(),
-        },
-        &user,
-    )
-    .await
-    .unwrap();
+    let (user, token) = confirm_user(db, client, &ConfirmEmail { token: link_id }, &user)
+        .await
+        .unwrap();
 
     Ok((token, user))
 }
@@ -190,25 +186,23 @@ pub async fn create_client(
     private: &[u8],
     bearer: &str,
     client: &TestClient,
-) -> (SignatureKeypair, Uuid) {
-    let backend = &OpenMlsRustCrypto::default();
-    let signature_keypair = SignatureKeypair::new(SIGNATURE_SCHEME, backend).unwrap();
-    let (_signature_privkey, signature_pubkey) = signature_keypair.clone().into_tuple();
+) -> (SignatureKeyPair, Uuid) {
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
     let user_keypair = Keypair {
         public: PublicKey::from_bytes(public).unwrap(),
         secret: SecretKey::from_bytes(private).unwrap(),
     };
 
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
     };
 
     let res = client
-        .post("/client")
+        .post("/v1/client")
         .header("Authorization", bearer)
         .json(&create_client)
         .send()
@@ -216,7 +210,7 @@ pub async fn create_client(
 
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let client_uuid = Uuid::from_str(&res.text().await).unwrap();
+    let res: CreateClientResponse = res.json().await;
 
-    (signature_keypair, client_uuid)
+    (signature_keypair, res.client_uuid)
 }

@@ -1,3 +1,5 @@
+DROP TABLE inbox;
+
 DROP TABLE keystore;
 
 DROP TABLE kv;

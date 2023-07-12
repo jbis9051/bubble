@@ -12,10 +12,14 @@ use crate::models::client::Client;
 use crate::models::key_package::KeyPackage as KeyPackageModel;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::routes::user::PublicClient;
-use crate::types::{Base64, DbPool};
-use openmls::key_packages::KeyPackage;
-use serde::{Deserialize, Serialize};
+use crate::types::DbPool;
+use common::base64::Base64;
+use common::http_types::{
+    CreateClient, CreateClientResponse, KeyPackagePublic, PublicClient, ReplaceKeyPackages,
+    UpdateClient,
+};
+use openmls::key_packages::KeyPackageIn;
+use openmls::prelude::TlsDeserializeTrait;
 
 pub fn router() -> Router {
     Router::new()
@@ -28,17 +32,11 @@ pub fn router() -> Router {
         .route("/:uuid/key_package", get(get_key_package))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CreateClient {
-    pub signing_key: Base64,
-    pub signature: Base64,
-}
-
 pub async fn create(
     db: Extension<DbPool>,
     Json(payload): Json<CreateClient>,
     user: AuthenticatedUser,
-) -> Result<(StatusCode, String), StatusCode> {
+) -> Result<(StatusCode, Json<CreateClientResponse>), StatusCode> {
     let identity =
         PublicKey::from_bytes(&user.identity).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?; // ensure the user has a valid identity key
 
@@ -60,13 +58,12 @@ pub async fn create(
 
     client.create(&db).await.map_err(map_sqlx_err)?;
 
-    Ok((StatusCode::CREATED, client.uuid.to_string()))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UpdateClient {
-    pub signing_key: Base64,
-    pub signature: Base64,
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateClientResponse {
+            client_uuid: client.uuid,
+        }),
+    ))
 }
 
 pub async fn update(
@@ -99,18 +96,17 @@ pub async fn update(
 
 pub async fn get_client(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<PublicClient>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     let user = User::from_id(&db, client.user_id)
         .await
         .map_err(map_sqlx_err)?;
 
     Ok(Json(PublicClient {
-        user_uuid: user.uuid.to_string(),
-        uuid: client.uuid.to_string(),
+        user_uuid: user.uuid,
+        uuid: client.uuid,
         signing_key: Base64(client.signing_key),
         signature: Base64(client.signature),
     }))
@@ -133,28 +129,22 @@ pub async fn delete_client(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ReplaceKeyPackages {
-    pub key_packages: Vec<Base64>,
-}
-
 pub async fn replace_key_packages(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     Json(payload): Json<ReplaceKeyPackages>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     if client.user_id != user.id {
         return Err(StatusCode::FORBIDDEN);
     }
 
     for package in &payload.key_packages {
-        let key_package =
-            KeyPackage::try_from(package.as_slice()).map_err(|_| StatusCode::BAD_REQUEST)?;
-        if key_package.credential().identity()
-            != format!("keypackage_{}_{}", user.uuid, client.uuid).as_bytes()
+        let key_package = KeyPackageIn::tls_deserialize(&mut package.as_slice())
+            .map_err(|_| StatusCode::BAD_REQUEST)?;
+        if key_package.unverified_credential().credential.identity()
+            != format!("client_{}_{}", user.uuid, client.uuid).as_bytes()
         {
             // IMPORTANT: we validate that the key package is actually for this client. This identifier will be used by other Clients to contact the Authentication Service (us)..
             return Err(StatusCode::BAD_REQUEST);
@@ -178,17 +168,11 @@ pub async fn replace_key_packages(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct KeyPackagePublic {
-    pub key_package: Base64,
-}
-
 pub async fn get_key_package(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<KeyPackagePublic>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let client = Client::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
     let (key_package, count) = KeyPackageModel::get_one_with_count(&db, client.id)
         .await

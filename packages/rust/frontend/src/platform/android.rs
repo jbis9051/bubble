@@ -1,8 +1,6 @@
+use crate::public::promise::Promise;
 use jni::objects::{GlobalRef, JObject};
-use jni::sys::jobject;
-use jni::{JNIEnv, JavaVM};
-
-use crate::promise::Promise;
+use jni::JavaVM;
 
 pub struct AndroidPromise {
     vm: JavaVM,
@@ -56,11 +54,10 @@ impl Promise for AndroidPromise {
 pub type DevicePromise = AndroidPromise;
 
 pub mod export {
-    use crate::call::call;
-    use crate::init::init;
     use crate::platform::DevicePromise;
+    use crate::public::call::call;
+    use crate::public::init::init;
     use jni::objects::{JClass, JObject, JString};
-    use jni::sys::{jdouble, jstring};
     use jni::JNIEnv;
 
     #[no_mangle]

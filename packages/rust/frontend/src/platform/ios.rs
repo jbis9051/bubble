@@ -1,4 +1,4 @@
-use crate::promise::{Callbacker, Promise};
+use crate::public::promise::{Callbacker, Promise};
 use std::ffi::{c_char, c_void, CString};
 
 pub type DevicePromise = IOSPromise;
@@ -38,7 +38,7 @@ impl Promise for IOSPromise {
 
 pub mod export {
     use crate::platform::ios::DevicePromise;
-    use crate::{call as call_impl, init as init_impl};
+    use crate::public::{call as call_impl, init as init_impl};
     use std::ffi::{c_char, c_void, CStr};
 
     #[no_mangle]

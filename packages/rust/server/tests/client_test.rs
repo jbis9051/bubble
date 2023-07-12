@@ -1,21 +1,20 @@
 use crate::helper::{create_client, start_server, TempDatabase};
-
-use std::str::FromStr;
-
 use axum::http::StatusCode;
-
-use bubble::routes::user::{Clients, CreateUser, PublicClient};
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signer};
 use openmls::prelude::*;
+use openmls_basic_credential::SignatureKeyPair;
 use openmls_rust_crypto::OpenMlsRustCrypto;
 use sqlx::Row;
 
 use uuid::Uuid;
 
-use bubble::routes::client::{CreateClient, KeyPackagePublic, ReplaceKeyPackages};
-
 use crate::crypto_helper::{PRIVATE, PUBLIC};
-use bubble::types::{Base64, CIPHERSUITES, SIGNATURE_SCHEME};
+use common::base64::Base64;
+use common::http_types::{
+    ClientsResponse, CreateClient, CreateClientResponse, CreateUser, KeyPackagePublic,
+    PublicClient, ReplaceKeyPackages,
+};
+use server::types::{CIPHERSUITES, SIGNATURE_SCHEME};
 
 mod crypto_helper;
 mod helper;
@@ -40,37 +39,34 @@ async fn test_client_crud() {
 
     // Ensure there are no clients
     let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
+        .get(&format!("/v1/user/{}/clients", user.uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let payload: Clients = res.json().await;
+    let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 0);
 
     // Create a Client
-    let backend = &OpenMlsRustCrypto::default();
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
     let user_keypair = Keypair {
         public: PublicKey::from_bytes(PUBLIC).unwrap(),
         secret: SecretKey::from_bytes(PRIVATE).unwrap(),
     };
 
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
     };
 
     let res = client
-        .post("/client")
+        .post("/v1/client")
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -78,26 +74,25 @@ async fn test_client_crud() {
 
     assert_eq!(res.status(), StatusCode::CREATED);
 
-    let client_uuid = Uuid::from_str(&res.text().await).unwrap();
+    let res: CreateClientResponse = res.json().await;
+
+    let client_uuid = res.client_uuid;
 
     // Ensure the client is created
     let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
+        .get(&format!("/v1/user/{}/clients", user.uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let payload: Clients = res.json().await;
+    let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 1);
-    assert_eq!(payload.clients[0].user_uuid, user.uuid.to_string());
-    assert_eq!(payload.clients[0].uuid, client_uuid.to_string());
-    assert_eq!(
-        payload.clients[0].signing_key.0,
-        signature_pubkey.as_slice()
-    );
+    assert_eq!(payload.clients[0].user_uuid, user.uuid);
+    assert_eq!(payload.clients[0].uuid, client_uuid);
+    assert_eq!(payload.clients[0].signing_key.0, signature_keypair.public());
     assert_eq!(
         payload.clients[0].signature.0,
         &signature_of_signing_key.to_bytes()
@@ -106,7 +101,7 @@ async fn test_client_crud() {
     // Check that the client can be retrieved
 
     let res = client
-        .get(&format!("/client/{}", client_uuid))
+        .get(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -115,26 +110,24 @@ async fn test_client_crud() {
 
     let payload: PublicClient = res.json().await;
 
-    assert_eq!(payload.user_uuid, user.uuid.to_string());
-    assert_eq!(payload.uuid, client_uuid.to_string());
-    assert_eq!(payload.signing_key.0, signature_pubkey.as_slice());
+    assert_eq!(payload.user_uuid, user.uuid);
+    assert_eq!(payload.uuid, client_uuid);
+    assert_eq!(payload.signing_key.0, signature_keypair.public());
     assert_eq!(payload.signature.0, &signature_of_signing_key.to_bytes());
 
     // Update the Client with a new signing key
 
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
     };
 
     let res = client
-        .patch(&format!("/client/{}", client_uuid))
+        .patch(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -145,7 +138,7 @@ async fn test_client_crud() {
     // Ensure the client is updated
 
     let res = client
-        .get(&format!("/client/{}", client_uuid))
+        .get(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -154,15 +147,15 @@ async fn test_client_crud() {
 
     let payload: PublicClient = res.json().await;
 
-    assert_eq!(payload.user_uuid, user.uuid.to_string());
-    assert_eq!(payload.uuid, client_uuid.to_string());
-    assert_eq!(payload.signing_key.0, signature_pubkey.as_slice());
+    assert_eq!(payload.user_uuid, user.uuid);
+    assert_eq!(payload.uuid, client_uuid);
+    assert_eq!(payload.signing_key.0, signature_keypair.public());
     assert_eq!(payload.signature.0, &signature_of_signing_key.to_bytes());
 
     // Delete the Client
 
     let res = client
-        .delete(&format!("/client/{}", client_uuid))
+        .delete(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -172,21 +165,21 @@ async fn test_client_crud() {
     // Ensure the client is deleted
 
     let res = client
-        .get(&format!("/user/{}/clients", user.uuid))
+        .get(&format!("/v1/user/{}/clients", user.uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
 
     assert_eq!(res.status(), StatusCode::OK);
 
-    let payload: Clients = res.json().await;
+    let payload: ClientsResponse = res.json().await;
 
     assert_eq!(payload.clients.len(), 0);
 
     // Ensure the client cannot be retrieved
 
     let res = client
-        .get(&format!("/client/{}", client_uuid))
+        .get(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -220,7 +213,7 @@ async fn test_key_packages() {
     // Ensure there are no key packages
 
     let res = client
-        .get(&format!("/client/{}/key_package", client_uuid))
+        .get(&format!("/v1/client/{}/key_package", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -229,27 +222,33 @@ async fn test_key_packages() {
 
     // Upload Key Packages
 
-    let identity = format!("keypackage_{}_{}", user.uuid, client_uuid);
-    let credential_bundle = CredentialBundle::from_parts(identity.into_bytes(), signature_keypair);
+    let identity = format!("client_{}_{}", user.uuid, client_uuid);
+    let credential = Credential::new(identity.into_bytes(), CredentialType::Basic).unwrap();
 
     let mut key_packages = Vec::new();
 
     for _ in 0..5 {
-        let key_package_bundle =
-            KeyPackageBundle::new(&[CIPHERSUITES], &credential_bundle, backend, vec![]).unwrap();
-        key_packages.push(Base64(
-            key_package_bundle
-                .key_package()
-                .clone()
-                .tls_serialize_detached()
-                .unwrap(),
-        ));
+        let key_package = KeyPackage::builder()
+            .build(
+                CryptoConfig {
+                    ciphersuite: CIPHERSUITES,
+                    version: ProtocolVersion::default(),
+                },
+                backend,
+                &signature_keypair,
+                CredentialWithKey {
+                    credential: credential.clone(),
+                    signature_key: SignaturePublicKey::from(signature_keypair.public()),
+                },
+            )
+            .unwrap();
+        key_packages.push(Base64(key_package.tls_serialize_detached().unwrap()));
     }
 
     let payload = ReplaceKeyPackages { key_packages };
 
     let res = client
-        .post(&format!("/client/{}/key_packages", client_uuid))
+        .post(&format!("/v1/client/{}/key_packages", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&payload)
         .send()
@@ -260,7 +259,7 @@ async fn test_key_packages() {
     // Get a Key Package
 
     let res = client
-        .get(&format!("/client/{}/key_package", client_uuid))
+        .get(&format!("/v1/client/{}/key_package", client_uuid))
         .header("Authorization", bearer.clone())
         .send()
         .await;
@@ -298,25 +297,22 @@ async fn test_create_client_bad_signature() {
 
     let bearer = format!("Bearer {}", token);
 
-    let backend = &OpenMlsRustCrypto::default();
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
     let user_keypair = Keypair {
         public: PublicKey::from_bytes(PUBLIC).unwrap(),
         secret: SecretKey::from_bytes(PRIVATE).unwrap(),
     };
 
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(vec![0; signature_of_signing_key.to_bytes().len()]),
     };
 
     let res = client
-        .post("/client")
+        .post("/v1/client")
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -363,25 +359,21 @@ async fn test_update_client_bad_auth() {
 
     // try to update the client with the second user's token
 
-    let backend = &OpenMlsRustCrypto::default();
-
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
     let user_keypair = Keypair {
         public: PublicKey::from_bytes(PUBLIC).unwrap(),
         secret: SecretKey::from_bytes(PRIVATE).unwrap(),
     };
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(signature_of_signing_key.to_bytes().to_vec()),
     };
 
     let res = client
-        .patch(&format!("/client/{}", client_uuid))
+        .patch(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bad_bearer.clone())
         .json(&create_client)
         .send()
@@ -412,24 +404,22 @@ async fn test_update_client_bad_signature() {
 
     // try to update the client with a bad signature
 
-    let backend = &OpenMlsRustCrypto::default();
-    let (_signature_privkey, signature_pubkey) = SignatureKeypair::new(SIGNATURE_SCHEME, backend)
-        .unwrap()
-        .into_tuple();
+    let _backend = &OpenMlsRustCrypto::default();
+    let signature_keypair = SignatureKeyPair::new(SIGNATURE_SCHEME).unwrap();
 
     let user_keypair = Keypair {
         public: PublicKey::from_bytes(PUBLIC).unwrap(),
         secret: SecretKey::from_bytes(PRIVATE).unwrap(),
     };
-    let signature_of_signing_key = user_keypair.sign(signature_pubkey.as_slice());
+    let signature_of_signing_key = user_keypair.sign(signature_keypair.public());
 
     let create_client = CreateClient {
-        signing_key: Base64(signature_pubkey.as_slice().to_vec()),
+        signing_key: Base64(signature_keypair.public().to_vec()),
         signature: Base64(vec![0; signature_of_signing_key.to_bytes().len()]),
     };
 
     let res = client
-        .patch(&format!("/client/{}", client_uuid))
+        .patch(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&create_client)
         .send()
@@ -477,7 +467,7 @@ async fn test_delete_client_bad_auth() {
     // try to delete the client with the second user's token
 
     let res = client
-        .delete(&format!("/client/{}", client_uuid))
+        .delete(&format!("/v1/client/{}", client_uuid))
         .header("Authorization", bad_bearer.clone())
         .send()
         .await;
@@ -523,27 +513,33 @@ async fn test_replace_key_packages_bad_auth() {
 
     // try to upload a key package with the second user's token
 
-    let identity = format!("keypackage_{}_{}", user.uuid, client_uuid);
-    let credential_bundle = CredentialBundle::from_parts(identity.into_bytes(), signature_keypair);
+    let identity = format!("client_{}_{}", user.uuid, client_uuid);
+    let credential = Credential::new(identity.into_bytes(), CredentialType::Basic).unwrap();
 
     let mut key_packages = Vec::new();
 
     let backend = &OpenMlsRustCrypto::default();
 
-    let key_package_bundle =
-        KeyPackageBundle::new(&[CIPHERSUITES], &credential_bundle, backend, vec![]).unwrap();
-    key_packages.push(Base64(
-        key_package_bundle
-            .key_package()
-            .clone()
-            .tls_serialize_detached()
-            .unwrap(),
-    ));
+    let key_package = KeyPackage::builder()
+        .build(
+            CryptoConfig {
+                ciphersuite: CIPHERSUITES,
+                version: ProtocolVersion::default(),
+            },
+            backend,
+            &signature_keypair,
+            CredentialWithKey {
+                credential: credential.clone(),
+                signature_key: SignaturePublicKey::from(signature_keypair.public()),
+            },
+        )
+        .unwrap();
+    key_packages.push(Base64(key_package.tls_serialize_detached().unwrap()));
 
     let payload = ReplaceKeyPackages { key_packages };
 
     let res = client
-        .post(&format!("/client/{}/key_packages", client_uuid))
+        .post(&format!("/v1/client/{}/key_packages", client_uuid))
         .header("Authorization", bad_bearer.clone())
         .json(&payload)
         .send()
@@ -574,27 +570,33 @@ async fn test_replace_key_packages_id() {
 
     // try to upload a key package a bad identity
 
-    let identity = format!("keypackage_{}_{}", user.uuid, Uuid::new_v4());
-    let credential_bundle = CredentialBundle::from_parts(identity.into_bytes(), signature_keypair);
+    let identity = format!("client_{}_{}", user.uuid, Uuid::new_v4());
+    let credential = Credential::new(identity.into_bytes(), CredentialType::Basic).unwrap();
 
     let mut key_packages = Vec::new();
 
     let backend = &OpenMlsRustCrypto::default();
 
-    let key_package_bundle =
-        KeyPackageBundle::new(&[CIPHERSUITES], &credential_bundle, backend, vec![]).unwrap();
-    key_packages.push(Base64(
-        key_package_bundle
-            .key_package()
-            .clone()
-            .tls_serialize_detached()
-            .unwrap(),
-    ));
+    let key_package = KeyPackage::builder()
+        .build(
+            CryptoConfig {
+                ciphersuite: CIPHERSUITES,
+                version: ProtocolVersion::default(),
+            },
+            backend,
+            &signature_keypair,
+            CredentialWithKey {
+                credential: credential.clone(),
+                signature_key: SignaturePublicKey::from(signature_keypair.public()),
+            },
+        )
+        .unwrap();
+    key_packages.push(Base64(key_package.tls_serialize_detached().unwrap()));
 
     let payload = ReplaceKeyPackages { key_packages };
 
     let res = client
-        .post(&format!("/client/{}/key_packages", client_uuid))
+        .post(&format!("/v1/client/{}/key_packages", client_uuid))
         .header("Authorization", bearer.clone())
         .json(&payload)
         .send()

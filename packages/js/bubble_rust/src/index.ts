@@ -12,6 +12,11 @@ export type Result<T, E> =
           value: E;
       };
 
-export function init(dataDir: string): Promise<void> {
+export type Uuid = string;
+
+export function init(dataDir: string): Promise<FrontendInstance> {
     return RustInterop.init(dataDir);
 }
+
+declare const tag: unique symbol;
+export type FrontendInstance = number & { readonly [tag]: unique symbol };

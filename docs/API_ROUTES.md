@@ -151,7 +151,7 @@ GET /user/reset?token=<token>
 ## User Forgot Password Confirm
 
 ```http request
-POST /user/reset
+PATCH /user/reset
 ```
 
 ```json
@@ -257,7 +257,7 @@ POST /client
 }
 ```
 
-The `<signature>` must be a signature of the `<signing_key>` by the User's identity key.
+The `<signature>` must be a signature of the `<signing_key>` by the User's private key.
 
 #### Response
 

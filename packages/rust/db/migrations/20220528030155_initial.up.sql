@@ -2,10 +2,11 @@ CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
     uuid UUID UNIQUE NOT NULL,
     username VARCHAR(255) UNIQUE NOT NULL,
-    PASSWORD VARCHAR(255) NOT NULL,
+    "password" VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NULL,
     name VARCHAR(255) NOT NULL,
     identity BYTEA NOT NULL,
+    primary_client_id INT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -24,7 +25,7 @@ CREATE TABLE confirmation (
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE SESSION (
+CREATE TABLE "session" (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES "user" (id) ON DELETE CASCADE NOT NULL,
     token UUID UNIQUE NOT NULL,
@@ -39,6 +40,13 @@ CREATE TABLE client (
     signature BYTEA NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE
+    "user"
+ADD
+    CONSTRAINT fk_user_primary_client_id FOREIGN KEY (primary_client_id) REFERENCES client (id) ON DELETE
+SET
+    NULL;
 
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,

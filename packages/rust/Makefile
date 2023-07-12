@@ -1,7 +1,7 @@
 fmt:
 	sleek **/**/*.sql
-	cargo fmt --all
 	cargo clippy --all --fix --allow-dirty --allow-staged
+	cargo fmt --all
 
 # For usage when developing server
 dev:
@@ -12,6 +12,10 @@ dev:
 start_dev:
 	docker compose -f docker-compose-start-dev.yml down
 	docker compose -f docker-compose-start-dev.yml up --build
+
+start_debug:
+	docker compose -f docker-compose-start-debug.yml down
+	docker compose -f docker-compose-start-debug.yml up --build
 
 test_ci: fmt_ci test_db_ci test_server_ci stop_ci
 

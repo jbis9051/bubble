@@ -2,37 +2,26 @@ use crate::extractor::authenticated_user::AuthenticatedUser;
 use crate::models::client::Client;
 use crate::models::message::Message;
 
-use crate::types::{Base64, DbPool};
+use crate::types::DbPool;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
-use serde::{Deserialize, Serialize};
+use common::base64::Base64;
+use common::http_types::{CheckMessages, Message as JsonMessage, MessagesResponse, SendMessage};
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::types::Uuid;
 use std::iter::Iterator;
 
 pub fn router() -> Router {
     Router::new().route("/", get(receive_message).post(send_message))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct MessageRequest {
-    pub client_uuids: Vec<String>,
-    pub message: Base64,
-}
-
 async fn send_message(
     db: Extension<DbPool>,
-    Json(payload): Json<MessageRequest>,
+    Json(payload): Json<SendMessage>,
     _: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
-    let uuids = payload
-        .client_uuids
-        .into_iter()
-        .map(|uuid| Uuid::parse_str(&uuid))
-        .collect::<Result<Vec<Uuid>, uuid::Error>>()
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuids = payload.client_uuids;
     if uuids.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
     }
@@ -47,8 +36,8 @@ async fn send_message(
 
     let mut message = Message {
         id: Default::default(),
-        message: payload.message.0,
-        created: NaiveDateTime::from_timestamp(0, 0),
+        message: payload.message.message.0,
+        created: NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), // unwrap is safe because timestamp is 0
     };
     message
         .create(&db, &client_ids)
@@ -58,23 +47,13 @@ async fn send_message(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CheckMessages {
-    pub client_uuid: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct MessagesReturned {
-    pub messages: Vec<Base64>,
-}
-
 async fn receive_message(
     db: Extension<DbPool>,
     Json(payload): Json<CheckMessages>,
     user: AuthenticatedUser,
-) -> Result<(StatusCode, Json<MessagesReturned>), StatusCode> {
+) -> Result<(StatusCode, Json<MessagesResponse>), StatusCode> {
     // Get client
-    let uuid = Uuid::parse_str(&payload.client_uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = payload.client_uuid;
     let client = Client::from_uuid(&db, &uuid)
         .await
         .map_err(|_| StatusCode::NOT_FOUND)?;
@@ -88,7 +67,7 @@ async fn receive_message(
     if messages.is_empty() {
         return Ok((
             StatusCode::OK,
-            Json(MessagesReturned {
+            Json(MessagesResponse {
                 messages: Vec::new(),
             }),
         ));
@@ -99,13 +78,15 @@ async fn receive_message(
         .map_err(|_| StatusCode::NOT_FOUND)?;
 
     let messages_to_return = messages
-        .iter()
-        .map(|message| Base64(message.message.clone()))
+        .into_iter()
+        .map(|message| JsonMessage {
+            message: Base64(message.message),
+        })
         .collect();
 
     Ok((
         StatusCode::OK,
-        Json(MessagesReturned {
+        Json(MessagesResponse {
             messages: messages_to_return,
         }),
     ))

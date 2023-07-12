@@ -1,5 +1,5 @@
 [package]
-name = "bubble"
+name = "server"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,13 +10,14 @@ sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "postgres", "migra
 tokio = { version = "1.18", features = ["full"] }
 serde = "1.0.137"
 once_cell = "1.12.0"
-uuid = { version = "1.1.2", features = ["v4"] }
+uuid = { version = "1.3", features = ["v4", "serde"] }
 ed25519-dalek = "1.0.1"
 axum = { version = "0.5.10", features = ["headers"] }
 rand_core = "0.6.3"
 argon2 = "0.4.1"
-openmls = "0.4.1"
+openmls = "0.5.0-pre.3"
 base64 = "0.21.0"
+common = { path = "../common" }
 
 # SendGrid
 sendgrid = "0.19.0"
@@ -24,7 +25,8 @@ sendgrid = "0.19.0"
 
 
 [dev-dependencies]
-axum-test-helper = "0.1.0"
 serde_json = "1.0.82"
-openmls_rust_crypto="0.1.0"
+axum-test-helper = "0.1.0"
+openmls_rust_crypto="0.2.0-pre.3"
+openmls_basic_credential="0.2.0-pre.3"
 rand_core_2 = { package = "rand_core", version = "0.5.1" }

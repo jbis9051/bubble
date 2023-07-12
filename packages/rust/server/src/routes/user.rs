@@ -17,13 +17,18 @@ use crate::models::forgot::Forgot;
 use crate::models::session::Session;
 use crate::models::user::User;
 use crate::routes::map_sqlx_err;
-use crate::services::email::{EmailService, Recipient};
+use crate::services::email::Recipient;
 
+use crate::config::CONFIG;
 use crate::services::password;
 use crate::services::session::create_session;
-use crate::types::Base64;
 use crate::types::{DbPool, EmailServiceArc};
-use serde::{Deserialize, Serialize};
+use common::base64::Base64;
+use common::http_types::{
+    ChangeEmail, ClientsResponse, ConfirmEmail, CreateUser, CreateUserResponse, DeleteUser,
+    ForgotEmail, Login, PasswordReset, PasswordResetCheck, PublicClient, PublicUser, Search,
+    SearchResponse, SessionTokenRequest, SessionTokenResponse, UpdateIdentity, UserProfile,
+};
 
 pub fn router() -> Router {
     Router::new()
@@ -37,22 +42,15 @@ pub fn router() -> Router {
         .route("/identity", put(update_identity))
         .route("/:uuid", get(get_user))
         .route("/:uuid/clients", get(get_clients))
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct CreateUser {
-    pub email: String,
-    pub username: String,
-    pub password: String,
-    pub name: String,
-    pub identity: Base64,
+        .route("/profile", put(update_profile))
+        .route("/search", get(search))
 }
 
 async fn register(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
     Json(payload): Json<CreateUser>,
-) -> Result<(StatusCode, String), (StatusCode, String)> {
+) -> Result<(StatusCode, Json<CreateUserResponse>), (StatusCode, String)> {
     // so technically there is race condition here, but I'm too lazy to avoid it
 
     if (User::from_username(&db, &payload.username).await).is_ok() {
@@ -84,6 +82,7 @@ async fn register(
         email: None,
         name: payload.name,
         identity: payload.identity.0,
+        primary_client_id: None,
         created: NaiveDateTime::from_timestamp(0, 0),
     };
 
@@ -129,29 +128,39 @@ async fn register(
             )
         })?;
 
-    Ok((StatusCode::CREATED, user.uuid.to_string()))
-}
+    if CONFIG.debug_mode {
+        // WARNING: this is a debug mode only feature, do not use in production
+        confirm(
+            db,
+            Json(ConfirmEmail {
+                token: confirmation.token,
+            }),
+        )
+        .await
+        .map_err(|e| {
+            println!("unable to confirm email: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "unable to confirm email".to_string(),
+            )
+        })?;
+    }
 
-#[derive(Serialize, Deserialize)]
-pub struct Confirm {
-    pub token: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct SessionToken {
-    pub token: String,
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateUserResponse {
+            user_uuid: user.uuid,
+        }),
+    ))
 }
 
 async fn confirm(
     db: Extension<DbPool>,
-    Json(payload): Json<Confirm>,
-) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let confirmation = Confirmation::from_token(
-        &db,
-        &Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?,
-    )
-    .await
-    .map_err(|_| StatusCode::NOT_FOUND)?;
+    Json(payload): Json<ConfirmEmail>,
+) -> Result<(StatusCode, Json<SessionTokenResponse>), StatusCode> {
+    let confirmation = Confirmation::from_token(&db, &payload.token)
+        .await
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
     confirmation.delete(&db).await.map_err(map_sqlx_err)?;
 
@@ -171,25 +180,32 @@ async fn confirm(
 
     Ok((
         StatusCode::OK,
-        Json(SessionToken {
-            token: token.to_string(),
+        Json(SessionTokenResponse {
+            user_uuid: user.uuid,
+            bearer: token,
         }),
     ))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Login {
-    pub email: String,
-    pub password: String,
 }
 
 async fn login(
     db: Extension<DbPool>,
     Json(payload): Json<Login>,
-) -> Result<(StatusCode, Json<SessionToken>), StatusCode> {
-    let user = User::from_email(&db, &payload.email)
-        .await
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+) -> Result<(StatusCode, Json<SessionTokenResponse>), StatusCode> {
+    let user = {
+        let by_email = User::from_email(&db, &payload.username_or_email).await;
+        if let Ok(user) = by_email {
+            user
+        } else {
+            User::from_username(&db, &payload.username_or_email)
+                .await
+                .map_err(|_| StatusCode::UNAUTHORIZED)?
+        }
+    };
+
+    // User account exists but email not confirmed yet
+    if user.email.is_none() {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
 
     if !password::verify(&user.password, &payload.password)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -201,15 +217,16 @@ async fn login(
 
     Ok((
         StatusCode::CREATED,
-        Json(SessionToken {
-            token: token.to_string(),
+        Json(SessionTokenResponse {
+            user_uuid: user.uuid,
+            bearer: token,
         }),
     ))
 }
 
 async fn logout(
     db: Extension<DbPool>,
-    Json(payload): Json<SessionToken>,
+    Json(payload): Json<SessionTokenRequest>,
     _user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     // so while with authenticate the user, this permits any user to delete any session token
@@ -217,23 +234,17 @@ async fn logout(
     // but in reality if you have another users session token, you could repeat this request with that token
     // and delete their session token anyway, so it's not really a problem
 
-    let token = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
-    let session = Session::from_token(&db, &token)
+    let session = Session::from_token(&db, &payload.token)
         .await
         .map_err(map_sqlx_err)?;
     session.delete(&db).await.map_err(map_sqlx_err)?;
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Email {
-    pub email: String,
-}
-
 async fn forgot(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
-    Json(payload): Json<Email>,
+    Json(payload): Json<ForgotEmail>,
 ) -> Result<StatusCode, StatusCode> {
     let user = User::from_email(&db, &payload.email)
         .await
@@ -265,17 +276,11 @@ async fn forgot(
     Ok(StatusCode::CREATED)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PasswordReset {
-    pub password: String,
-    pub token: String,
-}
-
 async fn reset(
     db: Extension<DbPool>,
     Json(payload): Json<PasswordReset>,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = payload.token;
     let forgot = Forgot::from_token(&db, &uuid).await.map_err(map_sqlx_err)?;
 
     let mut user = User::from_id(&db, forgot.user_id)
@@ -300,27 +305,16 @@ async fn reset(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PasswordResetCheck {
-    pub token: String,
-}
-
 async fn reset_check(
     db: Extension<DbPool>,
     Query(payload): Query<PasswordResetCheck>,
 ) -> Result<StatusCode, StatusCode> {
-    let uuid = Uuid::parse_str(&payload.token).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let uuid = payload.token;
     if Forgot::from_token(&db, &uuid).await.is_err() {
         return Err(StatusCode::NOT_FOUND);
     }
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ChangeEmail {
-    pub new_email: String,
-    pub password: String,
 }
 
 async fn change_email(
@@ -363,14 +357,9 @@ async fn change_email(
     Ok(StatusCode::CREATED)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Delete {
-    pub password: String,
-}
-
 async fn delete_user(
     db: Extension<DbPool>,
-    Json(payload): Json<Delete>,
+    Json(payload): Json<DeleteUser>,
     user: AuthenticatedUser,
 ) -> Result<StatusCode, StatusCode> {
     if !password::verify(&user.password, &payload.password)
@@ -382,11 +371,6 @@ async fn delete_user(
     user.delete(&db).await.map_err(map_sqlx_err)?;
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UpdateIdentity {
-    pub identity: Base64,
 }
 
 async fn update_identity(
@@ -403,65 +387,119 @@ async fn update_identity(
     Ok(StatusCode::OK)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PublicUser {
-    pub uuid: String,
-    pub username: String,
-    pub name: String,
-    pub identity: Base64,
-}
-
 async fn get_user(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
 ) -> Result<Json<PublicUser>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
+    let primary_client_uuid = user
+        .primary_client(&db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map(|c| c.uuid);
 
     Ok(Json(PublicUser {
-        uuid: user.uuid.to_string(),
+        uuid: user.uuid,
         username: user.username,
         name: user.name,
+        primary_client_uuid,
         identity: Base64(user.identity),
     }))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct PublicClient {
-    pub user_uuid: String,
-    pub uuid: String,
-    pub signing_key: Base64,
-    pub signature: Base64,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Clients {
-    pub clients: Vec<PublicClient>,
-}
-
 async fn get_clients(
     db: Extension<DbPool>,
-    Path(uuid): Path<String>,
+    Path(uuid): Path<Uuid>,
     _: AuthenticatedUser,
-) -> Result<Json<Clients>, StatusCode> {
-    let uuid = Uuid::parse_str(&uuid).map_err(|_| StatusCode::BAD_REQUEST)?;
+) -> Result<Json<ClientsResponse>, StatusCode> {
     let user = User::from_uuid(&db, &uuid).await.map_err(map_sqlx_err)?;
 
     Client::filter_user_id(&db, user.id)
         .await
         .map_err(map_sqlx_err)
         .map(|clients| {
-            Json(Clients {
+            Json(ClientsResponse {
                 clients: clients
                     .into_iter()
                     .map(|c| PublicClient {
-                        user_uuid: user.uuid.to_string(),
-                        uuid: c.uuid.to_string(),
+                        user_uuid: user.uuid,
+                        uuid: c.uuid,
                         signing_key: Base64(c.signing_key),
                         signature: Base64(c.signature),
                     })
                     .collect(),
             })
         })
+}
+
+async fn update_profile(
+    db: Extension<DbPool>,
+    Json(payload): Json<UserProfile>,
+    mut user: AuthenticatedUser,
+) -> Result<StatusCode, StatusCode> {
+    user.name = payload.name;
+
+    if let Some(client_uuid) = payload.primary_client_uuid {
+        let client = Client::from_uuid(&db, &client_uuid)
+            .await
+            .map_err(map_sqlx_err)?;
+        if client.user_id != user.id {
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+        user.primary_client_id = Some(client.id);
+    }
+
+    user.update(&db).await.map_err(map_sqlx_err)?;
+
+    Ok(StatusCode::OK)
+}
+
+async fn search(
+    db: Extension<DbPool>,
+    Json(payload): Json<Search>,
+    _: AuthenticatedUser,
+) -> Result<Json<SearchResponse>, StatusCode> {
+    let user_email = User::try_from_email(&db, &payload.query)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    let mut users_username = User::search_username(&db, &payload.query)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    let mut users_name = User::search_name(&db, &payload.query)
+        .await
+        .map_err(map_sqlx_err)?;
+
+    users_username.append(&mut users_name);
+
+    let mut users = users_username;
+
+    users.sort_by(|a, b| a.username.cmp(&b.username));
+    users.dedup_by_key(|u| u.id);
+
+    if let Some(u) = user_email {
+        users.insert(0, u);
+    }
+
+    let mut out = Vec::with_capacity(users.len());
+
+    for user in users {
+        let primary_client_uuid = user
+            .primary_client(&db)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .map(|c| c.uuid);
+
+        out.push(PublicUser {
+            uuid: user.uuid,
+            username: user.username,
+            name: user.name,
+            primary_client_uuid,
+            identity: Base64(user.identity),
+        })
+    }
+
+    Ok(Json(SearchResponse { users: out }))
 }
