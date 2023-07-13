@@ -46,6 +46,27 @@ pub fn router() -> Router {
         .route("/search", get(search))
 }
 
+/*
+POST /v1/user/register
+
+Desc:
+    Registers user and sends email confirmation.
+
+Request:
+{
+   "email": "<email>",
+  "username": "<username>",
+  "password": "<password>",
+  "name": "<name>",
+  "identity": "<identity>"
+}
+
+Response:
+    201 CREATED
+{
+    "user_uuid": "<uuid>"
+}
+ */
 async fn register(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
@@ -154,6 +175,24 @@ async fn register(
     ))
 }
 
+/*
+PATCH /v1/user/confirm
+
+Desc:
+    Confirms email of user and returns session.
+
+Request:
+{
+    "token": "<uuid>"
+}
+
+Response:
+    200 OK
+{
+    "user_uuid": "<uuid>",
+    "bearer": "<uuid>"
+}
+ */
 async fn confirm(
     db: Extension<DbPool>,
     Json(payload): Json<ConfirmEmail>,
@@ -187,6 +226,25 @@ async fn confirm(
     ))
 }
 
+/*
+POST /v1/user/session
+
+Desc:
+    Logs in user and returns session.
+
+Request:
+{
+    "username_or_email": "<username_or_email>",
+    "password": "password"
+}
+
+Response:
+    201 CREATED
+{
+    "user_uuid": "<uuid>",
+    "bearer": "<uuid>"
+}
+ */
 async fn login(
     db: Extension<DbPool>,
     Json(payload): Json<Login>,
@@ -224,6 +282,20 @@ async fn login(
     ))
 }
 
+/*
+DELETE /v1/user/session
+
+Desc:
+    Logs user out.
+
+Request:
+{
+    "token": "<uuid>"
+}
+
+Response:
+    200 OK
+ */
 async fn logout(
     db: Extension<DbPool>,
     Json(payload): Json<SessionTokenRequest>,
@@ -241,6 +313,20 @@ async fn logout(
     Ok(StatusCode::OK)
 }
 
+/*
+POST /v1/user/forgot
+
+Desc:
+    Sends token to provided email to reset password.
+
+Request:
+{
+    "email": "<email>"
+}
+
+Response:
+    201 CREATED
+ */
 async fn forgot(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
@@ -276,6 +362,21 @@ async fn forgot(
     Ok(StatusCode::CREATED)
 }
 
+/*
+PATCH /v1/user/reset
+
+Desc:
+    Resets user's password.
+
+Request:
+{
+    "password": "<new-password>",
+    "token": "uuid"
+}
+
+Response:
+    200 OK
+ */
 async fn reset(
     db: Extension<DbPool>,
     Json(payload): Json<PasswordReset>,
@@ -305,6 +406,20 @@ async fn reset(
     Ok(StatusCode::OK)
 }
 
+/*
+GET /v1/user/reset?token=<token>
+
+Desc:
+    Checks if reset-password row exists.
+
+Request:
+{
+    "token": "<uuid>"
+}
+
+Response:
+    200 OK
+ */
 async fn reset_check(
     db: Extension<DbPool>,
     Query(payload): Query<PasswordResetCheck>,
@@ -317,6 +432,21 @@ async fn reset_check(
     Ok(StatusCode::OK)
 }
 
+/*
+POST /v1/user/email
+
+Desc:
+    Sends confirmation to new email.
+
+Request:
+{
+    "new_email": "<email>",
+    "password": "<password>"
+}
+
+Response:
+    201 CREATED
+ */
 async fn change_email(
     db: Extension<DbPool>,
     email_service: Extension<EmailServiceArc>,
@@ -357,6 +487,20 @@ async fn change_email(
     Ok(StatusCode::CREATED)
 }
 
+/*
+DELETE /v1/user
+
+Desc:
+    Deletes user's account and all stored information.
+
+Request:
+{
+    "password": "<password>"
+}
+
+Response:
+    200 OK
+ */
 async fn delete_user(
     db: Extension<DbPool>,
     Json(payload): Json<DeleteUser>,
@@ -373,6 +517,20 @@ async fn delete_user(
     Ok(StatusCode::OK)
 }
 
+/*
+PUT /v1/user/identity
+
+Desc:
+    Resets user's identity.
+
+Request:
+{
+    "identity": "<new_identity>"
+}
+
+Response:
+    200 OK
+ */
 async fn update_identity(
     db: Extension<DbPool>,
     Json(payload): Json<UpdateIdentity>,
@@ -387,6 +545,22 @@ async fn update_identity(
     Ok(StatusCode::OK)
 }
 
+/*
+GET /v1/user/:uuid
+
+Desc:
+    Gets user from user's uuid and returns some information.
+
+Response:
+TODO no http status returned?
+{
+    "uuid": "<uuid>",
+    "username": "<username>",
+    "name": "<name>",
+    "primary_client_uuid": "<uuid>",
+    "identity": "<identity>"
+}
+ */
 async fn get_user(
     db: Extension<DbPool>,
     Path(uuid): Path<Uuid>,
@@ -408,6 +582,25 @@ async fn get_user(
     }))
 }
 
+/*
+GET /v1/user/:uuid/clients
+
+Desc:
+    Get user's clients with user's uuid.
+
+Response:
+TODO no http code
+{
+    "clients": [
+        {
+            "user_uuid": "<uuid>",
+            "uuid": "<uuid>",
+            "signing_key": "<signing_key>",
+            "signature": "<signature>"
+        } ...
+    ]
+}
+ */
 async fn get_clients(
     db: Extension<DbPool>,
     Path(uuid): Path<Uuid>,
@@ -433,6 +626,21 @@ async fn get_clients(
         })
 }
 
+/*
+PUT /v1/user/profile
+
+Desc:
+    Update user's profile information.
+
+Request:
+{
+    "name": "<name>",
+    "primary_client_uuid": "<uuid>"
+}
+
+Response:
+    200 OK
+ */
 async fn update_profile(
     db: Extension<DbPool>,
     Json(payload): Json<UserProfile>,
@@ -455,6 +663,30 @@ async fn update_profile(
     Ok(StatusCode::OK)
 }
 
+/*
+GET /v1/user/search
+
+Desc:
+
+Request:
+{
+    "query": "<query>"
+}
+
+Response:
+TODO http code
+{
+    "users": [
+        {
+            "uuid": "<uuid>",
+            "username": "<username>",
+            "name": "<name>",
+            "primary_client_uuid": "<uuid>",
+            "identity": "<identity>"
+        } ...
+    ]
+}
+ */
 async fn search(
     db: Extension<DbPool>,
     Json(payload): Json<Search>,
