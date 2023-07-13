@@ -28,7 +28,7 @@ fn main() {
     let mut output = r#"/* WARNING: This file is auto-generated. Do not modify. */
 
 import { NativeModules, Platform } from 'react-native';
-import { Result, Uuid, FrontendInstance } from './index';
+import { Result, Uuid, FrontendInstance, Base64 } from './index';
 
 const LINKING_ERROR =
     `The package 'react-native-bubble-rust' doesn't seem to be linked. Make sure: \n\n${Platform.select(
@@ -228,6 +228,14 @@ fn convert_type_to_ts(in_type: &str) -> String {
             convert_type_to_ts(key_type),
             convert_type_to_ts(value_type)
         ));
+        return out_type;
+    }
+
+    let option_regex = Regex::new(r"^Option < (.*) >$").unwrap();
+
+    if let Some(captures) = option_regex.captures(in_type) {
+        let inner_type = captures.get(1).unwrap().as_str();
+        out_type.push_str(&format!("{} | null", convert_type_to_ts(inner_type)));
         return out_type;
     }
 

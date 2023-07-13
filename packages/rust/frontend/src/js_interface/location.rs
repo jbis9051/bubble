@@ -12,7 +12,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 impl FrontendInstance {
-    //#[bridge]
+    #[bridge]
     pub async fn get_location(
         &self,
         group_uuid: Uuid,
@@ -62,7 +62,7 @@ impl FrontendInstance {
         Ok(locations)
     }
 
-    // #[bridge]
+    #[bridge]
     pub async fn send_location(
         &self,
         group_uuid: Uuid,

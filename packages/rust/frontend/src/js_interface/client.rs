@@ -4,12 +4,14 @@ use crate::js_interface::FrontendInstance;
 use crate::mls_provider::MlsProvider;
 use crate::types::CIPHERSUITE;
 use crate::Error;
+use bridge_macro::bridge;
 use openmls::prelude::{
     Credential, CredentialType, CredentialWithKey, CryptoConfig, KeyPackage, ProtocolVersion,
     SignaturePublicKey,
 };
 
 impl FrontendInstance {
+    #[bridge]
     pub async fn replace_key_packages(&self) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;

@@ -13,6 +13,7 @@ export type Result<T, E> =
       };
 
 export type Uuid = string;
+export type Base64 = string;
 
 export function init(dataDir: string): Promise<FrontendInstance> {
     return RustInterop.init(dataDir);

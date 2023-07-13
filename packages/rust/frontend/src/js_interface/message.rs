@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use crate::api::BubbleApi;
 use crate::application_message::Message;
 use crate::helper::bubble_group::BubbleGroup;
@@ -10,12 +8,14 @@ use crate::models::account::group::Group;
 use crate::models::account::inbox::Inbox;
 use crate::models::account::location::Location;
 use crate::types::MLS_GROUP_CONFIG;
+use crate::Error;
 use openmls::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::types::chrono::{NaiveDateTime, Utc};
 
 use crate::models::kv::AccountKv;
+use bridge_macro::bridge;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,8 +49,8 @@ fn print_message(message: &Inbox) {
 }
 
 impl FrontendInstance {
-    // #[bridge]
-    pub async fn receive_messages(&self) -> Result<(), crate::Error> {
+    #[bridge]
+    pub async fn receive_messages(&self) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;

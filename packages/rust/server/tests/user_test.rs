@@ -1,5 +1,5 @@
 use crate::crypto_helper::{generate_ed25519_keypair, PRIVATE, PUBLIC};
-use crate::helper::{confirm_user, create_client, login, register, start_server, TempDatabase};
+use crate::helper::{confirm_user, create_client, register, start_server, TempDatabase};
 use axum::http::StatusCode;
 use common::base64::Base64;
 use common::http_types::{
@@ -125,7 +125,7 @@ async fn test_login_without_confirm() {
     let confirm = ConfirmEmail {
         token: confirmation_token,
     };
-    let (user, token) = confirm_user(db.pool(), &client, &confirm, &user)
+    let (_user, _token) = confirm_user(db.pool(), &client, &confirm, &user)
         .await
         .unwrap();
 

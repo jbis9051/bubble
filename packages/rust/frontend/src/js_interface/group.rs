@@ -26,7 +26,7 @@ pub struct Group {
 }
 
 impl FrontendInstance {
-    //#[bridge]
+    #[bridge]
     pub async fn get_groups(&self) -> Result<Vec<Group>, Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -66,7 +66,7 @@ impl FrontendInstance {
         Ok(out)
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn create_group(&self) -> Result<Uuid, Error> {
         let global = self.account_data.read().await;
         let account_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -100,7 +100,7 @@ impl FrontendInstance {
         Ok(uuid)
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn add_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -168,7 +168,7 @@ impl FrontendInstance {
         Ok(())
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn remove_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -222,7 +222,7 @@ impl FrontendInstance {
         Ok(())
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn leave_group(&self, group_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
