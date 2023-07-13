@@ -16,6 +16,27 @@ pub fn router() -> Router {
     Router::new().route("/", get(receive_message).post(send_message))
 }
 
+/*
+POST /v1/message
+
+Desc:
+    Adds message to desired user(s) inbox.
+
+Request:
+{
+    "client_uuids": [
+        "<uuid>",
+        ...
+    ]
+    "message":
+    {
+        "message": "<message>"
+    }
+}
+
+Response:
+    200 OK
+ */
 async fn send_message(
     db: Extension<DbPool>,
     Json(payload): Json<SendMessage>,
@@ -47,6 +68,27 @@ async fn send_message(
     Ok(StatusCode::OK)
 }
 
+/*
+GET /v1/message
+
+Desc:
+    Checks client's inbox for messages and returns them.
+
+Request:
+{
+    "client_uuid": "<uuid>"
+}
+
+Response:
+    200 OK
+{
+    "messages": [
+        {
+            "message": "<message>"
+        } ...
+    ]
+}
+ */
 async fn receive_message(
     db: Extension<DbPool>,
     Json(payload): Json<CheckMessages>,
