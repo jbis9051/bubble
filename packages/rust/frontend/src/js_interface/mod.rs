@@ -1,3 +1,4 @@
+use serde::Serialize;
 use crate::export;
 use crate::public::init::TokioThread;
 use bridge_macro::bridge;
@@ -21,9 +22,12 @@ pub struct GlobalStaticData {
 #[derive(Debug)]
 pub struct GlobalAccountData {
     pub database: SqlitePool,
-    pub bearer: RwLock<String>,            // cached value
-    pub domain: String,                    // cached value
-    pub user_uuid: Uuid,                   // cached value
+    pub bearer: RwLock<String>,
+    // cached value
+    pub domain: String,
+    // cached value
+    pub user_uuid: Uuid,
+    // cached value
     pub client_uuid: RwLock<Option<Uuid>>, // cached value
 }
 
@@ -47,10 +51,43 @@ impl FrontendInstance {
     }
 }
 
+#[derive(Serialize)]
+#[bridge]
+pub struct AccountData {
+    pub domain: String,
+    pub user_uuid: Uuid,
+    pub client_uuid: Option<Uuid>,
+}
+
+#[derive(Serialize)]
+#[bridge]
+pub struct Status {
+    pub domain: String,
+    pub data_directory: String,
+    pub account_data: Option<AccountData>,
+}
+
 impl FrontendInstance {
     #[bridge]
-    pub async fn multiply(&self, a: i32, b: i32) -> Result<i32, ()> {
-        Ok(a * b)
+    pub async fn status(&self) -> Result<Status, ()> {
+        let account_data = self.account_data.read().await;
+
+
+        let account_data_out= if let Some(account_data) = account_data.as_ref() {
+            Some(AccountData {
+                domain: account_data.domain.clone(),
+                user_uuid: account_data.user_uuid,
+                client_uuid: *account_data.client_uuid.read().await,
+            })
+        } else {
+            None
+        };
+
+        Ok(Status {
+            domain: self.static_data.domain.clone(),
+            data_directory: self.static_data.data_directory.clone(),
+            account_data: account_data_out,
+        })
     }
 }
 
@@ -61,7 +98,7 @@ use crate::Error;
 
 export!(
     FrontendInstance,
-    multiply(a: i32, b: i32) -> Result<i32, ()>;
+    status() -> Result<Status, ()>;
     // user
     register(
         username: String,

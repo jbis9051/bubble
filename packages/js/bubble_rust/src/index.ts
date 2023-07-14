@@ -15,8 +15,8 @@ export type Result<T, E> =
 export type Uuid = string;
 export type Base64 = string;
 
-export function init(dataDir: string): Promise<FrontendInstance> {
-    return RustInterop.init(dataDir);
+export function init(dataDir: string): Promise<Result<FrontendInstance, string>> {
+    return RustInterop.init(dataDir).then((res: string) => JSON.parse(res));
 }
 
 declare const tag: unique symbol;

@@ -15,14 +15,25 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::io::AsyncReadExt;
 use uuid::Uuid;
+use common::base64::Base64;
+use common::http_types::PublicUser;
+use crate::js_interface::user::UserOut;
 
 #[bridge]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
+pub struct UserGroupInfo {
+    pub info: UserOut,
+    pub clients: Vec<Uuid>,
+}
+
+
+#[bridge]
+#[derive(Serialize)]
 pub struct Group {
     pub uuid: Uuid,
     pub name: Option<String>,
     pub image: Option<Vec<u8>>,
-    pub members: HashMap<Uuid, Vec<Uuid>>,
+    pub members: HashMap<Uuid, UserGroupInfo>,
 }
 
 impl FrontendInstance {
@@ -46,15 +57,28 @@ impl FrontendInstance {
             let mls_group = BubbleGroup::new_from_uuid(&group.uuid, &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?;
             let members = mls_group.get_group_members()?;
-            let mut out_members: HashMap<_, Vec<_>> = HashMap::with_capacity(members.len());
+            let mut out_members: HashMap<_, _> = HashMap::with_capacity(members.len());
             for member in members {
                 let client = resource_fetcher
                     .get_client_partial_authentication(&member.client_uuid)
                     .await?;
+                let user = resource_fetcher
+                    .get_user_partial_authentication(&client.user_uuid)
+                    .await?;
                 out_members
                     .entry(client.user_uuid)
-                    .or_insert_with(|| Vec::with_capacity(1))
-                    .push(client.uuid);
+                    .or_insert_with(|| UserGroupInfo {
+                        info: UserOut {
+                            uuid: client.user_uuid,
+                            username: user.username,
+                            name: user.name,
+                            primary_client_uuid: user.primary_client_uuid,
+                            identity: Base64(user.identity),
+                        },
+                        clients: Vec::with_capacity(1),
+                    })
+                    .clients
+                    .push(member.client_uuid);
             }
             out.push(Group {
                 uuid: group.uuid,

@@ -12,6 +12,7 @@ pub struct User {
     pub uuid: Uuid,
     pub username: String,
     pub name: String,
+    pub primary_client_uuid: Option<Uuid>,
     pub identity: Vec<u8>,
     pub updated_date: NaiveDateTime,
 }
@@ -23,6 +24,7 @@ impl From<&SqliteRow> for User {
             uuid: row.get("uuid"),
             username: row.get("username"),
             name: row.get("name"),
+            primary_client_uuid: row.get("primary_client_uuid"),
             identity: row.get("identity"),
             updated_date: row.get("updated_date"),
         }
@@ -36,6 +38,7 @@ impl From<PublicUser> for User {
             uuid: user.uuid,
             username: user.username,
             name: user.name,
+            primary_client_uuid: user.primary_client_uuid,
             identity: user.identity.0,
             updated_date: Default::default(),
         }
@@ -45,14 +48,15 @@ impl From<PublicUser> for User {
 impl User {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = (&sqlx::query(
-            "INSERT INTO \"user\" (uuid, username, name, identity) VALUES ($1, $2, $3, $4) RETURNING *;",
+            "INSERT INTO \"user\" (uuid, username, name, primary_client_uuid, identity) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
         )
-        .bind(self.uuid)
-        .bind(&self.username)
-        .bind(&self.name)
-        .bind(&self.identity)
-        .fetch_one(db)
-        .await?)
+            .bind(self.uuid)
+            .bind(&self.username)
+            .bind(&self.name)
+            .bind(&self.primary_client_uuid)
+            .bind(&self.identity)
+            .fetch_one(db)
+            .await?)
             .into();
         Ok(())
     }

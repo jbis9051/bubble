@@ -291,6 +291,8 @@ PODS:
   - React-jsinspector (0.71.8)
   - React-logger (0.71.8):
     - glog
+  - react-native-bubble-rust (0.0.0):
+    - React-Core
   - react-native-get-random-values (1.9.0):
     - React-Core
   - react-native-maps (1.7.1):
@@ -455,6 +457,7 @@ DEPENDENCIES:
   - React-jsiexecutor (from `../../node_modules/react-native/ReactCommon/jsiexecutor`)
   - React-jsinspector (from `../../node_modules/react-native/ReactCommon/jsinspector`)
   - React-logger (from `../../node_modules/react-native/ReactCommon/logger`)
+  - "react-native-bubble-rust (from `../../node_modules/@bubble/react-native-bubble-rust`)"
   - react-native-get-random-values (from `../../node_modules/react-native-get-random-values`)
   - react-native-maps (from `../../node_modules/react-native-maps`)
   - react-native-safe-area-context (from `../../node_modules/react-native-safe-area-context`)
@@ -545,6 +548,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/react-native/ReactCommon/jsinspector"
   React-logger:
     :path: "../../node_modules/react-native/ReactCommon/logger"
+  react-native-bubble-rust:
+    :path: "../../node_modules/@bubble/react-native-bubble-rust"
   react-native-get-random-values:
     :path: "../../node_modules/react-native-get-random-values"
   react-native-maps:
@@ -622,6 +627,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 747911ab5921641b4ed7e4900065896597142125
   React-jsinspector: c712f9e3bb9ba4122d6b82b4f906448b8a281580
   React-logger: 342f358b8decfbf8f272367f4eacf4b6154061be
+  react-native-bubble-rust: a03fed10c3f4471705a2828fc061b47d77452c45
   react-native-get-random-values: dee677497c6a740b71e5612e8dbd83e7539ed5bb
   react-native-maps: 667f9b975549c6fa9b1631bf859440f68ebd3b8f
   react-native-safe-area-context: 39c2d8be3328df5d437ac1700f4f3a4f75716acc

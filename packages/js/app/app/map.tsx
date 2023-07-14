@@ -6,28 +6,26 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import MapView, { LatLng, Marker } from 'react-native-maps';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
-import { useSelector } from 'react-redux';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { selectCurrentGroup } from '../../redux/slices/groupSlice';
-import { MapService } from '../../lib/bubbleApi/location';
-import { UserLocal } from '../../lib/bubbleApi/user';
-import { getInitials } from '../../lib/formatText';
-import StyledText from '../../components/StyledText';
-import Colors from "../../constants/Colors";
+import MapView, {LatLng, Marker} from 'react-native-maps';
+import {Ionicons, MaterialCommunityIcons} from '@expo/vector-icons';
+import {Link} from 'expo-router';
+import {useEffect, useState} from 'react';
+import {getInitials} from '../lib/formatText';
+import StyledText from '../components/StyledText';
+import Colors from "../constants/Colors";
+import {observer} from "mobx-react-lite";
+import MainStore from "../stores/MainStore";
+import {UserOut, Uuid} from '@bubble/react-native-bubble-rust';
+import FrontendInstanceStore from "../stores/FrontendInstanceStore";
 
 interface CustomMarkerProps {
     coordinate: LatLng;
-    user: UserLocal;
+    user: UserOut;
     selected?: boolean;
     onPress?: () => void;
 }
 
-function CustomMarker(props: CustomMarkerProps) {
-    const { coordinate, user } = props;
-
+function CustomMarker({coordinate, user}: CustomMarkerProps) {
     return (
         <Marker coordinate={coordinate}>
             <View
@@ -54,7 +52,7 @@ function CustomMarker(props: CustomMarkerProps) {
                 >
                     <StyledText
                         nomargin
-                        style={{ color: Colors.colors.primaryPaper }}
+                        style={{color: Colors.colors.primaryPaper}}
                     >
                         {getInitials(user.name)}
                     </StyledText>
@@ -64,42 +62,70 @@ function CustomMarker(props: CustomMarkerProps) {
     );
 }
 
-interface UserWithLocation extends UserLocal {
-    location: LatLng;
+interface UserLocation {
+    user: UserOut,
+    client_uuid: Uuid,
+    longitude: number,
+    latitude: number,
+    timestamp: Date,
 }
 
-export default function MapScreen() {
-    const activeGroup = useSelector(selectCurrentGroup);
-    const [memberLocations, setMemberLocations] = useState<UserWithLocation[]>(
+const Map = observer(() => {
+    const [memberLocations, setMemberLocations] = useState<UserLocation[]>(
         []
     );
 
-    useEffect(() => {
-        const interval = setInterval(async () => {
-            if (activeGroup) {
-                const memberLocations = await Promise.all(
-                    activeGroup.members.map(async (member) => {
-                        const locations = await MapService.get_location(
-                            activeGroup.uuid,
-                            member.primary_client_uuid,
-                            Date.now() + 1,
-                            1
-                        );
-                        return { ...member, location: locations[0].coordinate };
-                    })
-                );
-                setMemberLocations(memberLocations);
-            }
-        }, 2000);
 
-        return () => clearInterval(interval);
-    }, [activeGroup]);
+    useEffect(() => {
+        let currentTimer: NodeJS.Timer | null = null;
+        let cancel = false;
+
+        async function updateLocations() {
+            const group = MainStore.current_group;
+            if (!group) {
+                return;
+            }
+            const locations = await Promise.all(
+                Object.entries(group.members)
+                    .map(async ([user_uuid, user_group_info]) => {
+                        const location = await FrontendInstanceStore.instance.get_location(group.uuid, user_group_info.clients[0], Date.now(), 1)
+                        if (location.length === 0) {
+                            return null;
+                        }
+                        return {
+                            user: user_group_info.info,
+                            client_uuid: user_group_info.clients[0],
+                            longitude: location[0].longitude,
+                            latitude: location[0].latitude,
+                            timestamp: new Date(location[0].timestamp),
+                        } as UserLocation;
+                    })
+            )
+            if (cancel) {
+                return;
+            }
+            setMemberLocations(locations.filter((location) => location !== null) as UserLocation[]);
+            currentTimer = setTimeout(updateLocations, 2000);
+        }
+
+        updateLocations();
+
+        return () => {
+            cancel = true;
+            if (currentTimer) {
+                clearTimeout(currentTimer);
+            }
+        }
+    }, []);
 
     return (
         <View>
             <MapView style={styles.map}>
-                {memberLocations.map((mLoc) => (
-                    <CustomMarker coordinate={mLoc.location} user={mLoc} />
+                {memberLocations.map((userLocation) => (
+                    <CustomMarker coordinate={{
+                        latitude: userLocation.latitude,
+                        longitude: userLocation.longitude,
+                    }} user={userLocation.user}/>
                 ))}
             </MapView>
             <SafeAreaView
@@ -137,8 +163,8 @@ export default function MapScreen() {
                                 size={24}
                                 color="black"
                             />
-                            <Text numberOfLines={1} style={{ width: '85%' }}>
-                                {activeGroup?.name}
+                            <Text numberOfLines={1} style={{width: '85%'}}>
+                                {MainStore.current_group?.name}
                             </Text>
                         </TouchableOpacity>
                     </Link>
@@ -162,14 +188,16 @@ export default function MapScreen() {
                                 justifyContent: 'center',
                             }}
                         >
-                            <Ionicons name="settings" size={24} color="black" />
+                            <Ionicons name="settings" size={24} color="black"/>
                         </TouchableOpacity>
                     </Link>
                 </View>
             </SafeAreaView>
         </View>
     );
-}
+});
+
+export default Map;
 
 const styles = StyleSheet.create({
     container: {

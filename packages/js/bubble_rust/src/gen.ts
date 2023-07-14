@@ -34,11 +34,25 @@ export interface UserOut {
     primary_client_uuid: Uuid | null,
     identity: Base64,
 }
+export interface AccountData {
+    domain: string,
+    user_uuid: Uuid,
+    client_uuid: Uuid | null,
+}
+export interface Status {
+    domain: string,
+    data_directory: string,
+    account_data: AccountData | null,
+}
+export interface UserGroupInfo {
+    info: UserOut,
+    clients: Uuid[],
+}
 export interface Group {
     uuid: Uuid,
     name: string | null,
     image: number[] | null,
-    members: { [key: Uuid]: Uuid[] },
+    members: { [key: Uuid]: UserGroupInfo },
 }
 
 /* ---------------- FUNCTION DEFINITIONS ------------------- */
@@ -123,11 +137,11 @@ export function search(instance: FrontendInstance,query: string ): Promise<Resul
     })).then((res: string) => JSON.parse(res));
 }
 
-export function multiply(instance: FrontendInstance,a: number , b: number ): Promise<Result<number, void>> {
+export function status(instance: FrontendInstance,): Promise<Result<Status, void>> {
     return RustInterop.call(JSON.stringify({
         instance,
-        method: 'multiply',
-        args: {a, b},
+        method: 'status',
+        args: {},
     })).then((res: string) => JSON.parse(res));
 }
 

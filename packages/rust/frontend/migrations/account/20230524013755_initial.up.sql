@@ -3,6 +3,7 @@ CREATE TABLE user (
     uuid TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
+    primary_client_uuid TEXT NOT NULL,
     identity TEXT NOT NULL,
     updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

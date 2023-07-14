@@ -9,9 +9,6 @@
         "web": "expo start --web",
         "test": "jest --watchAll"
     },
-    "jest": {
-        "preset": "jest-expo"
-    },
     "dependencies": {
         "@expo/vector-icons": "^13.0.0",
         "@react-native-async-storage/async-storage": "^1.18.2",
@@ -40,7 +37,10 @@
         "react-native-web": "~0.18.10",
         "react-redux": "^8.0.5",
         "redux-persist": "^6.0.0",
-        "uuid": "^9.0.0"
+        "uuid": "^9.0.0",
+        "mobx": "^6.9.1",
+        "mobx-react-lite": "^4.0.3",
+        "@bubble/react-native-bubble-rust": "0.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.20.0",
