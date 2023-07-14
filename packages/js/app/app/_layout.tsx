@@ -1,7 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {useFonts} from 'expo-font';
 import {SplashScreen, Stack} from 'expo-router';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import Auth from "./auth";
 import {observer} from "mobx-react-lite";
 import MainStore from "../stores/MainStore";
@@ -17,15 +17,25 @@ const RootLayout = observer(() => {
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
+    const [inited, setInited] = useState(false);
 
     const loggedIn = !!(MainStore.status?.account_data);
 
     useEffect(() => {
         if (!FrontendInstanceStore.isInitialized()) {
-            FrontendInstanceStore.init("/Users/joshuabrown3/Desktop/data")
+            FrontendInstanceStore.init({
+                data_directory: "/Users/joshuabrown3/Desktop/data",
+                force_new: false
+            })
                 .then(() => FrontendInstanceStore.instance.status())
                 .then((status) => {
                     MainStore.status = status;
+                    setInited(true);
+                })
+                .then(async () => {
+                    if (MainStore.status?.account_data) {
+                        MainStore.groups = await FrontendInstanceStore.instance.get_groups()
+                    }
                 })
                 .catch((err) => {
                     throw err;
@@ -38,7 +48,7 @@ const RootLayout = observer(() => {
         if (error) throw error;
     }, [error]);
 
-    const loaded = fontsLoaded;
+    const loaded = fontsLoaded && inited;
 
     return (
         <>
@@ -57,20 +67,20 @@ function RootLayoutNav() {
                 name="map"
                 options={{headerShown: false}}
             />
-         {/*   <Stack.Screen
-                name="allGroupsModal"
+            <Stack.Screen
+                name="groups"
                 options={{
                     presentation: 'modal',
                     headerShown: false,
                 }}
             />
             <Stack.Screen
-                name="groupSettingsModal"
+                name="groupSettings"
                 options={{
                     presentation: 'modal',
                     headerShown: false,
                 }}
-            />*/}
+            />
         </Stack>
     );
 }

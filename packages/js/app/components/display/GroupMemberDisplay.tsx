@@ -1,11 +1,11 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
-import { UserLocal } from '../../lib/bubbleApi/user';
 import StyledText from '../StyledText';
 import Avatar from '../Avatar';
+import { UserOut } from '@bubble/react-native-bubble-rust';
 
 interface GroupMemberDisplayProps {
-    member: UserLocal;
+    member: UserOut;
 }
 export function GroupMemberDisplay({ member }: GroupMemberDisplayProps) {
     return (

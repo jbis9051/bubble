@@ -53,7 +53,7 @@ impl User {
             .bind(self.uuid)
             .bind(&self.username)
             .bind(&self.name)
-            .bind(&self.primary_client_uuid)
+            .bind(self.primary_client_uuid)
             .bind(&self.identity)
             .fetch_one(db)
             .await?)

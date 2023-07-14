@@ -15,7 +15,7 @@ use sha2::{Digest, Sha256};
 use sqlx::types::chrono::{NaiveDateTime, Utc};
 
 use crate::models::kv::AccountKv;
-use bridge_macro::bridge;
+
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,7 +49,7 @@ fn print_message(message: &Inbox) {
 }
 
 impl FrontendInstance {
-    #[bridge]
+    //#[bridge]
     pub async fn receive_messages(&self) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
@@ -65,6 +65,8 @@ impl FrontendInstance {
             let mut inbox = Inbox {
                 id: 0,
                 message: message.message.0,
+                server_received_date: NaiveDateTime::from_timestamp_millis(message.received_date)
+                    .unwrap(),
                 received_date: Utc::now().naive_utc(),
             };
             inbox.create(account_db).await.unwrap();
@@ -119,6 +121,7 @@ impl FrontendInstance {
                             uuid: group_id,
                             name: None,
                             image: None,
+                            updated_at: NaiveDateTime::default(),
                         }
                         .create(account_db)
                         .await
@@ -217,6 +220,18 @@ impl FrontendInstance {
                         .create(account_db)
                         .await
                         .unwrap();
+                    }
+                    Message::GroupStatus(status) => {
+                        let mut group = Group::from_uuid(account_db, group.group_uuid())
+                            .await
+                            .unwrap()
+                            .unwrap();
+                        if inbox_message.server_received_date > group.updated_at {
+                            group.name = status.name;
+                            group.image = status.image.map(|i| i.0);
+                            group.updated_at = Utc::now().naive_utc();
+                            group.update(account_db).await.unwrap();
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 import FrontendInstance from "../lib/FrontendInstance";
 import { makeAutoObservable } from "mobx"
+import { InitOptions } from "@bubble/react-native-bubble-rust";
 
 class FrontendInstanceStore {
     _instance: FrontendInstance | null = null;
@@ -8,8 +9,8 @@ class FrontendInstanceStore {
         makeAutoObservable(this);
     }
 
-    async init(dataDir: string) {
-        this._instance = await FrontendInstance.init(dataDir);
+    async init(options: InitOptions) {
+        this._instance = await FrontendInstance.init(options);
     }
 
     get instance() {

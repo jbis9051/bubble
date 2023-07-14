@@ -1,34 +1,33 @@
 use crate::api::BubbleApi;
+use crate::application_message::{GroupStatus, Message};
 use crate::helper::bubble_group::BubbleGroup;
 use crate::helper::helper::get_this_client_mls_resources;
 use crate::helper::resource_fetcher::ResourceFetcher;
+use crate::js_interface::user::UserOut;
 use crate::js_interface::FrontendInstance;
 use crate::mls_provider::MlsProvider;
 use crate::models::account::group::Group as GroupModel;
 use crate::types::MLS_GROUP_CONFIG;
 use crate::Error;
 use bridge_macro::bridge;
+use common::base64::Base64;
 use openmls::group::MlsGroup;
 use openmls::prelude::{GroupId, ProtocolVersion, TlsSerializeTrait};
 use openmls_traits::OpenMlsCryptoProvider;
 use serde::{Deserialize, Serialize};
+use sqlx::types::chrono::{NaiveDateTime, Utc};
 use std::collections::HashMap;
-use tokio::io::AsyncReadExt;
 use uuid::Uuid;
-use common::base64::Base64;
-use common::http_types::PublicUser;
-use crate::js_interface::user::UserOut;
 
 #[bridge]
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UserGroupInfo {
     pub info: UserOut,
     pub clients: Vec<Uuid>,
 }
 
-
 #[bridge]
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Group {
     pub uuid: Uuid,
     pub name: Option<String>,
@@ -117,6 +116,7 @@ impl FrontendInstance {
             uuid,
             name: None,
             image: None,
+            updated_at: NaiveDateTime::default(),
         }
         .create(account_db)
         .await?;
@@ -310,6 +310,49 @@ impl FrontendInstance {
             .await?;
 
         group.save_if_needed(&mls_provider)?;
+
+        Ok(())
+    }
+
+    #[bridge]
+    pub async fn update_group(&self, group_uuid: Uuid, name: Option<String>) -> Result<(), Error> {
+        let global = self.account_data.read().await;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
+        let account_db = &global_data.database;
+        let mls_provider = MlsProvider::new(account_db.clone());
+        let mut group = BubbleGroup::new(
+            MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
+                .ok_or_else(|| Error::MLSGroupLoad)?,
+        );
+        let api = BubbleApi::new(
+            global_data.domain.clone(),
+            Some(global_data.bearer.read().await.clone()),
+        );
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
+
+        let (signature, _) = get_this_client_mls_resources(
+            &global_data.user_uuid,
+            &client_uuid,
+            account_db,
+            &mls_provider,
+        )
+        .await?;
+
+        let message = Message::GroupStatus(GroupStatus {
+            name: name.clone(),
+            image: None,
+        });
+
+        group
+            .send_application_message(&mls_provider, &api, &signature, &message, &[client_uuid])
+            .await?;
+
+        let mut group = GroupModel::from_uuid(account_db, group_uuid)
+            .await?
+            .unwrap();
+        group.name = name;
+        group.updated_at = Utc::now().naive_utc();
+        group.update(account_db).await?;
 
         Ok(())
     }

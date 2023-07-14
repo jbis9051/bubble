@@ -12,14 +12,14 @@ use ed25519_dalek::{Keypair, SecretKey, Signer};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 use rand_core::OsRng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePoolOptions;
 use std::fs;
 use std::path::Path;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[bridge]
 pub struct UserOut {
     pub uuid: Uuid,

@@ -1,4 +1,5 @@
 use std::sync::RwLock;
+use std::vec::IntoIter;
 
 pub struct VirtualMemory<T> {
     // so this is a really cheap way of creating virtual memory
@@ -23,6 +24,10 @@ impl<T: Clone> VirtualMemory<T> {
         let mut write = self.memory.write().unwrap();
         write.push(instance);
         write.len() - 1
+    }
+
+    pub fn clone_iter(&self) -> IntoIter<T> {
+        self.memory.read().unwrap().clone().into_iter()
     }
 
     pub fn remove(&self, index: usize) -> T {

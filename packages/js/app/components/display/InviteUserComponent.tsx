@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Alert, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import StyledText from '../StyledText';
-import { GroupService } from '../../lib/bubbleApi/group';
-import { LoggingService } from '../../lib/bubbleApi/logging';
 import { StyledInput } from '../Input';
 import StyledButton from '../bubbleUI/Button';
 
@@ -16,12 +14,9 @@ export default function InviteUserComponent({
     const [username, setUsername] = useState('');
 
     const handleInvite = () => {
-        if (!username.length) return Alert.alert('Please enter a username');
-        GroupService.invite_user(groupUuid, username)
-            .then(() => {
-                setUsername('');
-            })
-            .catch(LoggingService.error);
+        if (username.length === 0) {
+            return Alert.alert('Please enter a username');
+        }
     };
 
     return (

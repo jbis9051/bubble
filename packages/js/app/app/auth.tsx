@@ -273,6 +273,7 @@ function SignIn(
         setLoading(true);
         FrontendInstanceStore.instance.login(email, password)
             .then(async _uuid => {
+                MainStore.groups = await FrontendInstanceStore.instance.get_groups();
                 MainStore.status = await FrontendInstanceStore.instance.status();
             })
             .catch(err => {

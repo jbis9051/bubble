@@ -1,7 +1,7 @@
-use serde::Serialize;
 use crate::export;
 use crate::public::init::TokioThread;
 use bridge_macro::bridge;
+use serde::Serialize;
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -72,8 +72,7 @@ impl FrontendInstance {
     pub async fn status(&self) -> Result<Status, ()> {
         let account_data = self.account_data.read().await;
 
-
-        let account_data_out= if let Some(account_data) = account_data.as_ref() {
+        let account_data_out = if let Some(account_data) = account_data.as_ref() {
             Some(AccountData {
                 domain: account_data.domain.clone(),
                 user_uuid: account_data.user_uuid,
@@ -114,6 +113,7 @@ export!(
     add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
     remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
     leave_group(group_uuid: Uuid) -> Result<(), Error>;
+    update_group(group_uuid: Uuid, name: Option<String>) -> Result<(), Error>;
     // message
     receive_messages() -> Result<(), Error>;
     // location

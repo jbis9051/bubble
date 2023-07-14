@@ -22,6 +22,10 @@ export const RustInterop = NativeModules.Bubble
 
 /* ---------------- STRUCT DEFINITIONS ------------------- */
 
+export interface InitOptions {
+    data_directory: string,
+    force_new: boolean,
+}
 export interface Location {
     latitude: number,
     longitude: number,
@@ -182,6 +186,14 @@ export function leave_group(instance: FrontendInstance,group_uuid: Uuid ): Promi
         instance,
         method: 'leave_group',
         args: {group_uuid},
+    })).then((res: string) => JSON.parse(res));
+}
+
+export function update_group(instance: FrontendInstance,group_uuid: Uuid , name: string | null ): Promise<Result<void, Error>> {
+    return RustInterop.call(JSON.stringify({
+        instance,
+        method: 'update_group',
+        args: {group_uuid, name},
     })).then((res: string) => JSON.parse(res));
 }
 

@@ -105,8 +105,8 @@ pub fn test_basic() {
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0].members.len(), 2);
     assert!(groups[0].members.get(&bob_uuid).is_some());
-    assert_eq!(groups[0].members.get(&bob_uuid).unwrap().len(), 1);
-    let bob_client = groups[0].members.get(&bob_uuid).unwrap()[0];
+    assert_eq!(groups[0].members.get(&bob_uuid).unwrap().clients.len(), 1);
+    let bob_client = groups[0].members.get(&bob_uuid).unwrap().clients[0];
 
     let groups = call!(bob_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
     assert_eq!(groups.len(), 0);
@@ -118,8 +118,8 @@ pub fn test_basic() {
     assert_eq!(groups[0].members.len(), 2);
     assert!(groups[0].members.get(&bob_uuid).is_some());
     assert!(groups[0].members.get(&alice_uuid).is_some());
-    assert_eq!(groups[0].members.get(&alice_uuid).unwrap().len(), 1);
-    let alice_client = groups[0].members.get(&alice_uuid).unwrap()[0];
+    assert_eq!(groups[0].members.get(&alice_uuid).unwrap().clients.len(), 1);
+    let alice_client = groups[0].members.get(&alice_uuid).unwrap().clients[0];
 
     let future = NaiveDateTime::MAX.timestamp_millis();
 
@@ -210,9 +210,9 @@ pub fn test_full() {
     call!(charlie_instance, receive_messages()).unwrap();
 
     let groups = call!(bob_instance, get_groups() -> Result<Vec<Group>, ()>).unwrap();
-    let alice_client = groups[0].members.get(&alice_uuid).unwrap()[0];
-    let bob_client = groups[0].members.get(&bob_uuid).unwrap()[0];
-    let _charlie_client = groups[0].members.get(&charlie_uuid).unwrap()[0];
+    let alice_client = groups[0].members.get(&alice_uuid).unwrap().clients[0];
+    let bob_client = groups[0].members.get(&bob_uuid).unwrap().clients[0];
+    let _charlie_client = groups[0].members.get(&charlie_uuid).unwrap().clients[0];
 
     let future = NaiveDateTime::MAX.timestamp_millis();
 

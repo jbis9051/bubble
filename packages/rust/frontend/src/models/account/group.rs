@@ -1,5 +1,6 @@
 use crate::types::DbPool;
 use sqlx::sqlite::SqliteRow;
+use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
 use uuid::Uuid;
 
@@ -8,6 +9,7 @@ pub struct Group {
     pub uuid: Uuid,
     pub name: Option<String>,
     pub image: Option<Vec<u8>>,
+    pub updated_at: NaiveDateTime,
 }
 
 impl From<&SqliteRow> for Group {
@@ -17,6 +19,7 @@ impl From<&SqliteRow> for Group {
             uuid: row.get("uuid"),
             name: row.get("name"),
             image: row.get("image"),
+            updated_at: row.get("updated_at"),
         }
     }
 }
@@ -31,6 +34,20 @@ impl Group {
         .bind(&self.image)
         .fetch_one(db)
         .await?)
+            .into();
+        Ok(())
+    }
+
+    pub async fn update(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
+        *self = (&sqlx::query(
+            "UPDATE \"group\" SET name = $1, image = $2, updated_at = $3 WHERE id = $4 RETURNING *;",
+        )
+            .bind(&self.name)
+            .bind(&self.image)
+            .bind(self.updated_at)
+            .bind(self.id)
+            .fetch_one(db)
+            .await?)
             .into();
         Ok(())
     }

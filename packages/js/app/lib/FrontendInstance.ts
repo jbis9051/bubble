@@ -1,6 +1,6 @@
 import {
     FrontendInstance as FrontendInstanceInternal,
-    get_location,
+    get_location, InitOptions,
     Result,
     Uuid
 } from '@bubble/react-native-bubble-rust';
@@ -13,8 +13,8 @@ export default class FrontendInstance {
         this.instance = instance;
     }
 
-    static async init(dataDir: string) {
-        const instance = await native.init(dataDir);
+    static async init(options: InitOptions) {
+        const instance = await native.init(options);
         if (instance.success) {
             return new FrontendInstance(instance.value);
         }
@@ -41,6 +41,22 @@ export default class FrontendInstance {
         return FrontendInstance.promiseify(native.get_location(this.instance, group_uuid, client, before_timestamp, amount));
     }
 
+    get_groups() {
+        return FrontendInstance.promiseify(native.get_groups(this.instance));
+    }
+
+    create_group() {
+        return FrontendInstance.promiseify(native.create_group(this.instance));
+    }
+
+    update_group(new_uuid: string, name: string | null) {
+        return FrontendInstance.promiseify(native.update_group(this.instance, new_uuid, name));
+    }
+
+    leave_group(group_uuid: Uuid) {
+        return FrontendInstance.promiseify(native.leave_group(this.instance, group_uuid));
+    }
+
     private static async promiseify<T, E>(promise: Promise<Result<T, E>>) {
         const res = await promise;
         if (res.success) {
@@ -48,6 +64,4 @@ export default class FrontendInstance {
         }
         throw res.value;
     }
-
-
 }

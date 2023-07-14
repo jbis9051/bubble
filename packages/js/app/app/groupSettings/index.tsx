@@ -1,38 +1,35 @@
 import {StatusBar} from 'expo-status-bar';
 import {
     Alert,
-    FlatList,
     Platform,
     ScrollView,
     StyleSheet,
     TouchableOpacity, View,
 } from 'react-native';
 import {useNavigation} from 'expo-router';
-import {useContext, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {Ionicons} from '@expo/vector-icons';
-import {useDispatch, useSelector} from 'react-redux';
 import StyledButton from '../../components/bubbleUI/Button';
 import StyledText from '../../components/StyledText';
-import {selectCurrentGroup, setGroups} from '../../redux/slices/groupSlice';
-import {GroupService} from '../../lib/bubbleApi/group';
-import {UserLocal} from '../../lib/bubbleApi/user';
 import Avatar from '../../components/Avatar';
-import {LoggingService} from '../../lib/bubbleApi/logging';
 import Colors from "../../constants/Colors";
+import {observer} from "mobx-react-lite";
+import MainStore from "../../stores/MainStore";
+import { UserOut } from '@bubble/react-native-bubble-rust';
+import FrontendInstanceStore from "../../stores/FrontendInstanceStore";
 
 interface BubbleMemberProps {
-    member: UserLocal;
+    member: UserOut;
 }
 
 function BubbleMember({member}: BubbleMemberProps) {
-    const {name, user_uuid} = member;
     const navigation = useNavigation();
 
     const handlePress = () => {
         // @ts-ignore
-        navigation.navigate('groupSettingsModal', {
+        navigation.navigate('groupSettings', {
             screen: 'memberDisplay',
-            params: {user_uuid},
+            params: {user_uuid: member.uuid},
         });
     };
 
@@ -46,18 +43,16 @@ function BubbleMember({member}: BubbleMemberProps) {
             }}
             onPress={handlePress}
         >
-            <Avatar name={name} width={50}/>
+            <Avatar name={member.name} width={50}/>
             <StyledText nomargin style={{textAlign: 'center', flex: 1}}>
-                {name}
+                {member.name}
             </StyledText>
         </TouchableOpacity>
     );
 }
 
-export default function GroupSettingsModal() {
-    const curGroup = useSelector(selectCurrentGroup);
+const GroupSettings = observer(() => {
     const navigation = useNavigation();
-    const dispatch = useDispatch();
 
     const [leaving, setLeaving] = useState(false);
 
@@ -67,7 +62,7 @@ export default function GroupSettingsModal() {
                 <TouchableOpacity
                     onPress={() => {
                         // @ts-ignore
-                        navigation.navigate('groupSettingsModal', {
+                        navigation.navigate('groupSettings', {
                             screen: 'shareBubble',
                         });
                     }}
@@ -79,27 +74,32 @@ export default function GroupSettingsModal() {
     }, []);
 
     const handleLeaveBubble = () => {
-        if (!curGroup) return null;
+        if (!MainStore.current_group) {
+            return null;
+        }
         Alert.alert(
-            `Leave '${curGroup.name}'?`,
+            `Leave '${MainStore.current_group.name}'?`,
             'You will need to be re-invited to join back.',
             [
                 {
                     text: 'OK',
                     style: 'destructive',
                     onPress: () => {
+                        if(!MainStore.current_group){
+                            return;
+                        }
                         setLeaving(true);
-                        GroupService.leave_group(curGroup.uuid)
-                            .then(() => {
-                                GroupService.get_groups()
-                                    .then((groups) => {
-                                        dispatch(setGroups(groups));
-                                        navigation.goBack();
-                                        setLeaving(false);
-                                    })
-                                    .catch(LoggingService.error);
+                        FrontendInstanceStore.instance
+                            .leave_group(MainStore.current_group.uuid)
+                            .then(() => FrontendInstanceStore.instance.get_groups())
+                            .then((groups) => {
+                                MainStore.groups = groups;
+                                navigation.goBack();
                             })
-                            .catch(LoggingService.error);
+                            .catch(err => {
+                                Alert.alert('Error', err);
+                            })
+                            .finally(() => setLeaving(false));
                     }
                 },
                 {
@@ -109,7 +109,9 @@ export default function GroupSettingsModal() {
         );
     };
 
-    if (!curGroup) return null;
+    if (!MainStore.current_group) {
+        return null;
+    }
 
     return (
         <View style={styles.container}>
@@ -117,7 +119,7 @@ export default function GroupSettingsModal() {
                 <StyledText nomargin style={{marginBottom: 15}}>
                     Bubble Members
                 </StyledText>
-                {curGroup.members.map((m, idx) => (
+                {Object.entries(MainStore.current_group.members).map(([user_uuid, info], idx) => (
                     <View
                         key={idx}
                         style={{
@@ -127,7 +129,7 @@ export default function GroupSettingsModal() {
                             borderBottomWidth: 1,
                         }}
                     >
-                        <BubbleMember member={m}/>
+                        <BubbleMember member={info.info}/>
                     </View>
                 ))}
                 <StyledButton
@@ -142,7 +144,8 @@ export default function GroupSettingsModal() {
             <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'}/>
         </View>
     );
-}
+});
+export default GroupSettings;
 
 const styles = StyleSheet.create({
     container: {

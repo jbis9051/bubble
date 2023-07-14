@@ -144,7 +144,7 @@ const Map = observer(() => {
                         paddingHorizontal: 10,
                     }}
                 >
-                    <Link href="/allGroupsModal" asChild>
+                    <Link href="/groups" asChild>
                         <TouchableOpacity
                             style={{
                                 backgroundColor: 'white',
@@ -176,7 +176,7 @@ const Map = observer(() => {
                         paddingHorizontal: 12,
                     }}
                 >
-                    <Link href="/groupSettingsModal" asChild>
+                    <Link href="/groupSettings" asChild>
                         <TouchableOpacity
                             style={{
                                 backgroundColor: 'white',

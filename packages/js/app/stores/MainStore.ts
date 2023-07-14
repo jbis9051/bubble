@@ -3,6 +3,13 @@ import { makeAutoObservable } from "mobx"
 import {Group, Status, Uuid} from "@bubble/react-native-bubble-rust";
 
 class MainStore {
+    get groups(): Group[] {
+        return this._groups;
+    }
+
+    set groups(value: Group[]) {
+        this._groups = value;
+    }
     get status(): Status | null {
         return this._status;
     }
@@ -21,6 +28,7 @@ class MainStore {
 
     private _status: Status | null = null;
     private _current_group: Group | null = null;
+    private _groups: Group[] = [];
 
 
     constructor() {

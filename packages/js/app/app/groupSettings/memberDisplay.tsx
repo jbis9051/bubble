@@ -1,44 +1,40 @@
-import React, {useEffect, useState} from 'react';
-import {useSelector} from 'react-redux';
+import React, {useState} from 'react';
 import {useLocalSearchParams, useNavigation} from 'expo-router';
 import {Alert, StyleSheet, View} from 'react-native';
 import {GroupMemberDisplay} from '../../components/display/GroupMemberDisplay';
-import {selectCurrentGroup} from '../../redux/slices/groupSlice';
 import StyledButton from '../../components/bubbleUI/Button';
-import {GroupService} from '../../lib/bubbleApi/group';
-import {LoggingService} from '../../lib/bubbleApi/logging';
+import MainStore from "../../stores/MainStore";
+import FrontendInstanceStore from "../../stores/FrontendInstanceStore";
 
 export default function MemberDisplay() {
-    const curGroup = useSelector(selectCurrentGroup);
     const {user_uuid} = useLocalSearchParams();
     const navigation = useNavigation();
 
     const [kicking, setKicking] = useState(false);
 
-    // useEffect(() => {
-    //     navigation.setOptions({
-    //         title: curMember?.name,
-    //     });
-    // }, []);
+    const curMember = MainStore.current_group?.members[user_uuid as string].info;
 
-    const curMember = curGroup?.members.find((m) => m.user_uuid === user_uuid);
+    if(!curMember) {
+        return null;
+    }
 
     const handleKick = () => {
         Alert.alert(
-            `Kick '${curMember?.name}'?`,
+            `Kick '${curMember.name}'?`,
             'They will need another invite to join back.', [
                 {
                     text: 'OK',
                     style: 'destructive',
                     onPress: () => {
                         setKicking(true);
-                        GroupService.remove_member(curGroup?.uuid!, user_uuid as string)
+                        FrontendInstanceStore.instance.leave_group(curMember.uuid)
                             .then(() => {
                                 navigation.goBack();
                             })
-                            .catch((e) => {
-                                LoggingService.error(e);
-                                Alert.alert('Something went wrong.');
+                            .catch((err) => {
+                                Alert.alert('Error', err);
+                            })
+                            .finally(() => {
                                 setKicking(false);
                             });
                     }
@@ -49,8 +45,6 @@ export default function MemberDisplay() {
                 }
             ]);
     };
-
-    if (!curMember) return null;
 
     return (
         <View style={styles.container}>

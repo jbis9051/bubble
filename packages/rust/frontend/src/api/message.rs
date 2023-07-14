@@ -1,6 +1,6 @@
 use crate::api::BubbleApi;
 use common::base64::Base64;
-use common::http_types::{CheckMessages, Message, MessagesResponse, SendMessage};
+use common::http_types::{CheckMessages, DeliveredMessage, Message, MessagesResponse, SendMessage};
 use uuid::Uuid;
 
 impl BubbleApi {
@@ -31,7 +31,7 @@ impl BubbleApi {
     pub async fn receive_messages(
         &self,
         client_uuid: Uuid,
-    ) -> Result<Vec<Message>, reqwest::Error> {
+    ) -> Result<Vec<DeliveredMessage>, reqwest::Error> {
         let response: MessagesResponse = self
             .client
             .get(&format!("{}/v1/message", self.domain))

@@ -46,8 +46,14 @@ pub struct CheckMessages {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct DeliveredMessage {
+    pub message: Base64,
+    pub received_date: i64,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct MessagesResponse {
-    pub messages: Vec<Message>,
+    pub messages: Vec<DeliveredMessage>,
 }
 
 #[derive(Deserialize, Serialize)]

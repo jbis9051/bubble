@@ -3,6 +3,8 @@ use crate::models::kv::{AccountKv, GlobalKv};
 use crate::platform::DevicePromise;
 use crate::public::promise::promisify;
 use crate::{Error, VIRTUAL_MEMORY};
+use bridge_macro::bridge;
+use serde::Deserialize;
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::str::FromStr;
@@ -47,16 +49,32 @@ impl TokioThread {
     }
 }
 
-pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
+#[bridge]
+#[derive(Deserialize)]
+struct InitOptions {
+    data_directory: String,
+    force_new: bool,
+}
+
+pub fn init(promise: DevicePromise, json: String) -> Result<(), Error> {
+    let options: InitOptions = serde_json::from_str(&json)?;
     let tokio_thread = TokioThread::spawn();
     let handle = tokio_thread.handle.clone();
     handle.block_on(promisify::<usize, Error>(promise, async move {
-        let (pool, account_data) = init_async(&data_directory).await?;
+        if !options.force_new {
+            let instance = VIRTUAL_MEMORY
+                .clone_iter()
+                .position(|m| m.static_data.data_directory == options.data_directory);
+            if let Some(instance) = instance {
+                return Ok(instance);
+            }
+        }
+        let (pool, account_data) = init_async(&options.data_directory).await?;
         let domain = GlobalKv::get(&pool, "domain")
             .await?
             .unwrap_or("http://localhost:3000".to_string()); // TODO: make this not dumb
         let global_data = GlobalStaticData {
-            data_directory,
+            data_directory: options.data_directory,
             domain,
             tokio: tokio_thread,
         };

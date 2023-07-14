@@ -1,25 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
 import { FlatList, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
-import {
-    selectGroups,
-    setActiveGroup,
-} from '../../redux/slices/groupSlice';
-import { Group } from '../../lib/bubbleApi/group';
 import StyledText from '../../components/StyledText';
 import { summarizeNames } from '../../lib/formatText';
 import Colors from "../../constants/Colors";
+import MainStore from "../../stores/MainStore";
+import {Group} from '@bubble/react-native-bubble-rust';
+import {observer} from "mobx-react-lite";
 
 function BubbleDisplay({ group }: { group: Group }) {
-    const dispatch = useDispatch();
     const navigation = useNavigation();
 
     const handleSetActive = () => {
         navigation.goBack();
-        dispatch(setActiveGroup(group.uuid));
+        MainStore.current_group = group;
     };
 
     return (
@@ -50,9 +46,9 @@ function BubbleDisplay({ group }: { group: Group }) {
                 <StyledText nomargin variant="h2" numberOfLines={1}>
                     {group.name}
                 </StyledText>
-                {group.members.length ? (
+                {Object.entries(group.members).length > 0 ? (
                     <StyledText nomargin variant="body">
-                        {summarizeNames(group.members.map((m) => m.name))}
+                        {summarizeNames(Object.entries(group.members).map(([user_uuid, info]) => info.info.name))}
                     </StyledText>
                 ) : null}
             </View>
@@ -60,9 +56,7 @@ function BubbleDisplay({ group }: { group: Group }) {
     );
 }
 
-export default function BubbleListModal() {
-    const groups = useSelector(selectGroups);
-
+ const Groups = observer(() => {
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -71,7 +65,7 @@ export default function BubbleListModal() {
                 <TouchableOpacity
                     onPress={() => {
                         // @ts-ignore
-                        navigation.navigate('allGroupsModal', {
+                        navigation.navigate('groups', {
                             screen: 'newGroup',
                         });
                     }}
@@ -85,11 +79,11 @@ export default function BubbleListModal() {
     return (
         <View style={styles.container}>
             <FlatList
-                data={groups}
+                data={MainStore.groups}
                 renderItem={({ item, index }) => (
                     <View
                         style={[
-                            index % 2 === (groups.length % 2 === 1 ? 0 : 1)
+                            index % 2 === (MainStore.groups.length % 2 === 1 ? 0 : 1)
                                 ? {
                                       borderTopColor:
                                           Colors.colors.secondaryPaper,
@@ -109,7 +103,8 @@ export default function BubbleListModal() {
             <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
         </View>
     );
-}
+});
+export default Groups;
 
 const styles = StyleSheet.create({
     container: {
