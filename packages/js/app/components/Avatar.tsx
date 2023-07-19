@@ -1,7 +1,7 @@
 import React from 'react';
+import { View } from 'react-native';
 import StyledText, { CustomTextProps } from './StyledText';
-import {View} from "react-native";
-import Colors from "../constants/Colors";
+import Colors from '../constants/Colors';
 
 interface AvatarProps {
     name: string;

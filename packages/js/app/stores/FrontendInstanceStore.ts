@@ -1,6 +1,6 @@
-import FrontendInstance from "../lib/FrontendInstance";
-import { makeAutoObservable } from "mobx"
-import { InitOptions } from "@bubble/react-native-bubble-rust";
+import { makeAutoObservable } from 'mobx';
+import { InitOptions } from '@bubble/react-native-bubble-rust';
+import FrontendInstance from '../lib/FrontendInstance';
 
 class FrontendInstanceStore {
     _instance: FrontendInstance | null = null;
@@ -15,7 +15,7 @@ class FrontendInstanceStore {
 
     get instance() {
         if (this._instance === null) {
-            throw new Error("Frontend instance not initialized");
+            throw new Error('Frontend instance not initialized');
         }
         return this._instance;
     }

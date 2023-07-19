@@ -1,6 +1,6 @@
-import FrontendInstance from "../lib/FrontendInstance";
-import { makeAutoObservable } from "mobx"
-import {Group, Status, Uuid} from "@bubble/react-native-bubble-rust";
+import { makeAutoObservable } from 'mobx';
+import { Group, Status, Uuid } from '@bubble/react-native-bubble-rust';
+import FrontendInstance from '../lib/FrontendInstance';
 
 class MainStore {
     get groups(): Group[] {
@@ -10,6 +10,7 @@ class MainStore {
     set groups(value: Group[]) {
         this._groups = value;
     }
+
     get status(): Status | null {
         return this._status;
     }
@@ -27,9 +28,10 @@ class MainStore {
     }
 
     private _status: Status | null = null;
-    private _current_group: Group | null = null;
-    private _groups: Group[] = [];
 
+    private _current_group: Group | null = null;
+
+    private _groups: Group[] = [];
 
     constructor() {
         makeAutoObservable(this);

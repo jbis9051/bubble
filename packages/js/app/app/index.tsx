@@ -1,6 +1,4 @@
-import { Redirect } from "expo-router";
+import { Redirect } from 'expo-router';
 
-const Index = () => {
-    return <Redirect href="/map" />;
-};
+const Index = () => <Redirect href="/map" />;
 export default Index;

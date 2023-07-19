@@ -1,14 +1,20 @@
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+    FlatList,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useEffect } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
+import { Group } from '@bubble/react-native-bubble-rust';
+import { observer } from 'mobx-react-lite';
 import StyledText from '../../components/StyledText';
 import { summarizeNames } from '../../lib/formatText';
-import Colors from "../../constants/Colors";
-import MainStore from "../../stores/MainStore";
-import {Group} from '@bubble/react-native-bubble-rust';
-import {observer} from "mobx-react-lite";
+import Colors from '../../constants/Colors';
+import MainStore from '../../stores/MainStore';
 
 function BubbleDisplay({ group }: { group: Group }) {
     const navigation = useNavigation();
@@ -48,7 +54,11 @@ function BubbleDisplay({ group }: { group: Group }) {
                 </StyledText>
                 {Object.entries(group.members).length > 0 ? (
                     <StyledText nomargin variant="body">
-                        {summarizeNames(Object.entries(group.members).map(([user_uuid, info]) => info.info.name))}
+                        {summarizeNames(
+                            Object.entries(group.members).map(
+                                ([user_uuid, info]) => info.info.name
+                            )
+                        )}
                     </StyledText>
                 ) : null}
             </View>
@@ -56,7 +66,7 @@ function BubbleDisplay({ group }: { group: Group }) {
     );
 }
 
- const Groups = observer(() => {
+const Groups = observer(() => {
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -83,7 +93,8 @@ function BubbleDisplay({ group }: { group: Group }) {
                 renderItem={({ item, index }) => (
                     <View
                         style={[
-                            index % 2 === (MainStore.groups.length % 2 === 1 ? 0 : 1)
+                            index % 2 ===
+                            (MainStore.groups.length % 2 === 1 ? 0 : 1)
                                 ? {
                                       borderTopColor:
                                           Colors.colors.secondaryPaper,

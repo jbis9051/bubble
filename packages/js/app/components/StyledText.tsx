@@ -1,4 +1,4 @@
-import {StyleProp, Text, TextProps, TextStyle} from 'react-native';
+import { StyleProp, Text, TextProps, TextStyle } from 'react-native';
 
 const baseTextStyle: StyleProp<TextStyle> = {
     fontFamily: 'System',

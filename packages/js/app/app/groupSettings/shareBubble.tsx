@@ -1,8 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import {Platform, StyleSheet, View} from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import StyledText from '../../components/StyledText';
 import InviteUserComponent from '../../components/display/InviteUserComponent';
-import MainStore from "../../stores/MainStore";
+import MainStore from '../../stores/MainStore';
 
 export default function ShareBubble() {
     const current = MainStore.current_group;
