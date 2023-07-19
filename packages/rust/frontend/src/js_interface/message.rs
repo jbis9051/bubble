@@ -16,6 +16,7 @@ use sqlx::types::chrono::{NaiveDateTime, Utc};
 
 use crate::models::kv::AccountKv;
 
+use bridge_macro::bridge;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,8 +50,8 @@ fn print_message(message: &Inbox) {
 }
 
 impl FrontendInstance {
-    //#[bridge]
-    pub async fn receive_messages(&self) -> Result<(), Error> {
+    #[bridge]
+    pub async fn receive_messages(&self) -> Result<usize, Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
@@ -60,7 +61,7 @@ impl FrontendInstance {
             Some(global_data.bearer.read().await.clone()),
         );
         let messages = api.receive_messages(*my_client_uuid).await.unwrap();
-
+        let num_received = messages.len();
         for message in messages {
             let mut inbox = Inbox {
                 id: 0,
@@ -73,7 +74,7 @@ impl FrontendInstance {
         }
 
         self.process_messages().await;
-        Ok(())
+        Ok(num_received)
     }
 
     async fn process_messages(&self) {
@@ -122,6 +123,7 @@ impl FrontendInstance {
                             name: None,
                             image: None,
                             updated_at: NaiveDateTime::default(),
+                            in_group: true,
                         }
                         .create(account_db)
                         .await

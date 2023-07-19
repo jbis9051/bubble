@@ -72,6 +72,10 @@ pub enum Error {
     UnexpectedWelcome,
     #[error("could not read client_uuid")]
     ReadClientUUID,
+    #[error("logging into an account on a device other than the one it was created on is not supported yet")]
+    WrongDevice,
+    #[error("no clients found for the requested user")]
+    NoClientsFound,
 
     #[error("don't know what to return for this error yet")]
     TestingError,

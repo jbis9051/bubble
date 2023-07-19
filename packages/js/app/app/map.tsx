@@ -6,17 +6,17 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import MapView, {LatLng, Marker} from 'react-native-maps';
-import {Ionicons, MaterialCommunityIcons} from '@expo/vector-icons';
-import {Link} from 'expo-router';
-import {useEffect, useState} from 'react';
-import {getInitials} from '../lib/formatText';
+import MapView, { LatLng, Marker } from 'react-native-maps';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { UserOut, Uuid } from '@bubble/react-native-bubble-rust';
+import { getInitials } from '../lib/formatText';
 import StyledText from '../components/StyledText';
-import Colors from "../constants/Colors";
-import {observer} from "mobx-react-lite";
-import MainStore from "../stores/MainStore";
-import {UserOut, Uuid} from '@bubble/react-native-bubble-rust';
-import FrontendInstanceStore from "../stores/FrontendInstanceStore";
+import Colors from '../constants/Colors';
+import MainStore from '../stores/MainStore';
+import FrontendInstanceStore from '../stores/FrontendInstanceStore';
 
 interface CustomMarkerProps {
     coordinate: LatLng;
@@ -25,7 +25,7 @@ interface CustomMarkerProps {
     onPress?: () => void;
 }
 
-function CustomMarker({coordinate, user}: CustomMarkerProps) {
+function CustomMarker({ coordinate, user }: CustomMarkerProps) {
     return (
         <Marker coordinate={coordinate}>
             <View
@@ -52,7 +52,7 @@ function CustomMarker({coordinate, user}: CustomMarkerProps) {
                 >
                     <StyledText
                         nomargin
-                        style={{color: Colors.colors.primaryPaper}}
+                        style={{ color: Colors.colors.primaryPaper }}
                     >
                         {getInitials(user.name)}
                     </StyledText>
@@ -63,69 +63,75 @@ function CustomMarker({coordinate, user}: CustomMarkerProps) {
 }
 
 interface UserLocation {
-    user: UserOut,
-    client_uuid: Uuid,
-    longitude: number,
-    latitude: number,
-    timestamp: Date,
+    user: UserOut;
+    client_uuid: Uuid;
+    longitude: number;
+    latitude: number;
+    timestamp: Date;
 }
 
 const Map = observer(() => {
-    const [memberLocations, setMemberLocations] = useState<UserLocation[]>(
-        []
-    );
+    const [memberLocations, setMemberLocations] = useState<UserLocation[]>([]);
 
+    const currentTimer = useRef<NodeJS.Timer | null>(null);
+
+    async function updateLocations() {
+        const group = MainStore.current_group;
+        if (!group) {
+            return;
+        }
+        const locations = await Promise.all(
+            Object.entries(group.members).map(
+                async ([user_uuid, user_group_info]) => {
+                    const location =
+                        await FrontendInstanceStore.instance.get_location(
+                            group.uuid,
+                            user_group_info.clients[0],
+                            Date.now(),
+                            1
+                        );
+                    if (location.length === 0) {
+                        return null;
+                    }
+                    return {
+                        user: user_group_info.info,
+                        client_uuid: user_group_info.clients[0],
+                        longitude: location[0].longitude,
+                        latitude: location[0].latitude,
+                        timestamp: new Date(location[0].timestamp),
+                    } as UserLocation;
+                }
+            )
+        );
+        setMemberLocations(
+            locations.filter((location) => location !== null) as UserLocation[]
+        );
+        currentTimer.current = setTimeout(updateLocations, 2000);
+    }
 
     useEffect(() => {
-        let currentTimer: NodeJS.Timer | null = null;
-        let cancel = false;
-
-        async function updateLocations() {
-            const group = MainStore.current_group;
-            if (!group) {
-                return;
-            }
-            const locations = await Promise.all(
-                Object.entries(group.members)
-                    .map(async ([user_uuid, user_group_info]) => {
-                        const location = await FrontendInstanceStore.instance.get_location(group.uuid, user_group_info.clients[0], Date.now(), 1)
-                        if (location.length === 0) {
-                            return null;
-                        }
-                        return {
-                            user: user_group_info.info,
-                            client_uuid: user_group_info.clients[0],
-                            longitude: location[0].longitude,
-                            latitude: location[0].latitude,
-                            timestamp: new Date(location[0].timestamp),
-                        } as UserLocation;
-                    })
-            )
-            if (cancel) {
-                return;
-            }
-            setMemberLocations(locations.filter((location) => location !== null) as UserLocation[]);
-            currentTimer = setTimeout(updateLocations, 2000);
+        if (!currentTimer.current) {
+            updateLocations();
         }
-
-        updateLocations();
 
         return () => {
-            cancel = true;
-            if (currentTimer) {
-                clearTimeout(currentTimer);
+            if (currentTimer.current) {
+                clearTimeout(currentTimer.current);
             }
-        }
+        };
     }, []);
 
     return (
         <View>
             <MapView style={styles.map}>
                 {memberLocations.map((userLocation) => (
-                    <CustomMarker coordinate={{
-                        latitude: userLocation.latitude,
-                        longitude: userLocation.longitude,
-                    }} user={userLocation.user}/>
+                    <CustomMarker
+                        coordinate={{
+                            latitude: userLocation.latitude,
+                            longitude: userLocation.longitude,
+                        }}
+                        user={userLocation.user}
+                    />
                 ))}
             </MapView>
             <SafeAreaView
@@ -163,7 +169,7 @@ const Map = observer(() => {
                                 size={24}
                                 color="black"
                             />
-                            <Text numberOfLines={1} style={{width: '85%'}}>
+                            <Text numberOfLines={1} style={{ width: '85%' }}>
                                 {MainStore.current_group?.name}
                             </Text>
                         </TouchableOpacity>
@@ -188,7 +194,7 @@ const Map = observer(() => {
                                 justifyContent: 'center',
                             }}
                         >
-                            <Ionicons name="settings" size={24} color="black"/>
+                            <Ionicons name="settings" size={24} color="black" />
                         </TouchableOpacity>
                     </Link>
                 </View>

@@ -1,11 +1,13 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import {useFonts} from 'expo-font';
-import {SplashScreen, Stack} from 'expo-router';
-import {useEffect, useState} from 'react';
-import Auth from "./auth";
-import {observer} from "mobx-react-lite";
-import MainStore from "../stores/MainStore";
-import FrontendInstanceStore from "../stores/FrontendInstanceStore";
+import { useFonts } from 'expo-font';
+import { SplashScreen, Stack } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Alert } from 'react-native';
+import { autorun } from 'mobx';
+import Auth from './auth';
+import MainStore from '../stores/MainStore';
+import FrontendInstanceStore from '../stores/FrontendInstanceStore';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -18,14 +20,44 @@ const RootLayout = observer(() => {
         ...FontAwesome.font,
     });
     const [inited, setInited] = useState(false);
+    const receiveTimer = useRef<NodeJS.Timer | null>(null);
 
-    const loggedIn = !!(MainStore.status?.account_data);
+    const loggedIn = !!MainStore.status?.account_data;
+
+    function receive() {
+        if (receiveTimer.current) {
+            clearTimeout(receiveTimer.current);
+        }
+        FrontendInstanceStore.instance
+            .receive_messages()
+            .then(() => {
+                receiveTimer.current = setTimeout(receive, 2000);
+            })
+            .catch((err) => {
+                Alert.alert('Error Receiving Messages', err.message);
+            });
+    }
+
+    useEffect(
+        () =>
+            autorun(() => {
+                if (MainStore.status?.account_data) {
+                    receive();
+                }
+                return () => {
+                    if (receiveTimer.current) {
+                        clearTimeout(receiveTimer.current);
+                    }
+                };
+            }),
+        []
+    );
 
     useEffect(() => {
         if (!FrontendInstanceStore.isInitialized()) {
             FrontendInstanceStore.init({
-                data_directory: "/Users/joshuabrown3/Desktop/data",
-                force_new: false
+                data_directory: '/Users/joshuabrown3/Desktop/data',
+                force_new: false,
             })
                 .then(() => FrontendInstanceStore.instance.status())
                 .then((status) => {
@@ -34,15 +66,18 @@ const RootLayout = observer(() => {
                 })
                 .then(async () => {
                     if (MainStore.status?.account_data) {
-                        MainStore.groups = await FrontendInstanceStore.instance.get_groups()
+                        MainStore.groups =
+                            await FrontendInstanceStore.instance.get_groups();
+                        if (MainStore.groups.length > 0) {
+                            MainStore.current_group = MainStore.groups[0];
+                        }
                     }
                 })
                 .catch((err) => {
                     throw err;
                 });
         }
-    }, [])
-
+    }, []);
 
     useEffect(() => {
         if (error) throw error;
@@ -53,20 +88,17 @@ const RootLayout = observer(() => {
     return (
         <>
             {/* Keep the splash screen open until the assets have loaded. In the future, we should just support async font loading with a native version of font-display. */}
-            {!loaded && <SplashScreen/>}
-            {loaded && !loggedIn && <Auth/>}
-            {loaded && loggedIn && <RootLayoutNav/>}
+            {!loaded && <SplashScreen />}
+            {loaded && !loggedIn && <Auth />}
+            {loaded && loggedIn && <RootLayoutNav />}
         </>
     );
 });
 
 function RootLayoutNav() {
     return (
-        <Stack initialRouteName={"map"}>
-            <Stack.Screen
-                name="map"
-                options={{headerShown: false}}
-            />
+        <Stack initialRouteName={'map'}>
+            <Stack.Screen name="map" options={{ headerShown: false }} />
             <Stack.Screen
                 name="groups"
                 options={{

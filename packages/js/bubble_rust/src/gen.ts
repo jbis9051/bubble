@@ -61,7 +61,7 @@ export interface Group {
 
 /* ---------------- FUNCTION DEFINITIONS ------------------- */
 
-export function receive_messages(instance: FrontendInstance,): Promise<Result<void, Error>> {
+export function receive_messages(instance: FrontendInstance,): Promise<Result<number, Error>> {
     return RustInterop.call(JSON.stringify({
         instance,
         method: 'receive_messages',
@@ -194,6 +194,14 @@ export function update_group(instance: FrontendInstance,group_uuid: Uuid , name:
         instance,
         method: 'update_group',
         args: {group_uuid, name},
+    })).then((res: string) => JSON.parse(res));
+}
+
+export function send_group_status(instance: FrontendInstance,group_uuid: Uuid ): Promise<Result<void, Error>> {
+    return RustInterop.call(JSON.stringify({
+        instance,
+        method: 'send_group_status',
+        args: {group_uuid},
     })).then((res: string) => JSON.parse(res));
 }
 

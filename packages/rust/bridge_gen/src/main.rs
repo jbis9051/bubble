@@ -251,6 +251,7 @@ fn convert_type_to_ts(in_type: &str) -> String {
         "u64" => out_type.push_str("number"),
         "f32" => out_type.push_str("number"),
         "f64" => out_type.push_str("number"),
+        "usize" => out_type.push_str("number"),
         "bool" => out_type.push_str("boolean"),
         "String" => out_type.push_str("string"),
         _ => out_type.push_str(in_type),

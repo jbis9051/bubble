@@ -48,7 +48,7 @@ impl FrontendInstance {
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
 
-        let db_groups = GroupModel::all(account_db).await?;
+        let db_groups = GroupModel::all_in_group(account_db).await?;
 
         let mut out = Vec::with_capacity(db_groups.len());
 
@@ -117,6 +117,7 @@ impl FrontendInstance {
             name: None,
             image: None,
             updated_at: NaiveDateTime::default(),
+            in_group: true,
         }
         .create(account_db)
         .await?;
@@ -152,6 +153,10 @@ impl FrontendInstance {
         let clients = resource_fetcher
             .get_clients_full_authentication(&user_uuid)
             .await?;
+
+        if clients.is_empty() {
+            return Err(Error::NoClientsFound);
+        }
 
         let mut key_packages = Vec::with_capacity(clients.len());
         let mut client_uuids = Vec::with_capacity(clients.len());
@@ -266,6 +271,9 @@ impl FrontendInstance {
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?,
         );
+        let mut group_model = GroupModel::from_uuid(account_db, group.group_uuid())
+            .await?
+            .unwrap();
 
         let my_user_uuid = &global_data.user_uuid;
         let my_client_uuid = &global_data
@@ -311,6 +319,9 @@ impl FrontendInstance {
 
         group.save_if_needed(&mls_provider)?;
 
+        group_model.in_group = false;
+        group_model.update(account_db).await?;
+
         Ok(())
     }
 
@@ -353,6 +364,46 @@ impl FrontendInstance {
         group.name = name;
         group.updated_at = Utc::now().naive_utc();
         group.update(account_db).await?;
+
+        Ok(())
+    }
+
+    #[bridge]
+    pub async fn send_group_status(&self, group_uuid: Uuid) -> Result<(), Error> {
+        let global = self.account_data.read().await;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
+        let account_db = &global_data.database;
+        let mls_provider = MlsProvider::new(account_db.clone());
+        let api = BubbleApi::new(
+            global_data.domain.clone(),
+            Some(global_data.bearer.read().await.clone()),
+        );
+        let group = GroupModel::from_uuid(account_db, group_uuid)
+            .await?
+            .unwrap();
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
+
+        let message = Message::GroupStatus(GroupStatus {
+            name: group.name,
+            image: group.image.map(Base64),
+        });
+
+        let (signature, _) = get_this_client_mls_resources(
+            &global_data.user_uuid,
+            &client_uuid,
+            account_db,
+            &mls_provider,
+        )
+        .await?;
+
+        let mut group = BubbleGroup::new(
+            MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
+                .ok_or_else(|| Error::MLSGroupLoad)?,
+        );
+
+        group
+            .send_application_message(&mls_provider, &api, &signature, &message, &[client_uuid])
+            .await?;
 
         Ok(())
     }

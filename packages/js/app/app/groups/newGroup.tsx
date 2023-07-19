@@ -1,29 +1,36 @@
-import React, {useState} from 'react';
-import {Alert, StyleSheet, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
+import { Redirect, useNavigation } from 'expo-router';
 import StyledText from '../../components/StyledText';
-import {StyledInput} from '../../components/Input';
+import { StyledInput } from '../../components/Input';
 import StyledButton from '../../components/bubbleUI/Button';
 import InviteUserComponent from '../../components/display/InviteUserComponent';
-import FrontendInstanceStore from "../../stores/FrontendInstanceStore";
-import MainStore from "../../stores/MainStore";
+import FrontendInstanceStore from '../../stores/FrontendInstanceStore';
+import MainStore from '../../stores/MainStore';
 
 export default function NewGroup() {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
-    const [createdUuid, setCreatedUuid] = useState('');
-
+    const [createdUuid, setCreatedUuid] = useState<string | null>(null);
+    const navigation = useNavigation();
 
     const handleCreate = () => {
         if (name.length === 0) {
             return Alert.alert('Please enter a name for your Bubble');
         }
         setLoading(true);
-        FrontendInstanceStore.instance.create_group()
+        FrontendInstanceStore.instance
+            .create_group()
             .then(async (new_uuid) => {
-                await FrontendInstanceStore.instance.update_group(new_uuid, name);
-                const groups = await FrontendInstanceStore.instance.get_groups();
+                await FrontendInstanceStore.instance.update_group(
+                    new_uuid,
+                    name
+                );
+                const groups =
+                    await FrontendInstanceStore.instance.get_groups();
                 MainStore.groups = groups;
-                MainStore.current_group = groups.find((group) => group.uuid === new_uuid) || null;
+                MainStore.current_group =
+                    groups.find((group) => group.uuid === new_uuid) || null;
                 setCreatedUuid(new_uuid);
             })
             .catch((err) => {
@@ -32,26 +39,28 @@ export default function NewGroup() {
             .finally(() => setLoading(false));
     };
 
+    useEffect(() => {
+        if (createdUuid) {
+            // @ts-ignore
+            navigation.navigate('groupSettings', {
+                screen: 'shareBubble',
+            });
+        }
+    }, [createdUuid]);
+
     if (createdUuid) {
-        return (
-            <View style={styles.container}>
-                <StyledText variant="h2" nomargin style={{marginBottom: 15}}>
-                    Bubble Created!
-                </StyledText>
-                <InviteUserComponent groupUuid={createdUuid}/>
-            </View>
-        );
+        return null;
     }
 
     return (
         <View style={styles.container}>
-            <StyledText variant="h2" nomargin style={{marginBottom: 15}}>
+            <StyledText variant="h2" nomargin style={{ marginBottom: 15 }}>
                 Name Your Bubble
             </StyledText>
-            <StyledInput label="Bubble Name" value={name} onChange={setName}/>
+            <StyledInput label="Bubble Name" value={name} onChange={setName} />
             <StyledButton
                 color="primary"
-                style={{marginBottom: 15, marginTop: 'auto'}}
+                style={{ marginBottom: 15, marginTop: 'auto' }}
                 onPress={handleCreate}
                 disabled={!name.length}
             >

@@ -114,8 +114,9 @@ export!(
     remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
     leave_group(group_uuid: Uuid) -> Result<(), Error>;
     update_group(group_uuid: Uuid, name: Option<String>) -> Result<(), Error>;
+    send_group_status(group_uuid: Uuid) -> Result<(), Error>;
     // message
-    receive_messages() -> Result<(), Error>;
+    receive_messages() -> Result<usize, Error>;
     // location
     get_location(
         group_uuid: Uuid,

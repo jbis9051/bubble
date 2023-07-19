@@ -93,7 +93,7 @@ impl FrontendInstance {
         );
         if !Path::new(&path).exists() {
             // TODO: fs exist race condition
-            panic!("logging into an account on a device other than the one it was created on is not supported yet");
+            return Err(Error::WrongDevice);
         }
         let account_db = SqlitePoolOptions::new()
             .connect(&format!("sqlite:{}", path))
