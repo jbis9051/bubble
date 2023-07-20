@@ -23,5 +23,9 @@ export function init(
     );
 }
 
+export function getAppDir(): Promise<string> {
+    return RustInterop.getAppDir();
+}
+
 declare const tag: unique symbol;
 export type FrontendInstance = number & { readonly [tag]: unique symbol };

@@ -20,14 +20,14 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 #[bridge]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UserGroupInfo {
     pub info: UserOut,
     pub clients: Vec<Uuid>,
 }
 
 #[bridge]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Group {
     pub uuid: Uuid,
     pub name: Option<String>,
@@ -118,6 +118,7 @@ impl FrontendInstance {
             image: None,
             updated_at: NaiveDateTime::default(),
             in_group: true,
+            created_at: NaiveDateTime::default(),
         }
         .create(account_db)
         .await?;

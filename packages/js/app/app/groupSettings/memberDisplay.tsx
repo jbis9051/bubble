@@ -29,13 +29,18 @@ export default function MemberDisplay() {
                     style: 'destructive',
                     onPress: () => {
                         setKicking(true);
+                        if (!MainStore.current_group) {
+                            return;
+                        }
                         FrontendInstanceStore.instance
-                            .leave_group(curMember.uuid)
-                            .then(() => {
+                            .remove_member(MainStore.current_group.uuid, curMember.uuid)
+                            .then(async () => {
+                                MainStore.groups = await FrontendInstanceStore.instance.get_groups();
+                                MainStore.current_group = MainStore.groups.find(g => g.uuid === MainStore.current_group?.uuid) || MainStore.groups[0] || null;
                                 navigation.goBack();
                             })
                             .catch((err) => {
-                                Alert.alert('Error', err);
+                                Alert.alert('Error', err.message);
                             })
                             .finally(() => {
                                 setKicking(false);

@@ -54,12 +54,14 @@ function SignUp({ switchToSignIn }: { switchToSignIn: () => void }) {
         setLoading(true);
         FrontendInstanceStore.instance
             .register(username, password, name, email)
+            .then(() => {
+                slideForward();
+            })
             .catch((e) => {
-                Alert.alert('Error', e);
+                Alert.alert('Error', e.message);
             })
             .finally(() => {
                 setLoading(false);
-                slideForward();
             });
     };
 
@@ -386,7 +388,7 @@ function ForgotPassword({ switchToSignIn }: { switchToSignIn: () => void }) {
         FrontendInstanceStore.instance
             .forgot(email)
             .catch((err) => {
-                Alert.alert('Error', err);
+                Alert.alert('Error', err.message);
             })
             .finally(() => {
                 setLoading(false);

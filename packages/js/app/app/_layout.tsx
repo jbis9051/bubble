@@ -1,13 +1,14 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { Alert } from 'react-native';
-import { autorun } from 'mobx';
+import {useFonts} from 'expo-font';
+import {SplashScreen, Stack} from 'expo-router';
+import {useEffect, useRef, useState} from 'react';
+import {observer} from 'mobx-react-lite';
+import {Alert} from 'react-native';
+import {autorun} from 'mobx';
 import Auth from './auth';
 import MainStore from '../stores/MainStore';
 import FrontendInstanceStore from '../stores/FrontendInstanceStore';
+import FrontendInstance from "../lib/FrontendInstance";
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -30,7 +31,12 @@ const RootLayout = observer(() => {
         }
         FrontendInstanceStore.instance
             .receive_messages()
-            .then(() => {
+            .then(async received => {
+                if(received > 0){
+                    MainStore.groups =
+                        await FrontendInstanceStore.instance.get_groups();
+                    MainStore.current_group = MainStore.groups.find(g => g.uuid === MainStore.current_group?.uuid) || MainStore.groups[0] || null;
+                }
                 receiveTimer.current = setTimeout(receive, 2000);
             })
             .catch((err) => {
@@ -55,10 +61,14 @@ const RootLayout = observer(() => {
 
     useEffect(() => {
         if (!FrontendInstanceStore.isInitialized()) {
-            FrontendInstanceStore.init({
-                data_directory: '/Users/joshuabrown3/Desktop/data',
-                force_new: false,
-            })
+            FrontendInstance.getAppDir().then((appDir) => {
+                    console.log("appDir: ", appDir);
+                    return FrontendInstanceStore.init({
+                        data_directory: appDir,
+                        force_new: false,
+                    })
+                }
+            )
                 .then(() => FrontendInstanceStore.instance.status())
                 .then((status) => {
                     MainStore.status = status;
@@ -88,9 +98,9 @@ const RootLayout = observer(() => {
     return (
         <>
             {/* Keep the splash screen open until the assets have loaded. In the future, we should just support async font loading with a native version of font-display. */}
-            {!loaded && <SplashScreen />}
-            {loaded && !loggedIn && <Auth />}
-            {loaded && loggedIn && <RootLayoutNav />}
+            {!loaded && <SplashScreen/>}
+            {loaded && !loggedIn && <Auth/>}
+            {loaded && loggedIn && <RootLayoutNav/>}
         </>
     );
 });
@@ -98,7 +108,7 @@ const RootLayout = observer(() => {
 function RootLayoutNav() {
     return (
         <Stack initialRouteName={'map'}>
-            <Stack.Screen name="map" options={{ headerShown: false }} />
+            <Stack.Screen name="map" options={{headerShown: false}}/>
             <Stack.Screen
                 name="groups"
                 options={{

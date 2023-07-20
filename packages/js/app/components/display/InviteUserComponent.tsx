@@ -38,19 +38,23 @@ export default function InviteUserComponent({
         if (MainStore.current_group === null) {
             return Alert.alert('No group selected');
         }
+        const group_uuid = MainStore.current_group.uuid;
         FrontendInstanceStore.instance
-            .add_member(MainStore.current_group.uuid, uuid)
+            .add_member(group_uuid, uuid)
             .then(() =>
                 FrontendInstanceStore.instance.send_group_status(
-                    MainStore.current_group!.uuid
+                    group_uuid
                 )
             )
             .then(async () => {
                 MainStore.groups =
                     await FrontendInstanceStore.instance.get_groups();
+                if(MainStore.current_group === null) {
+                    return;
+                }
                 MainStore.current_group =
                     MainStore.groups.find(
-                        (group) => MainStore.current_group?.uuid === group.uuid
+                        (group) => MainStore.current_group!.uuid === group.uuid
                     ) || null;
                 navigation.goBack();
             })

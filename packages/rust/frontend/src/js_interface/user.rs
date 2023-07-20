@@ -19,7 +19,7 @@ use std::path::Path;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[bridge]
 pub struct UserOut {
     pub uuid: Uuid,
@@ -183,6 +183,7 @@ impl FrontendInstance {
     #[bridge]
     pub async fn logout(&self) -> Result<(), Error> {
         GlobalKv::delete(&self.global_database, "current_account").await?;
+        self.account_data.write().await.take();
         Ok(())
     }
 

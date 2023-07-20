@@ -22,6 +22,10 @@ export default class FrontendInstance {
         throw instance.value;
     }
 
+    static getAppDir() {
+       return native.getAppDir();
+    }
+
     status() {
         console.log('status');
         return FrontendInstance.promiseify(native.status(this.instance));
@@ -121,6 +125,11 @@ export default class FrontendInstance {
         );
     }
 
+    logout() {
+        console.log('logout');
+        return native.logout(this.instance);
+    }
+
     private static async promiseify<T, E>(promise: Promise<Result<T, E>>) {
         const res = await promise;
         console.log(res);
@@ -128,5 +137,12 @@ export default class FrontendInstance {
             return res.value;
         }
         throw res.value;
+    }
+
+    remove_member(group_uuid: Uuid, user_uuid: Uuid) {
+        console.log('remove_member');
+        return FrontendInstance.promiseify(
+            native.remove_member(this.instance, group_uuid, user_uuid)
+        );
     }
 }

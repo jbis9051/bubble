@@ -5,7 +5,7 @@ pub mod js_interface;
 mod mls_provider;
 mod models;
 mod platform;
-mod public;
+pub mod public;
 mod types;
 mod virtual_memory;
 

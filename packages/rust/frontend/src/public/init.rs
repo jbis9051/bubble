@@ -4,7 +4,9 @@ use crate::platform::DevicePromise;
 use crate::public::promise::promisify;
 use crate::{Error, VIRTUAL_MEMORY};
 use bridge_macro::bridge;
-use serde::Deserialize;
+use log::LevelFilter;
+use oslog::OsLogger;
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::str::FromStr;
@@ -50,13 +52,17 @@ impl TokioThread {
 }
 
 #[bridge]
-#[derive(Deserialize)]
-struct InitOptions {
-    data_directory: String,
-    force_new: bool,
+#[derive(Deserialize, Serialize)]
+pub struct InitOptions {
+    pub data_directory: String,
+    pub force_new: bool,
 }
 
 pub fn init(promise: DevicePromise, json: String) -> Result<(), Error> {
+    OsLogger::new("com.bubble.app")
+        .level_filter(LevelFilter::Trace)
+        .init()
+        .unwrap();
     let options: InitOptions = serde_json::from_str(&json)?;
     let tokio_thread = TokioThread::spawn();
     let handle = tokio_thread.handle.clone();
@@ -69,21 +75,30 @@ pub fn init(promise: DevicePromise, json: String) -> Result<(), Error> {
                 return Ok(instance);
             }
         }
-        let (pool, account_data) = init_async(&options.data_directory).await?;
-        let domain = GlobalKv::get(&pool, "domain")
-            .await?
-            .unwrap_or("http://localhost:3000".to_string()); // TODO: make this not dumb
-        let global_data = GlobalStaticData {
-            data_directory: options.data_directory,
-            domain,
-            tokio: tokio_thread,
-        };
-        let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
+        let frontend_instance =
+            create_frontend_instance(options.data_directory, tokio_thread).await?;
         let address = VIRTUAL_MEMORY.push(Arc::new(frontend_instance));
         Ok(address)
     }));
 
     Ok(())
+}
+
+pub async fn create_frontend_instance(
+    data_directory: String,
+    tokio_thread: TokioThread,
+) -> Result<FrontendInstance, Error> {
+    let (pool, account_data) = init_async(&data_directory).await?;
+    let domain = GlobalKv::get(&pool, "domain")
+        .await?
+        .unwrap_or("http://localhost:3000".to_string()); // TODO: make this not dumb
+    let global_data = GlobalStaticData {
+        data_directory,
+        domain,
+        tokio: tokio_thread,
+    };
+    let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
+    Ok(frontend_instance)
 }
 
 pub async fn init_async(

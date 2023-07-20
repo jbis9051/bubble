@@ -64,6 +64,36 @@ const GroupSettings = observer(() => {
     useEffect(() => {
         navigation.setOptions({
             headerRight: () => (
+                <>
+                    <TouchableOpacity
+                        style={{ marginRight: 15 }}
+                        onPress={() => {
+                            Alert.alert('Are you sure you want to logout?', '', [
+                                {
+                                    text: 'Cancel',
+                                    style: 'cancel',
+                                },
+                                {
+                                    text: 'OK',
+                                    style: 'destructive',
+                                    onPress: () => {
+                                        FrontendInstanceStore.instance
+                                            .logout()
+                                            .then(async() => {
+                                                MainStore.current_group = null;
+                                                MainStore.groups = [];
+                                                MainStore.status = await FrontendInstanceStore.instance.status();
+                                            })
+                                            .catch((err) => {
+                                                Alert.alert('Error', err.message);
+                                            });
+                                    },
+                                },
+                            ]);
+                        }}
+                    >
+                        <Ionicons name={"log-out"} size={24} color={"black"}/>
+                    </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => {
                         // @ts-ignore
@@ -74,6 +104,7 @@ const GroupSettings = observer(() => {
                 >
                     <Ionicons name="ios-add-sharp" size={24} color="black" />
                 </TouchableOpacity>
+                </>
             ),
         });
     }, []);
@@ -108,7 +139,7 @@ const GroupSettings = observer(() => {
                                 navigation.goBack();
                             })
                             .catch((err) => {
-                                Alert.alert('Error', err);
+                                Alert.alert('Error', err.message);
                             })
                             .finally(() => setLeaving(false));
                     },
@@ -144,13 +175,11 @@ const GroupSettings = observer(() => {
                         >
                             <BubbleMember
                                 OnPress={() => {
-                                    const handlePress = () => {
-                                        // @ts-ignore
-                                        navigation.navigate('groupSettings', {
-                                            screen: 'memberDisplay',
-                                            params: { user_uuid },
-                                        });
-                                    };
+                                    // @ts-ignore
+                                    navigation.navigate('groupSettings', {
+                                        screen: 'memberDisplay',
+                                        params: { user_uuid },
+                                    });
                                 }}
                                 member={info.info}
                             />

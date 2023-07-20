@@ -9,6 +9,7 @@ use crate::models::account::inbox::Inbox;
 use crate::models::account::location::Location;
 use crate::types::MLS_GROUP_CONFIG;
 use crate::Error;
+use log::warn;
 use openmls::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -31,20 +32,20 @@ fn print_message(message: &Inbox) {
     match content {
         MlsMessageInBody::PublicMessage(m) => {
             let a: ProtocolMessage = m.into();
-            println!("public: {:?}", a.content_type());
+            warn!("public: {:?}", a.content_type());
         }
         MlsMessageInBody::PrivateMessage(m) => {
             let a: ProtocolMessage = m.into();
-            println!("private: {:?}", a.content_type());
+            warn!("private: {:?}", a.content_type());
         }
         MlsMessageInBody::Welcome(_m) => {
-            println!("welcome")
+            warn!("welcome")
         }
         MlsMessageInBody::GroupInfo(_m) => {
-            println!("GroupInfo")
+            warn!("GroupInfo")
         }
         MlsMessageInBody::KeyPackage(_m) => {
-            println!("key_package")
+            warn!("key_package")
         }
     }
 }
@@ -70,6 +71,7 @@ impl FrontendInstance {
                     .unwrap(),
                 received_date: Utc::now().naive_utc(),
             };
+            print_message(&inbox);
             inbox.create(account_db).await.unwrap();
         }
 
@@ -116,19 +118,22 @@ impl FrontendInstance {
 
                     let exists = Group::from_uuid(account_db, group_id).await.unwrap();
 
-                    if exists.is_none() {
-                        Group {
-                            id: 0,
-                            uuid: group_id,
-                            name: None,
-                            image: None,
-                            updated_at: NaiveDateTime::default(),
-                            in_group: true,
-                        }
-                        .create(account_db)
-                        .await
-                        .unwrap();
+                    if let Some(group) = exists {
+                        group.delete(account_db).await.unwrap();
                     }
+
+                    Group {
+                        id: 0,
+                        uuid: group_id,
+                        name: None,
+                        image: None,
+                        updated_at: NaiveDateTime::default(),
+                        in_group: true,
+                        created_at: NaiveDateTime::default(),
+                    }
+                    .create(account_db)
+                    .await
+                    .unwrap();
 
                     group.save_if_needed(&mls_provider).unwrap();
                 }
@@ -206,6 +211,7 @@ impl FrontendInstance {
         match content {
             ProcessedMessageContent::ApplicationMessage(app) => {
                 let message: Message = serde_json::from_slice(&app.into_bytes()).unwrap();
+                warn!("application: message: {:?}", message);
                 match message {
                     Message::Location(message) => {
                         Location {
@@ -228,6 +234,10 @@ impl FrontendInstance {
                             .await
                             .unwrap()
                             .unwrap();
+                        warn!(
+                            "group to update: {:?}, {} > {}",
+                            group, inbox_message.server_received_date, group.updated_at
+                        );
                         if inbox_message.server_received_date > group.updated_at {
                             group.name = status.name;
                             group.image = status.image.map(|i| i.0);

@@ -35,9 +35,9 @@ pub mod export {
     use crate::public::call as call_impl;
     use crate::public::init as init_impl;
 
-    pub fn init(data_directory: String) {
+    pub fn init(json: String) {
         let promise = DevicePromise::new();
-        init_impl::init(promise, data_directory).unwrap();
+        init_impl::init(promise, json).unwrap();
     }
 
     #[no_mangle]

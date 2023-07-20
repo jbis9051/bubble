@@ -4,6 +4,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use sqlx::Row;
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct Group {
     pub id: i32,
     pub uuid: Uuid,
@@ -11,6 +12,7 @@ pub struct Group {
     pub image: Option<Vec<u8>>,
     pub updated_at: NaiveDateTime,
     pub in_group: bool,
+    pub created_at: NaiveDateTime,
 }
 
 impl From<&SqliteRow> for Group {
@@ -22,6 +24,7 @@ impl From<&SqliteRow> for Group {
             image: row.get("image"),
             updated_at: row.get("updated_at"),
             in_group: row.get("in_group"),
+            created_at: row.get("created_at"),
         }
     }
 }
@@ -29,13 +32,15 @@ impl From<&SqliteRow> for Group {
 impl Group {
     pub async fn create(&mut self, db: &DbPool) -> Result<(), sqlx::Error> {
         *self = (&sqlx::query(
-            "INSERT INTO \"group\" (uuid, name, image) VALUES ($1, $2, $3) RETURNING *;",
+            "INSERT INTO \"group\" (uuid, name, image, in_group, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *;",
         )
-        .bind(self.uuid)
-        .bind(&self.name)
-        .bind(&self.image)
-        .fetch_one(db)
-        .await?)
+            .bind(self.uuid)
+            .bind(&self.name)
+            .bind(&self.image)
+            .bind(self.in_group)
+            .bind(self.updated_at)
+            .fetch_one(db)
+            .await?)
             .into();
         Ok(())
     }
@@ -74,5 +79,13 @@ impl Group {
             .await?
             .map(|r| (&r).into());
         Ok(row)
+    }
+
+    pub async fn delete(&self, db: &DbPool) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM \"group\" WHERE id = $1")
+            .bind(self.id)
+            .execute(db)
+            .await?;
+        Ok(())
     }
 }
