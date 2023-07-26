@@ -97,6 +97,7 @@ impl FrontendInstance {
             out
         };
         for (message, inbox_message) in messages {
+            print_message(&inbox_message);
             let body = message.extract();
             match body {
                 MlsMessageInBody::PublicMessage(m) => {
@@ -154,6 +155,7 @@ impl FrontendInstance {
         inbox_message: &Inbox,
         message: ProtocolMessage,
     ) -> Result<(), ()> {
+        warn!("processing group message: id: {}", inbox_message.id);
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
@@ -170,13 +172,12 @@ impl FrontendInstance {
             )
             .unwrap(),
         );
-
         if message.content_type() != ContentType::Application && group.epoch() > message.epoch() {
-            /* println!(
+            warn!(
                 "skipping message with epoch {} as we are at epoch {}",
                 message.epoch(),
                 group.epoch()
-            );*/
+            );
             return Ok(());
         }
 
@@ -204,8 +205,13 @@ impl FrontendInstance {
                 }
             }
         }
-
-        let group_message = group.process_message(&mls_provider, message).unwrap();
+        let group_message = group
+            .process_message(&mls_provider, message)
+            .map_err(|e| {
+                warn!("error processing message: {:?}", e);
+                e
+            })
+            .unwrap();
         let (_, client_uuid) = parse_identity(group_message.credential().identity()).unwrap();
         let content = group_message.into_content();
         match content {

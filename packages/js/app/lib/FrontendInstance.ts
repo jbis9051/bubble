@@ -145,4 +145,26 @@ export default class FrontendInstance {
             native.remove_member(this.instance, group_uuid, user_uuid)
         );
     }
+
+    has_location_permissions() {
+        console.log('has_location_permissions');
+        return FrontendInstance.promiseify(
+            native.has_location_permissions(this.instance)
+        );
+    }
+
+
+    request_location_permissions() {
+        console.log('request_location_permissions');
+        return FrontendInstance.promiseify(
+            native.request_location_permissions(this.instance)
+        );
+    }
+
+    subscribe_to_location_updates() {
+        console.log('subscribe_to_location_updates');
+        return FrontendInstance.promiseify(
+            native.subscribe_to_location_updates(this.instance)
+        );
+    }
 }

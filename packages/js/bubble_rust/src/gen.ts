@@ -69,6 +69,38 @@ export function receive_messages(instance: FrontendInstance,): Promise<Result<nu
     })).then((res: string) => JSON.parse(res));
 }
 
+export function request_location_permissions(instance: FrontendInstance,): Promise<Result<boolean, void>> {
+    return RustInterop.call(JSON.stringify({
+        instance,
+        method: 'request_location_permissions',
+        args: {},
+    })).then((res: string) => JSON.parse(res));
+}
+
+export function has_location_permissions(instance: FrontendInstance,): Promise<Result<boolean, void>> {
+    return RustInterop.call(JSON.stringify({
+        instance,
+        method: 'has_location_permissions',
+        args: {},
+    })).then((res: string) => JSON.parse(res));
+}
+
+export function subscribe_to_location_updates(instance: FrontendInstance,): Promise<Result<void, void>> {
+    return RustInterop.call(JSON.stringify({
+        instance,
+        method: 'subscribe_to_location_updates',
+        args: {},
+    })).then((res: string) => JSON.parse(res));
+}
+
+export function unsubscribe_from_location_updates(instance: FrontendInstance,): Promise<Result<void, void>> {
+    return RustInterop.call(JSON.stringify({
+        instance,
+        method: 'unsubscribe_from_location_updates',
+        args: {},
+    })).then((res: string) => JSON.parse(res));
+}
+
 export function replace_key_packages(instance: FrontendInstance,): Promise<Result<void, Error>> {
     return RustInterop.call(JSON.stringify({
         instance,

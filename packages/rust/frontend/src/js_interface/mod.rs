@@ -10,6 +10,7 @@ pub mod client;
 pub mod group;
 pub mod location;
 pub mod message;
+pub mod native;
 pub mod user;
 
 #[derive(Debug)]
@@ -35,6 +36,7 @@ pub struct FrontendInstance {
     pub(crate) static_data: GlobalStaticData,
     global_database: SqlitePool,
     account_data: RwLock<Option<GlobalAccountData>>,
+    device_api: DeviceApi,
 }
 
 impl FrontendInstance {
@@ -47,7 +49,12 @@ impl FrontendInstance {
             static_data,
             global_database,
             account_data: RwLock::new(account_data),
+            device_api: DeviceApi::init(),
         }
+    }
+
+    pub async fn logged_in(&self) -> bool {
+        self.account_data.read().await.is_some()
     }
 }
 
@@ -93,6 +100,8 @@ impl FrontendInstance {
 use crate::application_message::Location;
 use crate::js_interface::group::Group;
 use crate::js_interface::user::UserOut;
+use crate::platform::DeviceApi;
+use crate::public::native_api::NativeApi;
 use crate::Error;
 
 export!(
@@ -139,4 +148,9 @@ export!(
     // clients
     replace_key_packages() -> Result<(), Error>;
     search(query: String) -> Result<Vec<UserOut>, Error>;
+    // native
+    request_location_permissions() -> Result<bool, ()>;
+    has_location_permissions() -> Result<bool, ()>;
+    subscribe_to_location_updates() -> Result<(), ()>;
+    unsubscribe_from_location_updates() -> Result<(), ()>;
 );

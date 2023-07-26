@@ -73,5 +73,11 @@
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>$(PRODUCT_NAME) uses your location to show your current location on the map and share your location with your groups.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>$(PRODUCT_NAME) uses your location to show your current location on the map and share your location with your groups.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>$(PRODUCT_NAME) uses your location to show your current location on the map and share your location with your groups.</string>
   </dict>
 </plist>

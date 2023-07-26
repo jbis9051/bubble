@@ -76,8 +76,10 @@ const Map = observer(() => {
     const currentTimer = useRef<NodeJS.Timer | null>(null);
 
     async function updateLocations() {
+        console.log("updateLocations called");
         const group = MainStore.current_group;
         if (!group) {
+            currentTimer.current = setTimeout(updateLocations, 2000);
             return;
         }
         const locations = await Promise.all(
@@ -117,6 +119,7 @@ const Map = observer(() => {
         return () => {
             if (currentTimer.current) {
                 clearTimeout(currentTimer.current);
+                currentTimer.current = null;
             }
         };
     }, []);
@@ -126,6 +129,7 @@ const Map = observer(() => {
             <MapView style={styles.map}>
                 {memberLocations.map((userLocation) => (
                     <CustomMarker
+                        key={userLocation.client_uuid}
                         coordinate={{
                             latitude: userLocation.latitude,
                             longitude: userLocation.longitude,

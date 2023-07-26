@@ -406,6 +406,8 @@ impl FrontendInstance {
             .send_application_message(&mls_provider, &api, &signature, &message, &[client_uuid])
             .await?;
 
+        group.save_if_needed(&mls_provider)?;
+
         Ok(())
     }
 }

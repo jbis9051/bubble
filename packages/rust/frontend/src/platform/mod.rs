@@ -6,6 +6,7 @@ cfg_if!(
 
         pub use ios::export;
         pub use ios::DevicePromise;
+        pub use ios::DeviceApi;
     } else if #[cfg(target_os="android")] {
         pub mod android;
 
@@ -15,6 +16,7 @@ cfg_if!(
         pub mod default;
 
         pub use default::export;
+        pub use default::DeviceApi;
         pub use default::DevicePromise;
     }
 );
