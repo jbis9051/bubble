@@ -33,10 +33,21 @@ export default function MemberDisplay() {
                             return;
                         }
                         FrontendInstanceStore.instance
-                            .remove_member(MainStore.current_group.uuid, curMember.uuid)
+                            .remove_member(
+                                MainStore.current_group.uuid,
+                                curMember.uuid
+                            )
                             .then(async () => {
-                                MainStore.groups = await FrontendInstanceStore.instance.get_groups();
-                                MainStore.current_group = MainStore.groups.find(g => g.uuid === MainStore.current_group?.uuid) || MainStore.groups[0] || null;
+                                MainStore.groups =
+                                    await FrontendInstanceStore.instance.get_groups();
+                                MainStore.current_group =
+                                    MainStore.groups.find(
+                                        (g) =>
+                                            g.uuid ===
+                                            MainStore.current_group?.uuid
+                                    ) ||
+                                    MainStore.groups[0] ||
+                                    null;
                                 navigation.goBack();
                             })
                             .catch((err) => {

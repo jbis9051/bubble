@@ -23,7 +23,7 @@ export default class FrontendInstance {
     }
 
     static getAppDir() {
-       return native.getAppDir();
+        return native.getAppDir();
     }
 
     status() {
@@ -152,7 +152,6 @@ export default class FrontendInstance {
             native.has_location_permissions(this.instance)
         );
     }
-
 
     request_location_permissions() {
         console.log('request_location_permissions');

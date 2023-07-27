@@ -1,14 +1,14 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import {useFonts} from 'expo-font';
-import {SplashScreen, Stack} from 'expo-router';
-import {useEffect, useRef, useState} from 'react';
-import {observer} from 'mobx-react-lite';
-import {Alert} from 'react-native';
-import {autorun} from 'mobx';
+import { useFonts } from 'expo-font';
+import { SplashScreen, Stack } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Alert } from 'react-native';
+import { autorun } from 'mobx';
 import Auth from './auth';
 import MainStore from '../stores/MainStore';
 import FrontendInstanceStore from '../stores/FrontendInstanceStore';
-import FrontendInstance from "../lib/FrontendInstance";
+import FrontendInstance from '../lib/FrontendInstance';
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -26,25 +26,28 @@ const RootLayout = observer(() => {
     const loggedIn = !!MainStore.status?.account_data;
 
     function receive() {
-        console.log("receive called");
         if (receiveTimer.current) {
             clearTimeout(receiveTimer.current);
         }
         FrontendInstanceStore.instance
             .receive_messages()
-            .then(async received => {
-                console.log("received: ", received);
+            .then(async (received) => {
+                console.log('received: ', received);
                 if (received > 0) {
                     MainStore.groups =
                         await FrontendInstanceStore.instance.get_groups();
-                    MainStore.current_group = MainStore.groups.find(g => g.uuid === MainStore.current_group?.uuid) || MainStore.groups[0] || null;
+                    MainStore.current_group =
+                        MainStore.groups.find(
+                            (g) => g.uuid === MainStore.current_group?.uuid
+                        ) ||
+                        MainStore.groups[0] ||
+                        null;
                 }
             })
             .catch((err) => {
                 Alert.alert('Error Receiving Messages', err.message);
             })
             .finally(() => {
-                console.log("setting the timer");
                 receiveTimer.current = setTimeout(receive, 2000);
             });
     }
@@ -54,13 +57,15 @@ const RootLayout = observer(() => {
             autorun(async () => {
                 if (MainStore.status?.account_data) {
                     await FrontendInstanceStore.instance.request_location_permissions();
-                    console.log("location perms: ", await FrontendInstanceStore.instance.has_location_permissions());
+                    console.log(
+                        'location perms: ',
+                        await FrontendInstanceStore.instance.has_location_permissions()
+                    );
                     await FrontendInstanceStore.instance.subscribe_to_location_updates();
                     receive();
                 }
                 return () => {
                     if (receiveTimer.current) {
-                        console.log("clearing the timer")
                         clearTimeout(receiveTimer.current);
                         receiveTimer.current = null;
                     }
@@ -71,14 +76,14 @@ const RootLayout = observer(() => {
 
     useEffect(() => {
         if (!FrontendInstanceStore.isInitialized()) {
-            FrontendInstance.getAppDir().then((appDir) => {
-                    console.log("appDir: ", appDir);
+            FrontendInstance.getAppDir()
+                .then((appDir) => {
+                    console.log('appDir: ', appDir);
                     return FrontendInstanceStore.init({
                         data_directory: appDir,
                         force_new: false,
-                    })
-                }
-            )
+                    });
+                })
                 .then(() => FrontendInstanceStore.instance.status())
                 .then((status) => {
                     MainStore.status = status;
@@ -108,9 +113,9 @@ const RootLayout = observer(() => {
     return (
         <>
             {/* Keep the splash screen open until the assets have loaded. In the future, we should just support async font loading with a native version of font-display. */}
-            {!loaded && <SplashScreen/>}
-            {loaded && !loggedIn && <Auth/>}
-            {loaded && loggedIn && <RootLayoutNav/>}
+            {!loaded && <SplashScreen />}
+            {loaded && !loggedIn && <Auth />}
+            {loaded && loggedIn && <RootLayoutNav />}
         </>
     );
 });
@@ -118,7 +123,7 @@ const RootLayout = observer(() => {
 function RootLayoutNav() {
     return (
         <Stack initialRouteName={'map'}>
-            <Stack.Screen name="map" options={{headerShown: false}}/>
+            <Stack.Screen name="map" options={{ headerShown: false }} />
             <Stack.Screen
                 name="groups"
                 options={{

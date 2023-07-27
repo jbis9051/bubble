@@ -42,14 +42,12 @@ export default function InviteUserComponent({
         FrontendInstanceStore.instance
             .add_member(group_uuid, uuid)
             .then(() =>
-                FrontendInstanceStore.instance.send_group_status(
-                    group_uuid
-                )
+                FrontendInstanceStore.instance.send_group_status(group_uuid)
             )
             .then(async () => {
                 MainStore.groups =
                     await FrontendInstanceStore.instance.get_groups();
-                if(MainStore.current_group === null) {
+                if (MainStore.current_group === null) {
                     return;
                 }
                 MainStore.current_group =
@@ -63,11 +61,14 @@ export default function InviteUserComponent({
             });
     };
 
-    useEffect(() => () => {
+    useEffect(
+        () => () => {
             if (currentSearchTimeout) {
                 clearTimeout(currentSearchTimeout);
             }
-        }, []);
+        },
+        []
+    );
 
     return (
         <>

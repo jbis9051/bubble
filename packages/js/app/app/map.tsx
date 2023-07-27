@@ -76,7 +76,7 @@ const Map = observer(() => {
     const currentTimer = useRef<NodeJS.Timer | null>(null);
 
     async function updateLocations() {
-        console.log("updateLocations called");
+        console.log('updateLocations called');
         const group = MainStore.current_group;
         if (!group) {
             currentTimer.current = setTimeout(updateLocations, 2000);

@@ -68,42 +68,55 @@ const GroupSettings = observer(() => {
                     <TouchableOpacity
                         style={{ marginRight: 15 }}
                         onPress={() => {
-                            Alert.alert('Are you sure you want to logout?', '', [
-                                {
-                                    text: 'Cancel',
-                                    style: 'cancel',
-                                },
-                                {
-                                    text: 'OK',
-                                    style: 'destructive',
-                                    onPress: () => {
-                                        FrontendInstanceStore.instance
-                                            .logout()
-                                            .then(async() => {
-                                                MainStore.current_group = null;
-                                                MainStore.groups = [];
-                                                MainStore.status = await FrontendInstanceStore.instance.status();
-                                            })
-                                            .catch((err) => {
-                                                Alert.alert('Error', err.message);
-                                            });
+                            Alert.alert(
+                                'Are you sure you want to logout?',
+                                '',
+                                [
+                                    {
+                                        text: 'Cancel',
+                                        style: 'cancel',
                                     },
-                                },
-                            ]);
+                                    {
+                                        text: 'OK',
+                                        style: 'destructive',
+                                        onPress: () => {
+                                            FrontendInstanceStore.instance
+                                                .logout()
+                                                .then(async () => {
+                                                    MainStore.current_group =
+                                                        null;
+                                                    MainStore.groups = [];
+                                                    MainStore.status =
+                                                        await FrontendInstanceStore.instance.status();
+                                                })
+                                                .catch((err) => {
+                                                    Alert.alert(
+                                                        'Error',
+                                                        err.message
+                                                    );
+                                                });
+                                        },
+                                    },
+                                ]
+                            );
                         }}
                     >
-                        <Ionicons name={"log-out"} size={24} color={"black"}/>
+                        <Ionicons name={'log-out'} size={24} color={'black'} />
                     </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => {
-                        // @ts-ignore
-                        navigation.navigate('groupSettings', {
-                            screen: 'shareBubble',
-                        });
-                    }}
-                >
-                    <Ionicons name="ios-add-sharp" size={24} color="black" />
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => {
+                            // @ts-ignore
+                            navigation.navigate('groupSettings', {
+                                screen: 'shareBubble',
+                            });
+                        }}
+                    >
+                        <Ionicons
+                            name="ios-add-sharp"
+                            size={24}
+                            color="black"
+                        />
+                    </TouchableOpacity>
                 </>
             ),
         });
