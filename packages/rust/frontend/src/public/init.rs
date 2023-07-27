@@ -4,8 +4,6 @@ use crate::platform::DevicePromise;
 use crate::public::promise::promisify;
 use crate::{Error, VIRTUAL_MEMORY};
 use bridge_macro::bridge;
-use log::LevelFilter;
-use oslog::OsLogger;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::path::Path;
@@ -59,10 +57,11 @@ pub struct InitOptions {
 }
 
 pub fn init(promise: DevicePromise, json: String) -> Result<(), Error> {
+    /*use oslog::OsLogger;
     OsLogger::new("com.bubble.app")
-        .level_filter(LevelFilter::Trace)
-        .init()
-        .unwrap();
+           .level_filter(LevelFilter::Trace)
+           .init()
+           .unwrap();*/
     let options: InitOptions = serde_json::from_str(&json)?;
     let tokio_thread = TokioThread::spawn();
     let handle = tokio_thread.handle.clone();
