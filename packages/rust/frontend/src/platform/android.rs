@@ -1,3 +1,4 @@
+use crate::public::native_api::NativeApi;
 use crate::public::promise::Promise;
 use jni::objects::{GlobalRef, JObject};
 use jni::JavaVM;
@@ -51,7 +52,35 @@ impl Promise for AndroidPromise {
     }
 }
 
+pub struct AndroidApi {}
+
+impl NativeApi for AndroidApi {
+    type Error = ();
+
+    fn init() -> Self {
+        Self {}
+    }
+
+    fn request_location_permissions(&self) -> Result<bool, Self::Error> {
+        println!("request_location_permissions");
+        Ok(true)
+    }
+
+    fn has_location_permissions(&self) -> Result<bool, Self::Error> {
+        Ok(true)
+    }
+
+    fn subscribe_to_location_updates(&self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn unsubscribe_from_location_updates(&self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
 pub type DevicePromise = AndroidPromise;
+pub type DeviceApi = AndroidApi;
 
 pub mod export {
     use crate::platform::DevicePromise;

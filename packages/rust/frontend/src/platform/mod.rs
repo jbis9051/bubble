@@ -12,6 +12,7 @@ cfg_if!(
 
         pub use android::export;
         pub use android::DevicePromise;
+        pub use android::DeviceApi;
     } else {
         pub mod default;
 
