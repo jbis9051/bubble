@@ -1,6 +1,6 @@
 use crate::js_interface::{FrontendInstance, GlobalAccountData, GlobalStaticData};
 use crate::models::kv::{AccountKv, GlobalKv};
-use crate::platform::DevicePromise;
+use crate::platform::{get_default_domain, DevicePromise};
 use crate::public::promise::promisify;
 use crate::{Error, VIRTUAL_MEMORY};
 use bridge_macro::bridge;
@@ -88,9 +88,7 @@ pub async fn create_frontend_instance(
     tokio_thread: TokioThread,
 ) -> Result<FrontendInstance, Error> {
     let (pool, account_data) = init_async(&data_directory).await?;
-    let domain = GlobalKv::get(&pool, "domain")
-        .await?
-        .unwrap_or("http://localhost:3000".to_string()); // TODO: make this not dumb
+    let domain = GlobalKv::get(&pool, "domain").await?.unwrap();
     let global_data = GlobalStaticData {
         data_directory,
         domain,
@@ -106,6 +104,12 @@ pub async fn init_async(
     let database =
         SqlitePool::connect(&format!("sqlite:{}/global.db?mode=rwc", &data_directory)).await?;
     sqlx::migrate!("./migrations/global").run(&database).await?;
+
+    let domain = GlobalKv::get(&database, "domain").await?;
+
+    if domain.is_none() {
+        GlobalKv::set(&database, "domain", get_default_domain());
+    }
 
     let current_account = GlobalKv::get(&database, "current_account").await?;
 

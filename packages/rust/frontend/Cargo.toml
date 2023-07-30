@@ -40,3 +40,8 @@ oslog = "0.2"
 [lib]
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+
+[features]
+default = ["development"]
+development = []
+staging = []
