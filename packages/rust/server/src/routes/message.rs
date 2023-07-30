@@ -8,7 +8,7 @@ use axum::routing::get;
 use axum::Router;
 use axum::{Extension, Json};
 use common::base64::Base64;
-use common::http_types::{CheckMessages, Message as JsonMessage, MessagesResponse, SendMessage};
+use common::http_types::{CheckMessages, DeliveredMessage, MessagesResponse, SendMessage};
 use sqlx::types::chrono::NaiveDateTime;
 use std::iter::Iterator;
 
@@ -79,8 +79,9 @@ async fn receive_message(
 
     let messages_to_return = messages
         .into_iter()
-        .map(|message| JsonMessage {
+        .map(|message| DeliveredMessage {
             message: Base64(message.message),
+            received_date: message.created.timestamp_millis(),
         })
         .collect();
 

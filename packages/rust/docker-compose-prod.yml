@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  migrate:
+    build: db
+    command:
+      - migrate
+    environment:
+      DATABASE_URL: "${DATABASE_URL}"
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "${PORT}:5000"
+    environment:
+      DB_URL: "${DATABASE_URL}"
+      LISTEN_ADDR: "0.0.0.0:5000"
+      SENDGRID_API_KEY: "${SENDGRID_API_KEY}"
+      SENDER_EMAIL: "${SENDER_EMAIL}"
+    depends_on:
+      - migrate

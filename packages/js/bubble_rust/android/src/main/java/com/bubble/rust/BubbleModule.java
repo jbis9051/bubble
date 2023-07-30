@@ -40,4 +40,9 @@ public class BubbleModule extends ReactContextBaseJavaModule {
     nativeCall(json, promise);
   }
 
+  @ReactMethod
+  public void getAppDir(Promise promise) {
+    promise.resolve(getReactApplicationContext().getFilesDir().getAbsolutePath());
+  }
+
 }

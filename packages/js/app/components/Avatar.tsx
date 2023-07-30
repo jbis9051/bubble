@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
-import { View } from './Themed';
+import React from 'react';
+import { View } from 'react-native';
 import StyledText, { CustomTextProps } from './StyledText';
-import { ThemeContext } from '../lib/Context';
+import Colors from '../constants/Colors';
 
 interface AvatarProps {
     name: string;
@@ -13,7 +13,6 @@ export default function Avatar({ name, width, textVariant }: AvatarProps) {
         .split(' ')
         .map((n) => n[0])
         .join('');
-    const theme = useContext(ThemeContext);
 
     return (
         <View
@@ -21,7 +20,7 @@ export default function Avatar({ name, width, textVariant }: AvatarProps) {
                 width,
                 aspectRatio: 1,
                 borderRadius: 9999,
-                backgroundColor: theme.colors.secondaryPaper,
+                backgroundColor: Colors.colors.secondaryPaper,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',

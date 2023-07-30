@@ -1,6 +1,7 @@
 use crate::export;
 use crate::public::init::TokioThread;
 use bridge_macro::bridge;
+use serde::Serialize;
 use sqlx::SqlitePool;
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -9,6 +10,7 @@ pub mod client;
 pub mod group;
 pub mod location;
 pub mod message;
+pub mod native;
 pub mod user;
 
 #[derive(Debug)]
@@ -21,9 +23,12 @@ pub struct GlobalStaticData {
 #[derive(Debug)]
 pub struct GlobalAccountData {
     pub database: SqlitePool,
-    pub bearer: RwLock<String>,            // cached value
-    pub domain: String,                    // cached value
-    pub user_uuid: Uuid,                   // cached value
+    pub bearer: RwLock<String>,
+    // cached value
+    pub domain: String,
+    // cached value
+    pub user_uuid: Uuid,
+    // cached value
     pub client_uuid: RwLock<Option<Uuid>>, // cached value
 }
 
@@ -31,6 +36,7 @@ pub struct FrontendInstance {
     pub(crate) static_data: GlobalStaticData,
     global_database: SqlitePool,
     account_data: RwLock<Option<GlobalAccountData>>,
+    device_api: DeviceApi,
 }
 
 impl FrontendInstance {
@@ -43,25 +49,64 @@ impl FrontendInstance {
             static_data,
             global_database,
             account_data: RwLock::new(account_data),
+            device_api: DeviceApi::init(),
         }
     }
+
+    pub async fn logged_in(&self) -> bool {
+        self.account_data.read().await.is_some()
+    }
+}
+
+#[derive(Serialize)]
+#[bridge]
+pub struct AccountData {
+    pub domain: String,
+    pub user_uuid: Uuid,
+    pub client_uuid: Option<Uuid>,
+}
+
+#[derive(Serialize)]
+#[bridge]
+pub struct Status {
+    pub domain: String,
+    pub data_directory: String,
+    pub account_data: Option<AccountData>,
 }
 
 impl FrontendInstance {
     #[bridge]
-    pub async fn multiply(&self, a: i32, b: i32) -> Result<i32, ()> {
-        Ok(a * b)
+    pub async fn status(&self) -> Result<Status, ()> {
+        let account_data = self.account_data.read().await;
+
+        let account_data_out = if let Some(account_data) = account_data.as_ref() {
+            Some(AccountData {
+                domain: account_data.domain.clone(),
+                user_uuid: account_data.user_uuid,
+                client_uuid: *account_data.client_uuid.read().await,
+            })
+        } else {
+            None
+        };
+
+        Ok(Status {
+            domain: self.static_data.domain.clone(),
+            data_directory: self.static_data.data_directory.clone(),
+            account_data: account_data_out,
+        })
     }
 }
 
 use crate::application_message::Location;
 use crate::js_interface::group::Group;
+use crate::js_interface::user::UserOut;
+use crate::platform::DeviceApi;
+use crate::public::native_api::NativeApi;
 use crate::Error;
-use common::http_types::PublicUser;
 
 export!(
     FrontendInstance,
-    multiply(a: i32, b: i32) -> Result<i32, ()>;
+    status() -> Result<Status, ()>;
     // user
     register(
         username: String,
@@ -77,8 +122,10 @@ export!(
     add_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
     remove_member(group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error>;
     leave_group(group_uuid: Uuid) -> Result<(), Error>;
+    update_group(group_uuid: Uuid, name: Option<String>) -> Result<(), Error>;
+    send_group_status(group_uuid: Uuid) -> Result<(), Error>;
     // message
-    receive_messages() -> Result<(), Error>;
+    receive_messages() -> Result<usize, Error>;
     // location
     get_location(
         group_uuid: Uuid,
@@ -100,5 +147,10 @@ export!(
     ) -> Result<(), ()>;
     // clients
     replace_key_packages() -> Result<(), Error>;
-    search(query: String) -> Result<Vec<PublicUser>, Error>;
+    search(query: String) -> Result<Vec<UserOut>, Error>;
+    // native
+    request_location_permissions() -> Result<bool, ()>;
+    has_location_permissions() -> Result<bool, ()>;
+    subscribe_to_location_updates() -> Result<(), ()>;
+    unsubscribe_from_location_updates() -> Result<(), ()>;
 );

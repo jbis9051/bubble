@@ -4,26 +4,45 @@ use crate::mls_provider::MlsProvider;
 use crate::models::kv::{AccountKv, GlobalKv};
 use crate::types::SIGNATURE_SCHEME;
 use crate::Error;
+use bridge_macro::bridge;
 use common::base64;
+use common::base64::Base64;
 use common::http_types::{PublicUser, SessionTokenResponse};
 use ed25519_dalek::{Keypair, SecretKey, Signer};
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 use rand_core::OsRng;
+use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqlitePoolOptions;
 use std::fs;
 use std::path::Path;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-// create a database with sqlite
-// set database to update global db with user entry
-// identity = key
-// make a key and store in db
-// send an api route to create a user from uuid create account db
-// not updating global var
-// `domain`, `bearer`, `client_uuid`
+#[derive(Serialize, Deserialize, Debug)]
+#[bridge]
+pub struct UserOut {
+    pub uuid: Uuid,
+    pub username: String,
+    pub name: String,
+    pub primary_client_uuid: Option<Uuid>,
+    pub identity: Base64,
+}
+
+impl From<PublicUser> for UserOut {
+    fn from(value: PublicUser) -> Self {
+        Self {
+            uuid: value.uuid,
+            username: value.username,
+            name: value.name,
+            primary_client_uuid: value.primary_client_uuid,
+            identity: value.identity,
+        }
+    }
+}
+
 impl FrontendInstance {
+    #[bridge]
     pub async fn register(
         &self,
         username: String,
@@ -59,6 +78,7 @@ impl FrontendInstance {
         Ok(())
     }
 
+    #[bridge]
     pub async fn login(&self, username_or_email: String, password: String) -> Result<Uuid, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         let res = api.login(username_or_email, password).await?;
@@ -66,14 +86,14 @@ impl FrontendInstance {
         Ok(user_uuid)
     }
 
-    pub async fn login_with_token(&self, res: SessionTokenResponse) -> Result<Uuid, Error> {
+    async fn login_with_token(&self, res: SessionTokenResponse) -> Result<Uuid, Error> {
         let path = format!(
             "{}/accounts/{}.db",
             &self.static_data.data_directory, &res.user_uuid
         );
         if !Path::new(&path).exists() {
             // TODO: fs exist race condition
-            panic!("logging into an account on a device other than the one it was created on is not supported yet");
+            return Err(Error::WrongDevice);
         }
         let account_db = SqlitePoolOptions::new()
             .connect(&format!("sqlite:{}", path))
@@ -160,17 +180,21 @@ impl FrontendInstance {
         Ok(res.user_uuid)
     }
 
+    #[bridge]
     pub async fn logout(&self) -> Result<(), Error> {
         GlobalKv::delete(&self.global_database, "current_account").await?;
+        self.account_data.write().await.take();
         Ok(())
     }
 
+    #[bridge]
     pub async fn forgot(&self, email: String) -> Result<(), Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         api.forgot(email).await?;
         Ok(())
     }
 
+    #[bridge]
     pub async fn confirm(&self, token: Uuid) -> Result<Uuid, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         let res = api.confirm(token).await?;
@@ -178,19 +202,22 @@ impl FrontendInstance {
         Ok(user_uuid)
     }
 
+    #[bridge]
     pub async fn forgot_confirm(&self, password: String, token: Uuid) -> Result<(), Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         api.forgot_confirm(password, token).await?;
         Ok(())
     }
 
+    #[bridge]
     pub async fn forgot_check(&self, token: Uuid) -> Result<bool, Error> {
         let api = BubbleApi::new(self.static_data.domain.clone(), None);
         let res = api.forgot_check(token).await?;
         Ok(res)
     }
 
-    pub async fn search(&self, query: String) -> Result<Vec<PublicUser>, Error> {
+    #[bridge]
+    pub async fn search(&self, query: String) -> Result<Vec<UserOut>, Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
         let api = BubbleApi::new(
@@ -198,6 +225,7 @@ impl FrontendInstance {
             Some(global_data.bearer.read().await.clone()),
         );
         let res = api.search(query).await?;
-        Ok(res)
+        let out = res.into_iter().map(|user| user.into()).collect();
+        Ok(out)
     }
 }

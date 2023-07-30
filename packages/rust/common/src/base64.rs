@@ -13,7 +13,7 @@ pub fn serialize(data: &[u8]) -> String {
 }
 
 // https://users.rust-lang.org/t/serialize-a-vec-u8-to-json-as-base64/57781/5
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Base64(pub Vec<u8>);
 
 impl Deref for Base64 {

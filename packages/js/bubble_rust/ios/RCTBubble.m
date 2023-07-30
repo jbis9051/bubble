@@ -69,4 +69,13 @@ RCT_REMAP_METHOD(call, callWithJson
   call((void *)CFBridgingRetain(callbacker), [json UTF8String]);
 }
 
+RCT_REMAP_METHOD(getAppDir, getAppDirWithResolver
+                 : (RCTPromiseResolveBlock)resolve withRejecter
+                 : (RCTPromiseRejectBlock)reject) {
+
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+    NSString *dir = [paths firstObject];
+    resolve(dir);
+}
+
 @end

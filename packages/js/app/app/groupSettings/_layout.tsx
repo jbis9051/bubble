@@ -1,11 +1,7 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 
-export const unstable_settings = {
-    initialRouteName: 'index',
-};
-
-export default function GroupListModalLayout() {
+export default function GroupSettingsLayout() {
     return (
         <Stack screenOptions={{ presentation: 'modal' }}>
             <Stack.Screen

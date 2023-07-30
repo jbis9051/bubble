@@ -17,9 +17,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { layoutDefaults } from '../constants/Layout';
-import { ThemeContext } from '../lib/Context';
 import StyledText from './StyledText';
 import { Loading } from './Loading';
+import Colors from '../constants/Colors';
 
 interface TextInputProps {
     value: string;
@@ -77,7 +77,6 @@ export function StyledInput(props: TextInputProps) {
         textContentType,
         secureTextEntry,
     } = props;
-    const theme = useContext(ThemeContext);
     const [focused, setFocused] = useState(false);
 
     const labelScale = useSharedValue(0.8);
@@ -113,10 +112,10 @@ export function StyledInput(props: TextInputProps) {
         <View
             style={[
                 {
-                    backgroundColor: theme.colors.primaryPaper,
+                    backgroundColor: Colors.colors.primaryPaper,
                     height: 70,
                     borderRadius: layoutDefaults.paperBorderRadius,
-                    borderColor: theme.colors.secondaryPaper,
+                    borderColor: Colors.colors.secondaryPaper,
                     borderWidth: 1,
                 },
                 viewStyle,
@@ -127,7 +126,7 @@ export function StyledInput(props: TextInputProps) {
                     variant="mini"
                     style={{
                         marginLeft: 22,
-                        color: theme.colors.secondaryPaper,
+                        color: Colors.colors.secondaryPaper,
                         position: 'absolute',
                     }}
                 >

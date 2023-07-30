@@ -1,9 +1,11 @@
+use crate::public::native_api::NativeApi;
 use crate::public::promise::Promise;
 use std::sync;
 use std::sync::mpsc::Receiver;
 use std::sync::Mutex;
 
 pub type DevicePromise = DefaultPromise;
+pub type DeviceApi = DefaultApi;
 
 static RECEIVER: Mutex<Option<Receiver<String>>> = Mutex::new(None);
 
@@ -29,15 +31,42 @@ impl Promise for DefaultPromise {
     }
 }
 
+pub struct DefaultApi {}
+
+impl NativeApi for DefaultApi {
+    type Error = ();
+
+    fn init() -> Self {
+        Self {}
+    }
+
+    fn request_location_permissions(&self) -> Result<bool, Self::Error> {
+        println!("request_location_permissions");
+        Ok(true)
+    }
+
+    fn has_location_permissions(&self) -> Result<bool, Self::Error> {
+        Ok(true)
+    }
+
+    fn subscribe_to_location_updates(&self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn unsubscribe_from_location_updates(&self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
 pub mod export {
     use crate::platform::default::RECEIVER;
     use crate::platform::DevicePromise;
     use crate::public::call as call_impl;
     use crate::public::init as init_impl;
 
-    pub fn init(data_directory: String) {
+    pub fn init(json: String) {
         let promise = DevicePromise::new();
-        init_impl::init(promise, data_directory).unwrap();
+        init_impl::init(promise, json).unwrap();
     }
 
     #[no_mangle]

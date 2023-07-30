@@ -1,102 +1,145 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider as NavThemeProvider,
-} from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import { Provider as ReduxProvider, useSelector } from 'react-redux';
-
-import { UserContext, UserLocal, useSession } from '../lib/bubbleApi/user';
-import SignInScreen from '../components/display/SignInComponent';
-import { ThemeContext } from '../lib/Context';
-import Colors from '../constants/Colors';
-import store from '../redux/store';
-import { selectUser } from '../redux/slices/authSlice';
-import { useGroups } from '../lib/bubbleApi/group';
-import { AndroidPromptProvider } from '../components/PromptProvider';
+import { useEffect, useRef, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Alert } from 'react-native';
+import { autorun } from 'mobx';
+import Auth from './auth';
+import MainStore from '../stores/MainStore';
+import FrontendInstanceStore from '../stores/FrontendInstanceStore';
+import FrontendInstance from '../lib/FrontendInstance';
 
 export {
     // Catch any errors thrown by the Layout component.
     ErrorBoundary,
 } from 'expo-router';
 
-export const unstable_settings = {
-    // Ensure that reloading on `/modal` keeps a back button present.
-    initialRouteName: '(tabs)',
-};
-
-function RootLayout() {
+const RootLayout = observer(() => {
     const [fontsLoaded, error] = useFonts({
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         ...FontAwesome.font,
     });
-    const { loaded: userLoading } = useSession();
-    const { loaded: groupsLoaded } = useGroups();
-    const user = useSelector(selectUser);
+    const [inited, setInited] = useState(false);
+    const receiveTimer = useRef<NodeJS.Timer | null>(null);
+
+    const loggedIn = !!MainStore.status?.account_data;
+
+    function receive() {
+        if (receiveTimer.current) {
+            clearTimeout(receiveTimer.current);
+        }
+        FrontendInstanceStore.instance
+            .receive_messages()
+            .then(async (received) => {
+                console.log('received: ', received);
+                if (received > 0) {
+                    MainStore.groups =
+                        await FrontendInstanceStore.instance.get_groups();
+                    MainStore.current_group =
+                        MainStore.groups.find(
+                            (g) => g.uuid === MainStore.current_group?.uuid
+                        ) ||
+                        MainStore.groups[0] ||
+                        null;
+                }
+            })
+            .catch((err) => {
+                Alert.alert('Error Receiving Messages', err.message);
+            })
+            .finally(() => {
+                receiveTimer.current = setTimeout(receive, 2000);
+            });
+    }
+
+    useEffect(
+        () =>
+            autorun(async () => {
+                if (MainStore.status?.account_data) {
+                    await FrontendInstanceStore.instance.request_location_permissions();
+                    console.log(
+                        'location perms: ',
+                        await FrontendInstanceStore.instance.has_location_permissions()
+                    );
+                    await FrontendInstanceStore.instance.subscribe_to_location_updates();
+                    receive();
+                }
+                return () => {
+                    if (receiveTimer.current) {
+                        clearTimeout(receiveTimer.current);
+                        receiveTimer.current = null;
+                    }
+                };
+            }),
+        []
+    );
+
+    useEffect(() => {
+        if (!FrontendInstanceStore.isInitialized()) {
+            FrontendInstance.getAppDir()
+                .then((appDir) => {
+                    console.log('appDir: ', appDir);
+                    return FrontendInstanceStore.init({
+                        data_directory: appDir,
+                        force_new: false,
+                    });
+                })
+                .then(() => FrontendInstanceStore.instance.status())
+                .then((status) => {
+                    MainStore.status = status;
+                    setInited(true);
+                })
+                .then(async () => {
+                    if (MainStore.status?.account_data) {
+                        MainStore.groups =
+                            await FrontendInstanceStore.instance.get_groups();
+                        if (MainStore.groups.length > 0) {
+                            MainStore.current_group = MainStore.groups[0];
+                        }
+                    }
+                })
+                .catch((err) => {
+                    throw err;
+                });
+        }
+    }, []);
 
     useEffect(() => {
         if (error) throw error;
     }, [error]);
 
-    const loaded = userLoading && fontsLoaded && groupsLoaded;
+    const loaded = fontsLoaded && inited;
 
     return (
         <>
             {/* Keep the splash screen open until the assets have loaded. In the future, we should just support async font loading with a native version of font-display. */}
             {!loaded && <SplashScreen />}
-            {loaded && !user && <SignInScreen />}
-            {loaded && user && <RootLayoutNav user={user} />}
+            {loaded && !loggedIn && <Auth />}
+            {loaded && loggedIn && <RootLayoutNav />}
         </>
     );
-}
+});
 
-function RootLayoutNav({ user }: { user: UserLocal }) {
-    const colorScheme = useColorScheme();
-    const darkMode = colorScheme === 'dark';
-
+function RootLayoutNav() {
     return (
-        <>
-            <NavThemeProvider
-                value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-            >
-                <ThemeContext.Provider
-                    value={darkMode ? Colors.dark : Colors.light}
-                >
-                    <AndroidPromptProvider />
-                    <Stack>
-                        <Stack.Screen
-                            name="(tabs)"
-                            options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                            name="allGroupsModal"
-                            options={{
-                                presentation: 'modal',
-                                headerShown: false,
-                            }}
-                        />
-                        <Stack.Screen
-                            name="groupSettingsModal"
-                            options={{
-                                presentation: 'modal',
-                                headerShown: false,
-                            }}
-                        />
-                    </Stack>
-                </ThemeContext.Provider>
-            </NavThemeProvider>
-        </>
+        <Stack initialRouteName={'map'}>
+            <Stack.Screen name="map" options={{ headerShown: false }} />
+            <Stack.Screen
+                name="groups"
+                options={{
+                    presentation: 'modal',
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name="groupSettings"
+                options={{
+                    presentation: 'modal',
+                    headerShown: false,
+                }}
+            />
+        </Stack>
     );
 }
 
-export default function WithReduxLayout() {
-    return (
-        <ReduxProvider store={store}>
-            <RootLayout />
-        </ReduxProvider>
-    );
-}
+export default RootLayout;

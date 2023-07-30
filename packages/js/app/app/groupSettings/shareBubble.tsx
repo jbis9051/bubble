@@ -1,23 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { Platform, StyleSheet, View } from 'react-native';
 import StyledText from '../../components/StyledText';
-import { View } from '../../components/Themed';
 import InviteUserComponent from '../../components/display/InviteUserComponent';
-import { selectCurrentGroup } from '../../redux/slices/groupSlice';
+import MainStore from '../../stores/MainStore';
 
 export default function ShareBubble() {
-    const curBubble = useSelector(selectCurrentGroup);
+    const current = MainStore.current_group;
 
-    if (!curBubble) return null;
+    if (!current) {
+        return null;
+    }
 
     return (
         <View style={styles.container}>
             <StyledText style={{ marginVertical: 15, marginLeft: 0 }}>
-                Invite Members to {curBubble.name}
+                Invite Members to {current.name}
             </StyledText>
-            <InviteUserComponent groupUuid={curBubble.uuid} />
+            <InviteUserComponent groupUuid={current.uuid} />
             <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
         </View>
     );

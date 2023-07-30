@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use crate::api::BubbleApi;
 use crate::application_message::Message;
 use crate::helper::bubble_group::BubbleGroup;
@@ -10,12 +8,16 @@ use crate::models::account::group::Group;
 use crate::models::account::inbox::Inbox;
 use crate::models::account::location::Location;
 use crate::types::MLS_GROUP_CONFIG;
+use crate::Error;
+use log::warn;
 use openmls::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::types::chrono::{NaiveDateTime, Utc};
 
 use crate::models::kv::AccountKv;
+
+use bridge_macro::bridge;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,27 +32,27 @@ fn print_message(message: &Inbox) {
     match content {
         MlsMessageInBody::PublicMessage(m) => {
             let a: ProtocolMessage = m.into();
-            println!("public: {:?}", a.content_type());
+            warn!("public: {:?}", a.content_type());
         }
         MlsMessageInBody::PrivateMessage(m) => {
             let a: ProtocolMessage = m.into();
-            println!("private: {:?}", a.content_type());
+            warn!("private: {:?}", a.content_type());
         }
         MlsMessageInBody::Welcome(_m) => {
-            println!("welcome")
+            warn!("welcome")
         }
         MlsMessageInBody::GroupInfo(_m) => {
-            println!("GroupInfo")
+            warn!("GroupInfo")
         }
         MlsMessageInBody::KeyPackage(_m) => {
-            println!("key_package")
+            warn!("key_package")
         }
     }
 }
 
 impl FrontendInstance {
-    // #[bridge]
-    pub async fn receive_messages(&self) -> Result<(), crate::Error> {
+    #[bridge]
+    pub async fn receive_messages(&self) -> Result<usize, Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
@@ -60,18 +62,21 @@ impl FrontendInstance {
             Some(global_data.bearer.read().await.clone()),
         );
         let messages = api.receive_messages(*my_client_uuid).await.unwrap();
-
+        let num_received = messages.len();
         for message in messages {
             let mut inbox = Inbox {
                 id: 0,
                 message: message.message.0,
+                server_received_date: NaiveDateTime::from_timestamp_millis(message.received_date)
+                    .unwrap(),
                 received_date: Utc::now().naive_utc(),
             };
+            print_message(&inbox);
             inbox.create(account_db).await.unwrap();
         }
 
         self.process_messages().await;
-        Ok(())
+        Ok(num_received)
     }
 
     async fn process_messages(&self) {
@@ -92,6 +97,7 @@ impl FrontendInstance {
             out
         };
         for (message, inbox_message) in messages {
+            print_message(&inbox_message);
             let body = message.extract();
             match body {
                 MlsMessageInBody::PublicMessage(m) => {
@@ -113,17 +119,22 @@ impl FrontendInstance {
 
                     let exists = Group::from_uuid(account_db, group_id).await.unwrap();
 
-                    if exists.is_none() {
-                        Group {
-                            id: 0,
-                            uuid: group_id,
-                            name: None,
-                            image: None,
-                        }
-                        .create(account_db)
-                        .await
-                        .unwrap();
+                    if let Some(group) = exists {
+                        group.delete(account_db).await.unwrap();
                     }
+
+                    Group {
+                        id: 0,
+                        uuid: group_id,
+                        name: None,
+                        image: None,
+                        updated_at: NaiveDateTime::default(),
+                        in_group: true,
+                        created_at: NaiveDateTime::default(),
+                    }
+                    .create(account_db)
+                    .await
+                    .unwrap();
 
                     group.save_if_needed(&mls_provider).unwrap();
                 }
@@ -144,6 +155,7 @@ impl FrontendInstance {
         inbox_message: &Inbox,
         message: ProtocolMessage,
     ) -> Result<(), ()> {
+        warn!("processing group message: id: {}", inbox_message.id);
         let global = self.account_data.read().await;
         let global_data = global.as_ref().unwrap();
         let account_db = &global_data.database;
@@ -160,13 +172,12 @@ impl FrontendInstance {
             )
             .unwrap(),
         );
-
         if message.content_type() != ContentType::Application && group.epoch() > message.epoch() {
-            /* println!(
+            warn!(
                 "skipping message with epoch {} as we are at epoch {}",
                 message.epoch(),
                 group.epoch()
-            );*/
+            );
             return Ok(());
         }
 
@@ -194,13 +205,19 @@ impl FrontendInstance {
                 }
             }
         }
-
-        let group_message = group.process_message(&mls_provider, message).unwrap();
+        let group_message = group
+            .process_message(&mls_provider, message)
+            .map_err(|e| {
+                warn!("error processing message: {:?}", e);
+                e
+            })
+            .unwrap();
         let (_, client_uuid) = parse_identity(group_message.credential().identity()).unwrap();
         let content = group_message.into_content();
         match content {
             ProcessedMessageContent::ApplicationMessage(app) => {
                 let message: Message = serde_json::from_slice(&app.into_bytes()).unwrap();
+                warn!("application: message: {:?}", message);
                 match message {
                     Message::Location(message) => {
                         Location {
@@ -217,6 +234,22 @@ impl FrontendInstance {
                         .create(account_db)
                         .await
                         .unwrap();
+                    }
+                    Message::GroupStatus(status) => {
+                        let mut group = Group::from_uuid(account_db, group.group_uuid())
+                            .await
+                            .unwrap()
+                            .unwrap();
+                        warn!(
+                            "group to update: {:?}, {} > {}",
+                            group, inbox_message.server_received_date, group.updated_at
+                        );
+                        if inbox_message.server_received_date > group.updated_at {
+                            group.name = status.name;
+                            group.image = status.image.map(|i| i.0);
+                            group.updated_at = Utc::now().naive_utc();
+                            group.update(account_db).await.unwrap();
+                        }
                     }
                 }
             }

@@ -1,4 +1,4 @@
-import { RustInterop } from './gen';
+import { InitOptions, RustInterop } from './gen';
 
 export * from './gen';
 
@@ -13,9 +13,18 @@ export type Result<T, E> =
       };
 
 export type Uuid = string;
+export type Base64 = string;
 
-export function init(dataDir: string): Promise<FrontendInstance> {
-    return RustInterop.init(dataDir);
+export function init(
+    options: InitOptions
+): Promise<Result<FrontendInstance, string>> {
+    return RustInterop.init(JSON.stringify(options)).then((res: string) =>
+        JSON.parse(res)
+    );
+}
+
+export function getAppDir(): Promise<string> {
+    return RustInterop.getAppDir();
 }
 
 declare const tag: unique symbol;

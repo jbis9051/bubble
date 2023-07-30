@@ -1,49 +1,123 @@
-import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Touchable, TouchableHighlight, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { View } from '../Themed';
+import { UserOut } from '@bubble/react-native-bubble-rust';
+import { useNavigation } from 'expo-router';
 import StyledText from '../StyledText';
-import { GroupService } from '../../lib/bubbleApi/group';
-import { LoggingService } from '../../lib/bubbleApi/logging';
 import { StyledInput } from '../Input';
 import StyledButton from '../bubbleUI/Button';
+import groups from '../../app/groups';
+import FrontendInstanceStore from '../../stores/FrontendInstanceStore';
+import Colors from '../../constants/Colors';
+import { BubbleMember } from '../../app/groupSettings';
+import MainStore from '../../stores/MainStore';
 
 interface InviteUserComponentProps {
     groupUuid: string;
 }
+
 export default function InviteUserComponent({
     groupUuid,
 }: InviteUserComponentProps) {
     const [username, setUsername] = useState('');
+    const [searchResults, setSearchResults] = useState<UserOut[]>([]);
+    const [currentSearchTimeout, setCurrentSearchTimeout] =
+        useState<null | NodeJS.Timer>(null);
+    const navigation = useNavigation();
 
     const handleInvite = () => {
-        if (!username.length) return Alert.alert('Please enter a username');
-        GroupService.invite_user(groupUuid, username)
-            .then(() => {
-                setUsername('');
+        if (username.length === 0) {
+            return Alert.alert('Please enter a username');
+        }
+        const uuid = searchResults.find(
+            (user) => user.username === username
+        )?.uuid;
+        if (!uuid) {
+            return Alert.alert('User not found');
+        }
+        if (MainStore.current_group === null) {
+            return Alert.alert('No group selected');
+        }
+        const group_uuid = MainStore.current_group.uuid;
+        FrontendInstanceStore.instance
+            .add_member(group_uuid, uuid)
+            .then(() =>
+                FrontendInstanceStore.instance.send_group_status(group_uuid)
+            )
+            .then(async () => {
+                MainStore.groups =
+                    await FrontendInstanceStore.instance.get_groups();
+                if (MainStore.current_group === null) {
+                    return;
+                }
+                MainStore.current_group =
+                    MainStore.groups.find(
+                        (group) => MainStore.current_group!.uuid === group.uuid
+                    ) || null;
+                navigation.goBack();
             })
-            .catch(LoggingService.error);
+            .catch((err) => {
+                Alert.alert('Error Inviting User', err.message);
+            });
     };
+
+    useEffect(
+        () => () => {
+            if (currentSearchTimeout) {
+                clearTimeout(currentSearchTimeout);
+            }
+        },
+        []
+    );
 
     return (
         <>
             <StyledInput
                 label="Invite Username"
                 value={username}
-                onChange={setUsername}
+                onChange={(e) => {
+                    if (currentSearchTimeout) {
+                        clearTimeout(currentSearchTimeout);
+                    }
+                    setUsername(e);
+                    if (e.length === 0) {
+                        return setSearchResults([]);
+                    }
+                    setCurrentSearchTimeout(
+                        setTimeout(async () => {
+                            const results =
+                                await FrontendInstanceStore.instance.search(e);
+                            setSearchResults(results);
+                        }, 1000)
+                    );
+                }}
             />
             <View
                 style={{
                     display: 'flex',
-                    flexDirection: 'row',
                     alignItems: 'center',
                     marginTop: 10,
                 }}
             >
-                <Feather name="info" size={20} color="black" />
-                <StyledText nomargin style={{ marginLeft: 5 }} variant="mini">
-                    You can find the username in the account tab.
-                </StyledText>
+                {searchResults.map((result, i) => (
+                    <View
+                        style={{
+                            borderTopColor: Colors.colors.secondaryPaper,
+                            borderBottomColor: Colors.colors.secondaryPaper,
+                            borderTopWidth: i === 0 ? 1 : 0,
+                            borderBottomWidth: 1,
+                            width: '100%',
+                        }}
+                        key={result.uuid}
+                    >
+                        <BubbleMember
+                            OnPress={() => {
+                                setUsername(result.username);
+                            }}
+                            member={result}
+                        />
+                    </View>
+                ))}
             </View>
             <StyledButton
                 color="primary"
@@ -51,7 +125,7 @@ export default function InviteUserComponent({
                 onPress={handleInvite}
                 disabled={!username.length}
             >
-                Create
+                Invite
             </StyledButton>
         </>
     );

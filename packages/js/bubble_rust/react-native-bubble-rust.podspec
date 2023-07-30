@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => package["repository"]["url"], :tag => "v#{s.version}" }
 
   s.platforms    = { :ios => "11.0" }
-
+  s.framework      = 'CoreLocation'
   s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp}"
   s.vendored_libraries = "rust/libfrontend.a"
 

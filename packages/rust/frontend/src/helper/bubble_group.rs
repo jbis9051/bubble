@@ -9,12 +9,21 @@ use openmls::prelude::{GroupId, InnerState, LeafNodeIndex, Member, MlsGroup, Tls
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_traits::OpenMlsCryptoProvider;
 
+use log::warn;
 use std::ops::{Deref, DerefMut};
 use uuid::Uuid;
 
 pub struct BubbleGroup {
     group: MlsGroup,
     group_uuid: Uuid,
+}
+
+impl Drop for BubbleGroup {
+    fn drop(&mut self) {
+        if self.group.state_changed() == InnerState::Changed {
+            warn!("dropping group {:?} with unsaved changes", self.group_uuid);
+        }
+    }
 }
 
 impl BubbleGroup {
@@ -105,6 +114,7 @@ impl BubbleGroup {
         message: &Message,
         exclude_client: &[Uuid],
     ) -> Result<(), Error> {
+        warn!("send_application_message");
         let mls_message = serde_json::to_string(message)?;
         let mls_message_bytes = mls_message.as_bytes();
         let mls_out = self

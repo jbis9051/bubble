@@ -6,6 +6,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
     WithTimingConfig,
@@ -16,27 +17,18 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { Entypo } from '@expo/vector-icons';
-import { useDispatch } from 'react-redux';
-import { UserLocal, UserService } from '../../lib/bubbleApi/user';
-import { LoggingService } from '../../lib/bubbleApi/logging';
-import StyledButton, { TextButton } from '../bubbleUI/Button';
-import StyledText from '../StyledText';
-import { StyledInput } from '../Input';
-import SignUp1Svg from '../../assets/svgs/SignUp1Background.svg';
-import SignUp2Svg from '../../assets/svgs/SignUp2Background.svg';
-import { View } from '../Themed';
-import { setAuth } from '../../redux/slices/authSlice';
+import StyledButton, { TextButton } from '../components/bubbleUI/Button';
+import StyledText from '../components/StyledText';
+import { StyledInput } from '../components/Input';
+import SignUp1Svg from '../assets/svgs/SignUp1Background.svg';
+import SignUp2Svg from '../assets/svgs/SignUp2Background.svg';
+import FrontendInstanceStore from '../stores/FrontendInstanceStore';
+import MainStore from '../stores/MainStore';
 
-function SignUpFlow({
-    refreshUser,
-    toggleSignUp,
-}: {
-    refreshUser: () => void;
-    toggleSignUp: () => void;
-}) {
+function SignUp({ switchToSignIn }: { switchToSignIn: () => void }) {
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
-    const [displayName, setDisplayName] = useState('');
+    const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
@@ -44,12 +36,11 @@ function SignUpFlow({
     const [displayedSlide, setDisplayedSlide] = useState(0);
 
     const [loading, setLoading] = useState(false);
-
     const submitSignUp = async () => {
         if (
             !email ||
             !username ||
-            !displayName ||
+            !name ||
             !password ||
             !passwordConfirmation
         ) {
@@ -61,10 +52,17 @@ function SignUpFlow({
             return;
         }
         setLoading(true);
-        await UserService.register(username, password, displayName)
-            .then(refreshUser)
-            .catch(LoggingService.error);
-        setLoading(false);
+        FrontendInstanceStore.instance
+            .register(username, password, name, email)
+            .then(() => {
+                slideForward();
+            })
+            .catch((e) => {
+                Alert.alert('Error', e.message);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
     const backArrowDeltaX = 100;
@@ -142,8 +140,8 @@ function SignUpFlow({
                 Continue
             </StyledButton>
             <StyledText>Already have an account?</StyledText>
-            <TextButton color="secondary" onPress={toggleSignUp} underlined>
-                Sign in instead
+            <TextButton color="secondary" onPress={switchToSignIn} underlined>
+                Sign In Instead
             </TextButton>
         </>,
         <>
@@ -155,8 +153,8 @@ function SignUpFlow({
             />
             <StyledInput
                 viewStyle={styles.textInput}
-                value={displayName}
-                onChange={setDisplayName}
+                value={name}
+                onChange={setName}
                 label="Display Name"
             />
             <StyledButton
@@ -197,6 +195,14 @@ function SignUpFlow({
                 Finish Sign Up
             </StyledButton>
         </>,
+        <>
+            <StyledText variant="h1" style={{ textAlign: 'center' }}>
+                Welcome to Bubble!
+            </StyledText>
+            <StyledText style={{ textAlign: 'center' }}>
+                Please check your email to verify your account
+            </StyledText>
+        </>,
     ];
 
     return (
@@ -222,31 +228,40 @@ function SignUpFlow({
                                 backgroundColor: 'transparent',
                             }}
                         >
-                            <Animated.View
-                                style={[
-                                    {
-                                        margin: 15,
-                                        position: 'absolute',
-                                        zIndex: 1,
-                                    },
-                                    animatedBackArrowStyle,
-                                ]}
-                            >
-                                <TouchableOpacity onPress={slideBackward}>
-                                    <Entypo
-                                        name="chevron-left"
-                                        size={24}
-                                        color="black"
-                                    />
-                                </TouchableOpacity>
-                            </Animated.View>
-                            <StyledText
-                                variant="h1"
-                                nomargin
-                                style={{ textAlign: 'center', width: '100%' }}
-                            >
-                                Sign up
-                            </StyledText>
+                            {curSlide != slides.length - 1 && (
+                                <>
+                                    <Animated.View
+                                        style={[
+                                            {
+                                                margin: 15,
+                                                position: 'absolute',
+                                                zIndex: 1,
+                                            },
+                                            animatedBackArrowStyle,
+                                        ]}
+                                    >
+                                        <TouchableOpacity
+                                            onPress={slideBackward}
+                                        >
+                                            <Entypo
+                                                name="chevron-left"
+                                                size={24}
+                                                color="black"
+                                            />
+                                        </TouchableOpacity>
+                                    </Animated.View>
+                                    <StyledText
+                                        variant="h1"
+                                        nomargin
+                                        style={{
+                                            textAlign: 'center',
+                                            width: '100%',
+                                        }}
+                                    >
+                                        Sign Up
+                                    </StyledText>
+                                </>
+                            )}
                         </View>
                         <Animated.View style={animatedBodyStyle}>
                             {slides[displayedSlide]}
@@ -258,17 +273,12 @@ function SignUpFlow({
     );
 }
 
-function SignInFlow({
-    toggleSignUp,
-    toggleForgotPassword,
-    submitSignIn,
+function SignIn({
+    switchToSignUp,
+    switchToForgotPassword,
 }: {
-    toggleSignUp: () => void;
-    toggleForgotPassword: () => void;
-    submitSignIn: (
-        email: string,
-        password: string
-    ) => Promise<void> | undefined;
+    switchToSignUp: () => void;
+    switchToForgotPassword: () => void;
 }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -276,8 +286,21 @@ function SignInFlow({
 
     const submit = async () => {
         setLoading(true);
-        await submitSignIn(email, password);
-        setLoading(false);
+        FrontendInstanceStore.instance
+            .login(email, password)
+            .then(async (_uuid) => {
+                MainStore.groups =
+                    await FrontendInstanceStore.instance.get_groups();
+                MainStore.status =
+                    await FrontendInstanceStore.instance.status();
+                await FrontendInstanceStore.instance.replace_key_packages();
+            })
+            .catch((err) => {
+                Alert.alert('Error', err.message);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
     return (
@@ -308,7 +331,7 @@ function SignInFlow({
                                 nomargin
                                 style={{ textAlign: 'center', width: '100%' }}
                             >
-                                Welcome back
+                                Welcome Back
                             </StyledText>
                         </View>
                         <StyledInput
@@ -336,18 +359,18 @@ function SignInFlow({
                         </StyledButton>
                         <TextButton
                             color="secondary"
-                            onPress={toggleForgotPassword}
+                            onPress={switchToForgotPassword}
                             underlined
                         >
-                            Forgot password
+                            Forgot Password
                         </TextButton>
                         <StyledText>Don't have an account yet?</StyledText>
                         <TextButton
                             color="secondary"
-                            onPress={toggleSignUp}
+                            onPress={switchToSignUp}
                             underlined
                         >
-                            Create an account
+                            Create An Account
                         </TextButton>
                     </SafeAreaView>
                 </ScrollView>
@@ -356,20 +379,20 @@ function SignInFlow({
     );
 }
 
-function ResetPasswordFlow({
-    toggleForgotPassword,
-    submitForgotPassword,
-}: {
-    toggleForgotPassword: () => void;
-    submitForgotPassword: (email: string) => Promise<void> | undefined;
-}) {
+function ForgotPassword({ switchToSignIn }: { switchToSignIn: () => void }) {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
 
     const submit = async () => {
         setLoading(true);
-        await submitForgotPassword(email);
-        setLoading(false);
+        FrontendInstanceStore.instance
+            .forgot(email)
+            .catch((err) => {
+                Alert.alert('Error', err.message);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
     return (
@@ -421,7 +444,7 @@ function ResetPasswordFlow({
                         </StyledButton>
                         <TextButton
                             color="secondary"
-                            onPress={toggleForgotPassword}
+                            onPress={switchToSignIn}
                             underlined
                         >
                             Back
@@ -433,67 +456,34 @@ function ResetPasswordFlow({
     );
 }
 
-export default function SignInScreen() {
-    const dispatch = useDispatch();
+enum AuthPage {
+    SIGN_IN,
+    SIGN_UP,
+    FORGOT_PASSWORD,
+}
 
-    const [forgotPassword, setForgotPassword] = useState(false);
-    const [signingUp, setSigningUp] = useState(true);
+export default function Auth() {
+    const [page, setPage] = useState(AuthPage.SIGN_IN);
 
-    const refreshUser = () => {
-        UserService.retrieveSession()
-            .then((s) => {
-                dispatch(setAuth(s));
-            })
-            .catch(LoggingService.error);
-    };
-
-    const submitSignIn = (email: string, password: string) => {
-        if (!email || !password) {
-            Alert.alert('Please fill out all fields');
-            return;
-        }
-        return UserService.login(email, password)
-            .then(refreshUser)
-            .catch(LoggingService.error);
-    };
-
-    const submitForgotPassword = (email: string) => {
-        if (!email) {
-            Alert.alert('Please fill out all fields');
-            return;
-        }
-        return UserService.forgot(email)
-            .then(() =>
-                Alert.alert('Check your email for a password reset link')
-            )
-            .catch(LoggingService.error);
-    };
-
-    const toggleSignUp = () => setSigningUp(!signingUp);
-    const toggleForgotPassword = () => setForgotPassword(!forgotPassword);
-
-    if (forgotPassword) {
-        return (
-            <ResetPasswordFlow
-                submitForgotPassword={submitForgotPassword}
-                toggleForgotPassword={toggleForgotPassword}
-            />
-        );
+    switch (page) {
+        case AuthPage.SIGN_IN:
+            return (
+                <SignIn
+                    switchToSignUp={() => setPage(AuthPage.SIGN_UP)}
+                    switchToForgotPassword={() =>
+                        setPage(AuthPage.FORGOT_PASSWORD)
+                    }
+                />
+            );
+        case AuthPage.SIGN_UP:
+            return <SignUp switchToSignIn={() => setPage(AuthPage.SIGN_IN)} />;
+        case AuthPage.FORGOT_PASSWORD:
+            return (
+                <ForgotPassword
+                    switchToSignIn={() => setPage(AuthPage.SIGN_IN)}
+                />
+            );
     }
-
-    if (signingUp) {
-        return (
-            <SignUpFlow refreshUser={refreshUser} toggleSignUp={toggleSignUp} />
-        );
-    }
-
-    return (
-        <SignInFlow
-            toggleSignUp={toggleSignUp}
-            toggleForgotPassword={toggleForgotPassword}
-            submitSignIn={submitSignIn}
-        />
-    );
 }
 
 const styles = StyleSheet.create({

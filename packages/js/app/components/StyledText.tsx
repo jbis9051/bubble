@@ -1,5 +1,4 @@
-import { StyleProp, TextStyle } from 'react-native';
-import { Text as BaseText, TextProps } from './Themed';
+import { StyleProp, Text, TextProps, TextStyle } from 'react-native';
 
 const baseTextStyle: StyleProp<TextStyle> = {
     fontFamily: 'System',
@@ -15,7 +14,7 @@ const DEFAULT_MARGIN = 15;
 
 function Heading1(props: TextProps) {
     return (
-        <BaseText
+        <Text
             {...props}
             style={[
                 {
@@ -32,10 +31,9 @@ function Heading1(props: TextProps) {
     );
 }
 
-// ex: "Fall Break is just around the corner!"
 function Heading2(props: TextProps) {
     return (
-        <BaseText
+        <Text
             {...props}
             style={[
                 {
@@ -54,7 +52,7 @@ function Heading2(props: TextProps) {
 
 function Body(props: TextProps) {
     return (
-        <BaseText
+        <Text
             {...props}
             style={[
                 {
@@ -73,7 +71,7 @@ function Body(props: TextProps) {
 
 function Mini(props: TextProps) {
     return (
-        <BaseText
+        <Text
             {...props}
             style={[
                 {

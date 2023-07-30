@@ -1,32 +1,42 @@
 use crate::api::BubbleApi;
+use crate::application_message::{GroupStatus, Message};
 use crate::helper::bubble_group::BubbleGroup;
 use crate::helper::helper::get_this_client_mls_resources;
 use crate::helper::resource_fetcher::ResourceFetcher;
+use crate::js_interface::user::UserOut;
 use crate::js_interface::FrontendInstance;
 use crate::mls_provider::MlsProvider;
 use crate::models::account::group::Group as GroupModel;
 use crate::types::MLS_GROUP_CONFIG;
 use crate::Error;
 use bridge_macro::bridge;
+use common::base64::Base64;
 use openmls::group::MlsGroup;
 use openmls::prelude::{GroupId, ProtocolVersion, TlsSerializeTrait};
 use openmls_traits::OpenMlsCryptoProvider;
 use serde::{Deserialize, Serialize};
+use sqlx::types::chrono::{NaiveDateTime, Utc};
 use std::collections::HashMap;
-use tokio::io::AsyncReadExt;
 use uuid::Uuid;
 
 #[bridge]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserGroupInfo {
+    pub info: UserOut,
+    pub clients: Vec<Uuid>,
+}
+
+#[bridge]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Group {
     pub uuid: Uuid,
     pub name: Option<String>,
     pub image: Option<Vec<u8>>,
-    pub members: HashMap<Uuid, Vec<Uuid>>,
+    pub members: HashMap<Uuid, UserGroupInfo>,
 }
 
 impl FrontendInstance {
-    //#[bridge]
+    #[bridge]
     pub async fn get_groups(&self) -> Result<Vec<Group>, Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -38,7 +48,7 @@ impl FrontendInstance {
         );
         let resource_fetcher = ResourceFetcher::new(api.clone(), account_db.clone());
 
-        let db_groups = GroupModel::all(account_db).await?;
+        let db_groups = GroupModel::all_in_group(account_db).await?;
 
         let mut out = Vec::with_capacity(db_groups.len());
 
@@ -46,15 +56,28 @@ impl FrontendInstance {
             let mls_group = BubbleGroup::new_from_uuid(&group.uuid, &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?;
             let members = mls_group.get_group_members()?;
-            let mut out_members: HashMap<_, Vec<_>> = HashMap::with_capacity(members.len());
+            let mut out_members: HashMap<_, _> = HashMap::with_capacity(members.len());
             for member in members {
                 let client = resource_fetcher
                     .get_client_partial_authentication(&member.client_uuid)
                     .await?;
+                let user = resource_fetcher
+                    .get_user_partial_authentication(&client.user_uuid)
+                    .await?;
                 out_members
                     .entry(client.user_uuid)
-                    .or_insert_with(|| Vec::with_capacity(1))
-                    .push(client.uuid);
+                    .or_insert_with(|| UserGroupInfo {
+                        info: UserOut {
+                            uuid: client.user_uuid,
+                            username: user.username,
+                            name: user.name,
+                            primary_client_uuid: user.primary_client_uuid,
+                            identity: Base64(user.identity),
+                        },
+                        clients: Vec::with_capacity(1),
+                    })
+                    .clients
+                    .push(member.client_uuid);
             }
             out.push(Group {
                 uuid: group.uuid,
@@ -66,7 +89,7 @@ impl FrontendInstance {
         Ok(out)
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn create_group(&self) -> Result<Uuid, Error> {
         let global = self.account_data.read().await;
         let account_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -93,6 +116,9 @@ impl FrontendInstance {
             uuid,
             name: None,
             image: None,
+            updated_at: NaiveDateTime::default(),
+            in_group: true,
+            created_at: NaiveDateTime::default(),
         }
         .create(account_db)
         .await?;
@@ -100,7 +126,7 @@ impl FrontendInstance {
         Ok(uuid)
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn add_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -128,6 +154,10 @@ impl FrontendInstance {
         let clients = resource_fetcher
             .get_clients_full_authentication(&user_uuid)
             .await?;
+
+        if clients.is_empty() {
+            return Err(Error::NoClientsFound);
+        }
 
         let mut key_packages = Vec::with_capacity(clients.len());
         let mut client_uuids = Vec::with_capacity(clients.len());
@@ -168,7 +198,7 @@ impl FrontendInstance {
         Ok(())
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn remove_member(&self, group_uuid: Uuid, user_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -222,7 +252,7 @@ impl FrontendInstance {
         Ok(())
     }
 
-    //#[bridge]
+    #[bridge]
     pub async fn leave_group(&self, group_uuid: Uuid) -> Result<(), Error> {
         let global = self.account_data.read().await;
         let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
@@ -242,6 +272,9 @@ impl FrontendInstance {
             MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
                 .ok_or_else(|| Error::MLSGroupLoad)?,
         );
+        let mut group_model = GroupModel::from_uuid(account_db, group.group_uuid())
+            .await?
+            .unwrap();
 
         let my_user_uuid = &global_data.user_uuid;
         let my_client_uuid = &global_data
@@ -283,6 +316,94 @@ impl FrontendInstance {
 
         group
             .send_message(&api, &leave_message, &[*my_client_uuid])
+            .await?;
+
+        group.save_if_needed(&mls_provider)?;
+
+        group_model.in_group = false;
+        group_model.update(account_db).await?;
+
+        Ok(())
+    }
+
+    #[bridge]
+    pub async fn update_group(&self, group_uuid: Uuid, name: Option<String>) -> Result<(), Error> {
+        let global = self.account_data.read().await;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
+        let account_db = &global_data.database;
+        let mls_provider = MlsProvider::new(account_db.clone());
+        let mut group = BubbleGroup::new(
+            MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
+                .ok_or_else(|| Error::MLSGroupLoad)?,
+        );
+        let api = BubbleApi::new(
+            global_data.domain.clone(),
+            Some(global_data.bearer.read().await.clone()),
+        );
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
+
+        let (signature, _) = get_this_client_mls_resources(
+            &global_data.user_uuid,
+            &client_uuid,
+            account_db,
+            &mls_provider,
+        )
+        .await?;
+
+        let message = Message::GroupStatus(GroupStatus {
+            name: name.clone(),
+            image: None,
+        });
+
+        group
+            .send_application_message(&mls_provider, &api, &signature, &message, &[client_uuid])
+            .await?;
+
+        let mut group = GroupModel::from_uuid(account_db, group_uuid)
+            .await?
+            .unwrap();
+        group.name = name;
+        group.updated_at = Utc::now().naive_utc();
+        group.update(account_db).await?;
+
+        Ok(())
+    }
+
+    #[bridge]
+    pub async fn send_group_status(&self, group_uuid: Uuid) -> Result<(), Error> {
+        let global = self.account_data.read().await;
+        let global_data = global.as_ref().ok_or_else(|| Error::NoGlobalAccountData)?;
+        let account_db = &global_data.database;
+        let mls_provider = MlsProvider::new(account_db.clone());
+        let api = BubbleApi::new(
+            global_data.domain.clone(),
+            Some(global_data.bearer.read().await.clone()),
+        );
+        let group = GroupModel::from_uuid(account_db, group_uuid)
+            .await?
+            .unwrap();
+        let client_uuid = global_data.client_uuid.read().await.unwrap();
+
+        let message = Message::GroupStatus(GroupStatus {
+            name: group.name,
+            image: group.image.map(Base64),
+        });
+
+        let (signature, _) = get_this_client_mls_resources(
+            &global_data.user_uuid,
+            &client_uuid,
+            account_db,
+            &mls_provider,
+        )
+        .await?;
+
+        let mut group = BubbleGroup::new(
+            MlsGroup::load(&GroupId::from_slice(group_uuid.as_ref()), &mls_provider)
+                .ok_or_else(|| Error::MLSGroupLoad)?,
+        );
+
+        group
+            .send_application_message(&mls_provider, &api, &signature, &message, &[client_uuid])
             .await?;
 
         group.save_if_needed(&mls_provider)?;

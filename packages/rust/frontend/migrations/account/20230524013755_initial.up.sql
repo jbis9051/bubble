@@ -3,6 +3,7 @@ CREATE TABLE user (
     uuid TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
+    primary_client_uuid TEXT NULL,
     identity TEXT NOT NULL,
     updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -31,7 +32,10 @@ CREATE TABLE "group" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE,
     name TEXT NULL,
-    image BLOB NULL
+    image BLOB NULL,
+    updated_at DATETIME NOT NULL,
+    in_group BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE kv (
@@ -52,5 +56,6 @@ CREATE TABLE keystore (
 CREATE TABLE inbox (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     message BLOB NOT NULL,
+    server_received_date DATETIME NOT NULL,
     received_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 )

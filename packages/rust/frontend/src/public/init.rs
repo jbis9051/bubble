@@ -1,8 +1,10 @@
 use crate::js_interface::{FrontendInstance, GlobalAccountData, GlobalStaticData};
 use crate::models::kv::{AccountKv, GlobalKv};
-use crate::platform::DevicePromise;
+use crate::platform::{get_default_domain, DevicePromise};
 use crate::public::promise::promisify;
 use crate::{Error, VIRTUAL_MEMORY};
+use bridge_macro::bridge;
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::path::Path;
 use std::str::FromStr;
@@ -47,25 +49,53 @@ impl TokioThread {
     }
 }
 
-pub fn init(promise: DevicePromise, data_directory: String) -> Result<(), Error> {
+#[bridge]
+#[derive(Deserialize, Serialize)]
+pub struct InitOptions {
+    pub data_directory: String,
+    pub force_new: bool,
+}
+
+pub fn init(promise: DevicePromise, json: String) -> Result<(), Error> {
+    /*use oslog::OsLogger;
+    OsLogger::new("com.bubble.app")
+           .level_filter(LevelFilter::Trace)
+           .init()
+           .unwrap();*/
+    let options: InitOptions = serde_json::from_str(&json)?;
     let tokio_thread = TokioThread::spawn();
     let handle = tokio_thread.handle.clone();
     handle.block_on(promisify::<usize, Error>(promise, async move {
-        let (pool, account_data) = init_async(&data_directory).await?;
-        let domain = GlobalKv::get(&pool, "domain")
-            .await?
-            .unwrap_or("http://localhost:3000".to_string()); // TODO: make this not dumb
-        let global_data = GlobalStaticData {
-            data_directory,
-            domain,
-            tokio: tokio_thread,
-        };
-        let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
+        if !options.force_new {
+            let instance = VIRTUAL_MEMORY
+                .clone_iter()
+                .position(|m| m.static_data.data_directory == options.data_directory);
+            if let Some(instance) = instance {
+                return Ok(instance);
+            }
+        }
+        let frontend_instance =
+            create_frontend_instance(options.data_directory, tokio_thread).await?;
         let address = VIRTUAL_MEMORY.push(Arc::new(frontend_instance));
         Ok(address)
     }));
 
     Ok(())
+}
+
+pub async fn create_frontend_instance(
+    data_directory: String,
+    tokio_thread: TokioThread,
+) -> Result<FrontendInstance, Error> {
+    let (pool, account_data) = init_async(&data_directory).await?;
+    let domain = GlobalKv::get(&pool, "domain").await?.unwrap();
+    let global_data = GlobalStaticData {
+        data_directory,
+        domain,
+        tokio: tokio_thread,
+    };
+    let frontend_instance = FrontendInstance::new(global_data, pool, account_data);
+    Ok(frontend_instance)
 }
 
 pub async fn init_async(
@@ -74,6 +104,12 @@ pub async fn init_async(
     let database =
         SqlitePool::connect(&format!("sqlite:{}/global.db?mode=rwc", &data_directory)).await?;
     sqlx::migrate!("./migrations/global").run(&database).await?;
+
+    let domain = GlobalKv::get(&database, "domain").await?;
+
+    if domain.is_none() {
+        GlobalKv::set(&database, "domain", get_default_domain());
+    }
 
     let current_account = GlobalKv::get(&database, "current_account").await?;
 
