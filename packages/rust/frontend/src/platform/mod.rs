@@ -25,22 +25,19 @@ cfg_if!(
 pub fn get_default_domain() -> &'static str {
     #[cfg(all(feature = "development", feature = "staging"))]
     compile_error!("development and staging features cannot both be set");
-
     cfg_if!(
         if #[cfg(feature = "development")]{
             cfg_if!(
                 if #[cfg(target_os="android")]{
-                    "http://10.0.2.2:3000"
+                    return "http://10.0.2.2:3000";
                 } else {
-                    "http://localhost:3000"
+                    return "http://localhost:3000";
                 }
             );
         } else if #[cfg(feature = "staging")]{
-            "https://api.staging.bubble.place"
+            return "https://api.staging.bubble.place";
         } else { // release
-            "https://api.bubble.place"
+            return "https://api.bubble.place";
         }
     );
-
-    unreachable!()
 }

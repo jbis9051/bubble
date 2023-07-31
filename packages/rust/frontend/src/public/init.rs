@@ -108,7 +108,7 @@ pub async fn init_async(
     let domain = GlobalKv::get(&database, "domain").await?;
 
     if domain.is_none() {
-        GlobalKv::set(&database, "domain", get_default_domain());
+        GlobalKv::set(&database, "domain", get_default_domain()).await?;
     }
 
     let current_account = GlobalKv::get(&database, "current_account").await?;
