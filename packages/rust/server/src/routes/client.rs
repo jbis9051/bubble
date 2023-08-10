@@ -32,6 +32,24 @@ pub fn router() -> Router {
         .route("/:uuid/key_package", get(get_key_package))
 }
 
+/*
+POST /v1/client
+
+Desc:
+    Creates a new client for a user.
+
+Request:
+{
+    "signing_key": "<signing_key>",
+    "signature": "<signature>"
+}
+
+Response:
+    201 CREATED
+{
+    "client_uuid": "<uuid>"
+}
+ */
 pub async fn create(
     db: Extension<DbPool>,
     Json(payload): Json<CreateClient>,
@@ -66,6 +84,21 @@ pub async fn create(
     ))
 }
 
+/*
+PATCH /v1/client/:uuid
+
+Desc:
+    Updates a client for a user.
+
+Request:
+{
+    "signing_key": "<signing_key>",
+    "signature": "<signature>"
+}
+
+Response:
+    200 OK
+ */
 pub async fn update(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -94,6 +127,21 @@ pub async fn update(
     Ok(StatusCode::OK)
 }
 
+/*
+GET /v1/client/:uuid
+
+Desc:
+    Gets a client by uuid and returns some information.
+
+Response:
+TODO http code
+{
+    "user_uuid": "<uuid>",
+    "uuid": "<uuid>",
+    "signing_key": "<signing_key>",
+    "signature": "<signature>"
+}
+ */
 pub async fn get_client(
     db: Extension<DbPool>,
     Path(uuid): Path<Uuid>,
@@ -112,6 +160,15 @@ pub async fn get_client(
     }))
 }
 
+/*
+DELETE /v1/client/:uuid
+
+Desc:
+    Deletes client by uuid.
+
+Response:
+    200 OK
+ */
 pub async fn delete_client(
     db: Extension<DbPool>,
     Path(uuid): Path<String>,
@@ -129,6 +186,22 @@ pub async fn delete_client(
     Ok(StatusCode::OK)
 }
 
+/*
+POST /v1/client/:uuid/key_packages
+
+Desc:
+    Replaces client's key-packages.
+
+Request:
+{
+    "key_packages": [
+        "<key_package>"
+    ]
+}
+
+Response:
+    200 OK
+ */
 pub async fn replace_key_packages(
     db: Extension<DbPool>,
     Path(uuid): Path<Uuid>,
@@ -168,6 +241,18 @@ pub async fn replace_key_packages(
     Ok(StatusCode::OK)
 }
 
+/*
+GET /v1/client/:uuid/key_package
+
+Desc:
+    Gets key-package for a client from uuid.
+
+Response:
+TODO http code
+{
+    "key_package": "<key_package>"
+}
+ */
 pub async fn get_key_package(
     db: Extension<DbPool>,
     Path(uuid): Path<Uuid>,
